@@ -1,0 +1,48 @@
+services:
+  php:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./files:/var/www/html
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "80:80"
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "php -v || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  postgres:
+    image: postgres:16
+    restart: always
+    env_file:
+      - .env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./sql_init:/docker-entrypoint-initdb.d
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: "10s"      # Check every 10 seconds
+      timeout: "5s"        # Wait up to 5 seconds for the command to complete
+      retries: 5           # Retry 5 times before considering the service unhealthy
+      start_period: "10s"  # Wait 10 seconds before starting health checks
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
