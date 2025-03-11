@@ -7,8 +7,8 @@
             'name' => 'Project Setup and Architecture Design',
             'tasks' => [
                 'Create project structure' => true,
-                'Design database schemas' => false,
-                'Plan API endpoints' => false,
+                'Design database schemas' => true,
+                'Plan API endpoints' => true,
                 'Set up Docker environment' => true,
             ]
         ],
