@@ -15,9 +15,9 @@
         'phase2' => [
             'name' => 'Authentication Service Implementation',
             'tasks' => [
-                'Create users and roles tables' => false,
+                'Create users and roles tables' => true,
                 'Implement user registration and login' => false,
-                'Build JWT token generation' => false,
+                'Build JWT token generation' => true,
                 'Create role-based permission system' => false,
                 'Implement API endpoints' => false
             ]
@@ -327,7 +327,8 @@
                             </div>
                             <div class="task-item">
                                 <span class="pending"><i class="bi bi-circle"></i></span>
-                                Build JWT token generation and validation
+                                Build JWT token generation and validation - JWT must be tied to context.
+                                Have the client make a new Auth request before continuing if context is not right.
                             </div>
                             <div class="task-item">
                                 <span class="pending"><i class="bi bi-circle"></i></span>
