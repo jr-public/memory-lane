@@ -3,6 +3,12 @@
 -- -----------------------------------------------------------------------------
 -- Initial data population
 -- -----------------------------------------------------------------------------
+INSERT INTO public.clients ( client_id, client_name, password_hash, email ) VALUES 
+    ('john_doe_corp', 'John Doe Enterprises', '12341234', 'john.doe@example.com'),
+    ('smith_industries', 'Smith Global Industries', '12341234', 'ceo@smithindustries.com'),
+    ('tech_innovate', 'Tech Innovate Solutions', '12341234', 'contact@techinnovate.com'),
+    ('green_energy_co', 'Green Energy Collective', '12341234', 'info@greenenergy.org'),
+    ('marketing_pros', 'Marketing Professionals Ltd', '12341234', 'admin@marketingpros.net');
 INSERT INTO roles (name, description) VALUES 
     ('admin', 'Administrator with full system access'),
     ('manager', 'Can manage tasks and assignments for their team'),
