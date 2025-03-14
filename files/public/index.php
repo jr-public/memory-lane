@@ -60,6 +60,9 @@ define("DB",reserved_db());
 // $response = $auth->verifyToken($jwt);
 // echo json_encode($response);
 
+// if ( $_SERVER["REQUEST_METHOD"] == "POST") {
+
+// }
 ?>
 
 <!DOCTYPE html>
@@ -165,13 +168,13 @@ define("DB",reserved_db());
     <div class="container">
         <div class="form-container">
             <!-- Login Form -->
-            <form id="login-form" class="active">
+            <form id="login-form" class="active" method="post" action="Api.php">
                 <h2>Login</h2>
                 <div class="form-group">
-                    <input type="email" placeholder="Email" required>
+                    <input type="text" name="username" placeholder="Username" value="my_username" required>
                 </div>
                 <div class="form-group">
-                    <input type="password" placeholder="Password" required>
+                    <input type="password" name="password" placeholder="Password" value="12341234" required>
                 </div>
                 <button type="submit" class="btn">Login</button>
                 <div class="toggle-form">
@@ -180,19 +183,19 @@ define("DB",reserved_db());
             </form>
 
             <!-- Registration Form -->
-            <form id="register-form">
+            <form id="register-form" method="post" action="Api.php">
                 <h2>Create Account</h2>
                 <div class="form-group">
-                    <input type="text" placeholder="Full Name" required>
+                    <input type="text" name="username" placeholder="Username" value="my_username" required>
                 </div>
                 <div class="form-group">
-                    <input type="email" placeholder="Email" required>
+                    <input type="email" name="email" placeholder="Email" value="email@email.com" required>
                 </div>
                 <div class="form-group">
-                    <input type="password" placeholder="Password" required>
+                    <input type="password" name="password" placeholder="Password" value="12341234" required>
                 </div>
                 <div class="form-group">
-                    <input type="password" placeholder="Confirm Password" required>
+                    <input type="password" name="rPass" placeholder="Confirm Password" value="12341234" required>
                 </div>
                 <button type="submit" class="btn">Register</button>
                 <div class="toggle-form">
