@@ -103,6 +103,7 @@ $timestamp = date('Y-m-d H:i:s');
     </style>
 </head>
 <body>
+    <pre><a href='index.php'>GO BACK</a></pre>
     <div class="container">
         <h1>HTTP Request Logger</h1>
         <p class="timestamp">Request received at: <?php echo $timestamp; ?></p>
