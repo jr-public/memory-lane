@@ -52,17 +52,31 @@ define("DB",reserved_db());
 // echo "and now for something completely different :";
 // echo "<br/>";
 
-// require 'vendor/autoload.php';
+// 
 
-// use MemoryLane\Auth;
-// $auth = new Auth();
-// $jwt = $auth->authenticate("jr-client","12341234");
-// $response = $auth->verifyToken($jwt);
-// echo json_encode($response);
 
-// if ( $_SERVER["REQUEST_METHOD"] == "POST") {
-
-// }
+require_once(getenv("PROJECT_ROOT") . 'vendor/autoload.php');
+use MemoryLane\Auth;
+if ( $_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["form_name"]) ) {
+    if ( $_POST["form_name"] == "login" ) {
+        $auth = new Auth();
+        $jwt = $auth->authenticate("jr-client","1234");
+        if ( !$jwt ) {
+            header("Location: index.php?e=1");
+            die();
+        }
+        header("Location: main.php");
+        die();
+    }
+    else if ( $_POST["form_name"] == "register" ) {
+        echo 'REGISTATION NOT IMPLEMENTED!';
+        echo '<a href="index.php">Go back</a>';
+        die();
+    }
+    // $response = $auth->verifyToken("asdasd");
+    // echo json_encode($response);
+    // die();
+}
 ?>
 
 <!DOCTYPE html>
@@ -168,7 +182,8 @@ define("DB",reserved_db());
     <div class="container">
         <div class="form-container">
             <!-- Login Form -->
-            <form id="login-form" class="active" method="post" action="Api.php">
+            <form id="login-form" class="active" method="post">
+                <input type="hidden" name="form_name" value="login">
                 <h2>Login</h2>
                 <div class="form-group">
                     <input type="text" name="username" placeholder="Username" value="my_username" required>
@@ -183,7 +198,8 @@ define("DB",reserved_db());
             </form>
 
             <!-- Registration Form -->
-            <form id="register-form" method="post" action="Api.php">
+            <form id="register-form" method="post">
+                <input type="hidden" name="form_name" value="register">
                 <h2>Create Account</h2>
                 <div class="form-group">
                     <input type="text" name="username" placeholder="Username" value="my_username" required>
