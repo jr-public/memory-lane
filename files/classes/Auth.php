@@ -65,4 +65,18 @@ class Auth {
             return null;
         }
     }
+
+    public function set_cookie( $jwt, $expiration = null) {
+        setcookie('auth_token', $jwt, [
+            'expires' => $expiration ?? time() + 3600,
+            'path' => '/',
+            'domain' => $_SERVER['SERVER_NAME'],
+            // 'secure' => true,     // Only send over HTTPS
+            'httponly' => true,   // Not accessible via JavaScript
+            'samesite' => 'Lax'   // Protects against CSRF
+        ]);
+    }
+    public function get_cookie() {
+        return $_COOKIE["auth_token"];
+    }
 }

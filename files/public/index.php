@@ -65,6 +65,7 @@ if ( $_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["form_name"]) ) {
             header("Location: index.php?e=1");
             die();
         }
+        $auth->set_cookie($jwt);
         header("Location: main.php");
         die();
     }
