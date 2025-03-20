@@ -1,0 +1,23 @@
+# Enable URL rewriting
+RewriteEngine On
+
+# Set the base directory
+# Adjust this if your API is in a subdirectory
+RewriteBase /
+
+# Redirect all requests to Gateway.php except for existing files and directories
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ Gateway.php [QSA,L]
+
+# Allow HTTP Authorization header (if needed for API authentication)
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+# Prevent directory listing
+Options -Indexes
+
+# Set default character set
+AddDefaultCharset UTF-8
+
+# Disable server signature
+ServerSignature Off
