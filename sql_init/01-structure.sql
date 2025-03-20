@@ -34,6 +34,7 @@ CREATE TABLE task_statuses (
 -- Contains all registered users of the system
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
+    client_id INTEGER NOT NULL REFERENCES clients(id), -- Client that owns the user
     username VARCHAR(100) NOT NULL,
     email VARCHAR(255) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
