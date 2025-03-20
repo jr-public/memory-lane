@@ -19,8 +19,8 @@ INSERT INTO task_statuses (name, description) VALUES
     ('in_progress', 'Task is currently being worked on'),
     ('review', 'Task is completed and awaiting review'),
     ('done', 'Task is completed and reviewed');
-INSERT INTO users (username, email, password, role_id) VALUES 
-	( 'Admin User', 'admin@example.com', '1234', 1 ),
-	( 'Manager User', 'manager@example.com', '1234', 2 ),
-	( 'Regular User', 'user@example.com', '1234', 3 ),
-	( 'Jane Smith', 'jane.smith@example.com', '1234', 3 );
+INSERT INTO users (client_id, username, email, password, role_id) VALUES 
+	( 1, 'admin', 'admin@example.com', '1234', 1 ),
+	( 1, 'Manager User', 'manager@example.com', '1234', 2 ),
+	( 1, 'Regular User', 'user@example.com', '1234', 3 ),
+	( 1, 'Jane Smith', 'jane.smith@example.com', '1234', 3 );
