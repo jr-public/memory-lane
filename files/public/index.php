@@ -1,41 +1,7 @@
 <?php
-// 1. Initial Authentication
-// - Generate JWT with current context
-// - Store context markers in token
-
-// 2. Subsequent Requests
-// - Validate current context against token
-// - If context differs:
-//   * Reject request
-//   * Prompt client to re-authenticate
-//   * Generate new JWT with updated context
-
-
-// try {
-// 	$sql	= "SELECT * FROM users";
-// 	$stmt	= DB->prepare($sql);
-// 	$stmt->execute();
-// 	$users	= $stmt->fetchAll();
-	
-// 	echo "<br /><br />";
-// 	foreach ( $users AS $user ) {
-// 		echo json_encode($user);
-// 		echo "<br /><br />";
-// 	}
-// } catch (\Throwable $th) {
-//     echo "<b>An error occurred:</b> " . $th->getMessage();
-// }
-
-
-// echo "<br/>";
-// echo "and now for something completely different :";
-// echo "<br/>";
-
-
 if ( $_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["form_name"]) ) {
 
     require_once(getenv("PROJECT_ROOT") . 'vendor/autoload.php');
-    // $Auth = new MemoryLane\Auth();
     $User = new MemoryLane\User(DB);
 
     if ( $_POST["form_name"] == "register" ) {
@@ -48,15 +14,13 @@ if ( $_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["form_name"]) ) {
         $User->create($userData);
     }
 
-    $auth = $User->authenticate(1, $_POST["username"],$_POST["password"]);
-    // echo json_encode(verify_token($auth["data"]["jwt"]));
-    // die();
+    $auth = $User->authenticate(1, $_POST["username"],$_POST["password"], device_id());
     if ( !$auth["success"] ) {
         header("Location: index.php?e=".$auth["message"]);
         die();
     }
     set_cookie($auth["data"]["jwt"]);
-    header("Location: requests.php");
+    header("Location: main.php");
     die();
 }
 ?>
@@ -168,10 +132,10 @@ if ( $_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["form_name"]) ) {
                 <input type="hidden" name="form_name" value="login">
                 <h2>Login</h2>
                 <div class="form-group">
-                    <input type="text" name="username" placeholder="Username" value="my_username" required>
+                    <input type="text" name="username" placeholder="Username" value="admin" required>
                 </div>
                 <div class="form-group">
-                    <input type="password" name="password" placeholder="Password" value="12341234" required>
+                    <input type="password" name="password" placeholder="Password" value="1234" required>
                 </div>
                 <button type="submit" class="btn">Login</button>
                 <div class="toggle-form">

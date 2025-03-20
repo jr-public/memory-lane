@@ -58,7 +58,7 @@ class User {
             die('User list error: ' . $e->getMessage());
         }
     }
-    public function authenticate(string $client_id, string $username, string $password): array {
+    public function authenticate(string $client_id, string $username, string $password, string $device ): array {
 		try {
             $sql = "SELECT 
                         users.id,
@@ -85,7 +85,7 @@ class User {
         
         return response( true, [
             "user" => $user,
-            "jwt" => generate_token($user)
+            "jwt" => generate_token($user, $device)
         ]);
     }
 }
