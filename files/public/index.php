@@ -31,31 +31,33 @@
 // echo "and now for something completely different :";
 // echo "<br/>";
 
-// 
 
-
-require_once(getenv("PROJECT_ROOT") . 'vendor/autoload.php');
-use MemoryLane\Auth;
 if ( $_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["form_name"]) ) {
-    if ( $_POST["form_name"] == "login" ) {
-        $auth = new Auth();
-        $jwt = $auth->authenticate("jr-client","1234");
-        if ( !$jwt ) {
-            header("Location: index.php?e=1");
-            die();
-        }
-        $auth->set_cookie($jwt);
-        header("Location: main.php");
-        die();
+
+    require_once(getenv("PROJECT_ROOT") . 'vendor/autoload.php');
+    // $Auth = new MemoryLane\Auth();
+    $User = new MemoryLane\User(DB);
+
+    if ( $_POST["form_name"] == "register" ) {
+        $userData = [
+            'username'  => $_POST["username"],
+            'email'     => $_POST["email"],
+            'password'  => $_POST["password"],
+            'role_id'   => 2
+        ];
+        $User->create($userData);
     }
-    else if ( $_POST["form_name"] == "register" ) {
-        echo 'REGISTATION NOT IMPLEMENTED!';
-        echo '<a href="index.php">Go back</a>';
-        die();
-    }
-    // $response = $auth->verifyToken("asdasd");
-    // echo json_encode($response);
+
+    $auth = $User->authenticate(1, $_POST["username"],$_POST["password"]);
+    // echo json_encode(verify_token($auth["data"]["jwt"]));
     // die();
+    if ( !$auth["success"] ) {
+        header("Location: index.php?e=".$auth["message"]);
+        die();
+    }
+    set_cookie($auth["data"]["jwt"]);
+    header("Location: requests.php");
+    die();
 }
 ?>
 
