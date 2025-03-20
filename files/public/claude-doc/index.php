@@ -16,7 +16,7 @@
             'name' => 'Authentication Service Implementation',
             'tasks' => [
                 'Create users and roles tables' => true,
-                'Implement user registration and login' => false,
+                'Implement user registration and login' => true,
                 'Build JWT token generation' => true,
                 'Create role-based permission system' => false,
                 'Implement API endpoints' => false
