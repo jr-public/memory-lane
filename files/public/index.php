@@ -1,185 +1,110 @@
 <?php
-if ( $_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["form_name"]) ) {
 
-    require_once(getenv("PROJECT_ROOT") . 'vendor/autoload.php');
-    $User = new MemoryLane\User(DB);
+// header("Location: /memory-lane.com");
 
-    if ( $_POST["form_name"] == "register" ) {
-        $userData = [
-            'username'  => $_POST["username"],
-            'email'     => $_POST["email"],
-            'password'  => $_POST["password"],
-            'role_id'   => 2
+/**
+ * Make a POST request to a configured endpoint with JSON body and JWT authentication
+ */
+
+// Configuration
+$config = [
+    'api_endpoint' => 'http://localhost/user/get', // Replace with your API endpoint
+    'jwt_token' => 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...', // Replace with your actual JWT token
+    'timeout' => 30, // Request timeout in seconds
+    'verify_ssl' => true // Set to false to disable SSL verification (not recommended for production)
+];
+
+// JSON payload
+$payload = [
+    'id' => 1,
+    'action' => 'update',
+    'data' => [
+        'name' => 'John Doe',
+        'email' => 'john.doe@example.com',
+        'status' => 'active'
+    ]
+];
+
+/**
+ * Send POST request with JSON body and JWT token
+ * 
+ * @param array $config API configuration
+ * @param array $payload JSON payload
+ * @return array Response data and status
+ */
+function sendApiRequest($config, $payload) {
+    // Initialize cURL session
+    $ch = curl_init($config['api_endpoint']);
+    
+    // Encode payload as JSON
+    $jsonPayload = json_encode($payload);
+    if ($jsonPayload === false) {
+        return [
+            'success' => false,
+            'status_code' => 0,
+            'error' => 'Failed to encode JSON payload: ' . json_last_error_msg()
         ];
-        $User->create($userData);
     }
-
-    $auth = $User->authenticate(1, $_POST["username"],$_POST["password"], device_id());
-    if ( !$auth["success"] ) {
-        header("Location: index.php?e=".$auth["message"]);
-        die();
+    
+    // Set cURL options
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,     // Return response as string
+        CURLOPT_POST => true,               // Set request method to POST
+        CURLOPT_POSTFIELDS => $jsonPayload, // Set JSON payload
+        CURLOPT_TIMEOUT => $config['timeout'],
+        CURLOPT_HTTPHEADER => [
+            'Content-Type: application/json',
+            'Accept: application/json',
+            'Authorization: Bearer ' . $config['jwt_token']
+        ]
+    ]);
+    
+    // Disable SSL verification if configured (not recommended for production)
+    if ($config['verify_ssl'] === false) {
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
     }
-    set_cookie($auth["data"]["jwt"]);
-    header("Location: main.php");
-    die();
+    
+    // Execute the request
+    $response = curl_exec($ch);
+    $statusCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    
+    // Check for cURL errors
+    if ($response === false) {
+        $error = curl_error($ch);
+        curl_close($ch);
+        return [
+            'success' => false,
+            'status_code' => $statusCode,
+            'error' => 'cURL Error: ' . $error
+        ];
+    }
+    
+    // Close cURL session
+    curl_close($ch);
+    
+    // Try to parse JSON response
+    $responseData = json_decode($response, true);
+    if ($responseData === null && json_last_error() !== JSON_ERROR_NONE) {
+        return [
+            'success' => false,
+            'status_code' => $statusCode,
+            'error' => 'Invalid JSON response: ' . json_last_error_msg(),
+            'raw_response' => $response
+        ];
+    }
+    
+    return [
+        'success' => $statusCode >= 200 && $statusCode < 300,
+        'status_code' => $statusCode,
+        'data' => $responseData,
+        'raw_response' => $response
+    ];
 }
-?>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login / Registration</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-        }
+// Send the request
+$result = sendApiRequest($config, $payload);
 
-        body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-
-        .container {
-            width: 100%;
-            max-width: 400px;
-            padding: 40px;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
-            transition: all 0.3s ease;
-        }
-
-        .form-container {
-            text-align: center;
-        }
-
-        .form-container h2 {
-            color: #333;
-            margin-bottom: 30px;
-            font-weight: 600;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-            position: relative;
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 12px 15px;
-            border: 1.5px solid #e0e0e0;
-            border-radius: 8px;
-            outline: none;
-            transition: all 0.3s ease;
-        }
-
-        .form-group input:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
-        }
-
-        .btn {
-            width: 100%;
-            padding: 12px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-weight: 600;
-        }
-
-        .btn:hover {
-            opacity: 0.9;
-            transform: translateY(-2px);
-        }
-
-        .toggle-form {
-            margin-top: 20px;
-            color: #666;
-            font-size: 14px;
-        }
-
-        .toggle-form a {
-            color: #667eea;
-            text-decoration: none;
-            font-weight: 600;
-        }
-
-        #login-form, #register-form {
-            display: none;
-        }
-
-        #login-form.active, #register-form.active {
-            display: block;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="form-container">
-            <!-- Login Form -->
-            <form id="login-form" class="active" method="post">
-                <input type="hidden" name="form_name" value="login">
-                <h2>Login</h2>
-                <div class="form-group">
-                    <input type="text" name="username" placeholder="Username" value="admin" required>
-                </div>
-                <div class="form-group">
-                    <input type="password" name="password" placeholder="Password" value="1234" required>
-                </div>
-                <button type="submit" class="btn">Login</button>
-                <div class="toggle-form">
-                    Don't have an account? <a href="#" id="show-register">Register</a>
-                </div>
-            </form>
-
-            <!-- Registration Form -->
-            <form id="register-form" method="post">
-                <input type="hidden" name="form_name" value="register">
-                <h2>Create Account</h2>
-                <div class="form-group">
-                    <input type="text" name="username" placeholder="Username" value="my_username" required>
-                </div>
-                <div class="form-group">
-                    <input type="email" name="email" placeholder="Email" value="email@email.com" required>
-                </div>
-                <div class="form-group">
-                    <input type="password" name="password" placeholder="Password" value="12341234" required>
-                </div>
-                <div class="form-group">
-                    <input type="password" name="rPass" placeholder="Confirm Password" value="12341234" required>
-                </div>
-                <button type="submit" class="btn">Register</button>
-                <div class="toggle-form">
-                    Already have an account? <a href="#" id="show-login">Login</a>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <script>
-        // Form toggle functionality
-        document.getElementById('show-register').addEventListener('click', function(e) {
-            e.preventDefault();
-            document.getElementById('login-form').classList.remove('active');
-            document.getElementById('register-form').classList.add('active');
-        });
-
-        document.getElementById('show-login').addEventListener('click', function(e) {
-            e.preventDefault();
-            document.getElementById('register-form').classList.remove('active');
-            document.getElementById('login-form').classList.add('active');
-        });
-    </script>
-</body>
-</html>
+// Output the result
+header('Content-Type: application/json');
+echo json_encode($result, JSON_PRETTY_PRINT);
