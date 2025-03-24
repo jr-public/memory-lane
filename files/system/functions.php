@@ -50,6 +50,41 @@ function device_id() {
     
     return $device_id;
 }
+
+
+function api_call( $controller, $action, $request ) {
+    $backtrace  = debug_backtrace();
+    $caller     = basename($backtrace[0]['file']);
+
+    // Validate received arguments
+    if (!preg_match('/^[a-zA-Z0-9_]+$/', $controller)) {
+        return response(false, null, 'Invalid class name');
+    }
+    $file       = getenv("PROJECT_ROOT") . 'classes/' . $controller . '.php';
+    if (!file_exists($file)) {
+        return response(false, null, 'Class not found in ' . $file);
+    }
+    $class      = "MemoryLane\\$controller";
+    if (!class_exists($class)) {
+        return response(false, null, 'Class not found');
+    }
+    $instance   = new $class(DB);
+    if (!method_exists($instance, $action) || !is_callable([$instance, $action])) {
+        return response(false, null, 'Action not found: '. $action);
+    }
+
+    $reflection = new \ReflectionMethod($instance, $action);
+    $m_params   = $reflection->getParameters(); // Method parameters
+    $c_params   = []; // Call parameters
+    foreach ($m_params as $param)  {
+        $param_name = $param->getName();
+        if (!isset($request[$param_name]) && !$param->isDefaultValueAvailable()) {
+            return response(false, null, 'Required parameter ' . $param_name . ' missing');
+        }
+        $c_params[] = $request[$param_name] ?? $param->getDefaultValue();
+    }
+    return $reflection->invokeArgs($instance, $c_params);
+}
 function response( bool $success = true, $data = null, ?string $message = null, ?int $code = null ): array {
     $response = [
 		"success" 	=> $success,
