@@ -1,68 +1,183 @@
 <?php
-
-
-    // Task completion tracking (Edit these arrays to update progress)
+    // Task completion tracking with restructured format
     $phases = [
         'phase1' => [
             'name' => 'Project Setup and Architecture Design',
+            'title' => 'Phase 1: Project Setup and Architecture Design',
             'tasks' => [
-                'Create project structure' => true,
-                'Design database schemas' => true,
-                'Plan API endpoints' => true,
-                'Set up Docker environment' => true,
+                'create_project_structure' => [
+                    'name' => 'Create project structure',
+                    'value' => true,
+                    'description' => 'Create project structure and directories'
+                ],
+                'design_database_schemas' => [
+                    'name' => 'Design database schemas',
+                    'value' => true,
+                    'description' => 'Design database schemas'
+                ],
+                'plan_api_endpoints' => [
+                    'name' => 'Plan API endpoints',
+                    'value' => true,
+                    'description' => 'Plan API endpoints and data formats'
+                ],
+                'setup_docker_environment' => [
+                    'name' => 'Set up Docker environment',
+                    'value' => true,
+                    'description' => 'Set up Docker environment'
+                ]
             ]
         ],
         'phase2' => [
             'name' => 'Authentication Service Implementation',
+            'title' => 'Phase 2: Authentication Service Implementation',
             'tasks' => [
-                'Create users and roles tables' => true,
-                'Implement user registration and login' => true,
-                'Build JWT token generation' => true,
-                'Create role-based permission system' => false,
-                'Implement API endpoints' => false
+                'create_users_tables' => [
+                    'name' => 'Create users and roles tables',
+                    'value' => true,
+                    'description' => 'Create users and roles tables'
+                ],
+                'implement_user_registration' => [
+                    'name' => 'Implement user registration and login',
+                    'value' => true,
+                    'description' => 'Implement user registration and login'
+                ],
+                'build_jwt_token' => [
+                    'name' => 'Build JWT token generation',
+                    'value' => true,
+                    'description' => 'Build JWT token generation and validation - JWT must be tied to context. Have the client make a new Auth request before continuing if context is not right.'
+                ],
+                'create_permission_system' => [
+                    'name' => 'Create role-based permission system (SKIPPED)',
+                    'value' => true,
+                    'description' => 'Create role-based permission system (SKIPPED)'
+                ],
+                'implement_api_endpoints' => [
+                    'name' => 'Implement API endpoints',
+                    'value' => true,
+                    'description' => 'Implement API endpoints'
+                ]
             ]
         ],
         'phase3' => [
             'name' => 'Task Service Implementation',
+            'title' => 'Phase 3: Task Service Implementation',
             'tasks' => [
-                'Create tasks tables' => false,
-                'Implement task CRUD operations' => false,
-                'Build assignment and status management' => false,
-                'Implement filtering and sorting' => false,
-                'Create API endpoints' => false
+                'create_tasks_tables' => [
+                    'name' => 'Create tasks tables',
+                    'value' => false,
+                    'description' => 'Create tasks and related tables'
+                ],
+                'implement_task_crud' => [
+                    'name' => 'Implement task CRUD operations',
+                    'value' => false,
+                    'description' => 'Implement task CRUD operations'
+                ],
+                'build_assignment_management' => [
+                    'name' => 'Build assignment and status management',
+                    'value' => false,
+                    'description' => 'Build assignment and status management'
+                ],
+                'implement_filtering' => [
+                    'name' => 'Implement filtering and sorting',
+                    'value' => false,
+                    'description' => 'Implement filtering and sorting'
+                ],
+                'create_api_endpoints' => [
+                    'name' => 'Create API endpoints',
+                    'value' => false,
+                    'description' => 'Create API endpoints'
+                ]
             ]
         ],
         'phase4' => [
             'name' => 'API Gateway and Integration',
+            'title' => 'Phase 4: API Gateway and Integration',
             'tasks' => [
-                'Build API gateway service' => false,
-                'Implement request routing' => false,
-                'Set up authentication middleware' => false,
-                'Configure inter-service communication' => false
+                'build_api_gateway' => [
+                    'name' => 'Build API gateway service',
+                    'value' => true,
+                    'description' => 'Build API gateway service'
+                ],
+                'implement_request_routing' => [
+                    'name' => 'Implement request routing',
+                    'value' => true,
+                    'description' => 'Implement request routing'
+                ],
+                'setup_auth_middleware' => [
+                    'name' => 'Set up authentication middleware',
+                    'value' => true,
+                    'description' => 'Set up authentication middleware'
+                ],
+                'configure_service_communication' => [
+                    'name' => 'Configure inter-service communication',
+                    'value' => false,
+                    'description' => 'Configure inter-service communication'
+                ]
             ]
         ],
         'phase5' => [
             'name' => 'Testing and Refinement',
+            'title' => 'Phase 5: Testing and Refinement',
             'tasks' => [
-                'Write unit tests' => false,
-                'Create integration tests' => false,
-                'Perform security review' => false,
-                'Optimize database queries' => false,
-                'Implement caching strategies' => false
+                'write_unit_tests' => [
+                    'name' => 'Write unit tests',
+                    'value' => false,
+                    'description' => 'Write unit tests for core logic'
+                ],
+                'create_integration_tests' => [
+                    'name' => 'Create integration tests',
+                    'value' => false,
+                    'description' => 'Create integration tests for APIs'
+                ],
+                'perform_security_review' => [
+                    'name' => 'Perform security review',
+                    'value' => false,
+                    'description' => 'Perform security review'
+                ],
+                'optimize_database_queries' => [
+                    'name' => 'Optimize database queries',
+                    'value' => false,
+                    'description' => 'Optimize database queries'
+                ],
+                'implement_caching' => [
+                    'name' => 'Implement caching strategies',
+                    'value' => false,
+                    'description' => 'Implement caching strategies'
+                ]
             ]
         ],
         'phase6' => [
             'name' => 'Documentation and Presentation',
+            'title' => 'Phase 6: Documentation and Presentation',
             'tasks' => [
-                'Create architecture diagrams' => false,
-                'Document API endpoints' => false,
-                'Write database schema documentation' => false,
-                'Create setup instructions' => false,
-                'Prepare portfolio presentation' => false
+                'create_architecture_diagrams' => [
+                    'name' => 'Create architecture diagrams',
+                    'value' => false,
+                    'description' => 'Create system architecture diagrams'
+                ],
+                'document_api_endpoints' => [
+                    'name' => 'Document API endpoints',
+                    'value' => false,
+                    'description' => 'Document API endpoints'
+                ],
+                'write_database_documentation' => [
+                    'name' => 'Write database schema documentation',
+                    'value' => false,
+                    'description' => 'Write database schema documentation'
+                ],
+                'create_setup_instructions' => [
+                    'name' => 'Create setup instructions',
+                    'value' => false,
+                    'description' => 'Create setup and deployment instructions'
+                ],
+                'prepare_portfolio_presentation' => [
+                    'name' => 'Prepare portfolio presentation',
+                    'value' => false,
+                    'description' => 'Prepare portfolio presentation'
+                ]
             ]
         ]
     ];
-
     ?>
 
 <!DOCTYPE html>
@@ -74,40 +189,162 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
     <style>
+        :root {
+            --dark-bg: #121212;
+            --dark-surface: #1e1e1e;
+            --dark-surface-light: #2d2d2d;
+            --dark-primary: #bb86fc;
+            --dark-secondary: #03dac6;
+            --dark-error: #cf6679;
+            --dark-text-primary: rgba(255, 255, 255, 0.87);
+            --dark-text-secondary: rgba(255, 255, 255, 0.6);
+            --dark-border: #333;
+        }
+        
+        body {
+            background-color: var(--dark-bg);
+            color: var(--dark-text-primary);
+        }
+        
+        .card {
+            background-color: var(--dark-surface);
+            border-color: var(--dark-border);
+        }
+        
+        .card-header {
+            background-color: var(--dark-surface-light) !important;
+            border-color: var(--dark-border);
+        }
+        
         .phase-card {
             margin-bottom: 20px;
-            border-left: 4px solid #0d6efd;
+            border-left: 4px solid var(--dark-primary);
         }
+        
         .resource-card {
-            border-left: 4px solid #198754;
+            border-left: 4px solid var(--dark-secondary);
         }
+        
         .task-item {
             padding: 8px 0;
-            border-bottom: 1px solid #eee;
+            border-bottom: 1px solid var(--dark-border);
         }
+        
         .task-item:last-child {
             border-bottom: none;
         }
+        
         .sidebar {
-            background-color: #f8f9fa;
+            background-color: var(--dark-surface);
             height: 100%;
             padding: 20px;
         }
+        
         .progress {
             height: 25px;
+            background-color: var(--dark-surface-light);
         }
+        
+        .progress-bar {
+            background-color: var(--dark-primary);
+        }
+        
         .checkmark {
-            color: #198754;
+            color: var(--dark-secondary);
             margin-right: 8px;
         }
+        
         .pending {
-            color: #6c757d;
+            color: var(--dark-text-secondary);
             margin-right: 8px;
+        }
+        
+        .navbar {
+            background-color: #343a40 !important;
+        }
+        
+        .accordion-button {
+            background-color: var(--dark-surface);
+            color: var(--dark-text-primary);
+        }
+        
+        .accordion-button:not(.collapsed) {
+            background-color: var(--dark-surface-light);
+            color: var(--dark-text-primary);
+        }
+        
+        .accordion-button::after {
+            filter: invert(1);
+        }
+        
+        footer {
+            background-color: var(--dark-surface) !important;
+            color: var(--dark-text-primary);
+        }
+        
+        a {
+            color: var(--dark-primary);
+        }
+        
+        a:hover {
+            color: var(--dark-secondary);
+        }
+        
+        .nav-link {
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        .nav-link.active, .nav-link:hover {
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        .bg-light {
+            background-color: var(--dark-surface-light) !important;
+        }
+        
+        .text-muted {
+            color: var(--dark-text-secondary) !important;
+        }
+        
+        code {
+            background-color: #2d2d2d;
+            color: #e83e8c;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+        
+        /* Go to top button styles */
+        #goToTopBtn {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 99;
+            border: none;
+            outline: none;
+            background-color: var(--dark-primary);
+            color: white;
+            cursor: pointer;
+            padding: 15px;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        #goToTopBtn:hover {
+            background-color: var(--dark-secondary);
+            transform: translateY(-3px);
+        }
+        
+        #goToTopBtn i {
+            font-size: 1.25rem;
         }
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
             <a class="navbar-brand" href="#">PHP Architect Portfolio Project</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -288,166 +525,21 @@
                 <section id="roadmap" class="mb-5">
                     <h3>Development Roadmap</h3>
                     
-                    <div class="card phase-card" id="phase1">
+                    <?php foreach ($phases as $phaseId => $phase): ?>
+                    <div class="card phase-card" id="<?php echo $phaseId; ?>">
                         <div class="card-header bg-light">
-                            <h5 class="mb-0">Phase 1: Project Setup and Architecture Design</h5>
+                            <h5 class="mb-0"><?php echo $phase['title']; ?></h5>
                         </div>
                         <div class="card-body">
+                            <?php foreach ($phase['tasks'] as $taskId => $task): ?>
                             <div class="task-item">
                                 <span class="pending"><i class="bi bi-circle"></i></span>
-                                Create project structure and directories
+                                <?php echo $task['description']; ?>
                             </div>
-                            <div class="task-item">
-                                <span class="pending"><i class="bi bi-circle"></i></span>
-                                Design database schemas
-                            </div>
-                            <div class="task-item">
-                                <span class="pending"><i class="bi bi-circle"></i></span>
-                                Plan API endpoints and data formats
-                            </div>
-                            <div class="task-item">
-                                <span class="pending"><i class="bi bi-circle"></i></span>
-                                Set up Docker environment
-                            </div>
+                            <?php endforeach; ?>
                         </div>
                     </div>
-                    
-                    <div class="card phase-card" id="phase2">
-                        <div class="card-header bg-light">
-                            <h5 class="mb-0">Phase 2: Authentication Service Implementation</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="task-item">
-                                <span class="pending"><i class="bi bi-circle"></i></span>
-                                Create users and roles tables
-                            </div>
-                            <div class="task-item">
-                                <span class="pending"><i class="bi bi-circle"></i></span>
-                                Implement user registration and login
-                            </div>
-                            <div class="task-item">
-                                <span class="pending"><i class="bi bi-circle"></i></span>
-                                Build JWT token generation and validation - JWT must be tied to context.
-                                Have the client make a new Auth request before continuing if context is not right.
-                            </div>
-                            <div class="task-item">
-                                <span class="pending"><i class="bi bi-circle"></i></span>
-                                Create role-based permission system
-                            </div>
-                            <div class="task-item">
-                                <span class="pending"><i class="bi bi-circle"></i></span>
-                                Implement API endpoints
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="card phase-card" id="phase3">
-                        <div class="card-header bg-light">
-                            <h5 class="mb-0">Phase 3: Task Service Implementation</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="task-item">
-                                <span class="pending"><i class="bi bi-circle"></i></span>
-                                Create tasks and related tables
-                            </div>
-                            <div class="task-item">
-                                <span class="pending"><i class="bi bi-circle"></i></span>
-                                Implement task CRUD operations
-                            </div>
-                            <div class="task-item">
-                                <span class="pending"><i class="bi bi-circle"></i></span>
-                                Build assignment and status management
-                            </div>
-                            <div class="task-item">
-                                <span class="pending"><i class="bi bi-circle"></i></span>
-                                Implement filtering and sorting
-                            </div>
-                            <div class="task-item">
-                                <span class="pending"><i class="bi bi-circle"></i></span>
-                                Create API endpoints
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="card phase-card" id="phase4">
-                        <div class="card-header bg-light">
-                            <h5 class="mb-0">Phase 4: API Gateway and Integration</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="task-item">
-                                <span class="pending"><i class="bi bi-circle"></i></span>
-                                Build API gateway service
-                            </div>
-                            <div class="task-item">
-                                <span class="pending"><i class="bi bi-circle"></i></span>
-                                Implement request routing
-                            </div>
-                            <div class="task-item">
-                                <span class="pending"><i class="bi bi-circle"></i></span>
-                                Set up authentication middleware
-                            </div>
-                            <div class="task-item">
-                                <span class="pending"><i class="bi bi-circle"></i></span>
-                                Configure inter-service communication
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="card phase-card" id="phase5">
-                        <div class="card-header bg-light">
-                            <h5 class="mb-0">Phase 5: Testing and Refinement</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="task-item">
-                                <span class="pending"><i class="bi bi-circle"></i></span>
-                                Write unit tests for core logic
-                            </div>
-                            <div class="task-item">
-                                <span class="pending"><i class="bi bi-circle"></i></span>
-                                Create integration tests for APIs
-                            </div>
-                            <div class="task-item">
-                                <span class="pending"><i class="bi bi-circle"></i></span>
-                                Perform security review
-                            </div>
-                            <div class="task-item">
-                                <span class="pending"><i class="bi bi-circle"></i></span>
-                                Optimize database queries
-                            </div>
-                            <div class="task-item">
-                                <span class="pending"><i class="bi bi-circle"></i></span>
-                                Implement caching strategies
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="card phase-card" id="phase6">
-                        <div class="card-header bg-light">
-                            <h5 class="mb-0">Phase 6: Documentation and Presentation</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="task-item">
-                                <span class="pending"><i class="bi bi-circle"></i></span>
-                                Create system architecture diagrams
-                            </div>
-                            <div class="task-item">
-                                <span class="pending"><i class="bi bi-circle"></i></span>
-                                Document API endpoints
-                            </div>
-                            <div class="task-item">
-                                <span class="pending"><i class="bi bi-circle"></i></span>
-                                Write database schema documentation
-                            </div>
-                            <div class="task-item">
-                                <span class="pending"><i class="bi bi-circle"></i></span>
-                                Create setup and deployment instructions
-                            </div>
-                            <div class="task-item">
-                                <span class="pending"><i class="bi bi-circle"></i></span>
-                                Prepare portfolio presentation
-                            </div>
-                        </div>
-                    </div>
+                    <?php endforeach; ?>
                 </section>
                 
                 <section id="resources" class="mb-5">
@@ -567,25 +659,98 @@
         </div>
     </div>
 
-    <footer class="bg-light py-4 mt-5">
+    <footer class="py-4 mt-5">
         <div class="container text-center">
             <p>Task Management System - PHP Architecture Portfolio Project</p>
         </div>
     </footer>
 
+    <!-- Go to top button -->
+    <button id="goToTopBtn" title="Go to top"><i class="bi bi-arrow-up"></i></button>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     
+    <!-- Go to top button functionality -->
+    <script>
+    // Modular "Go to Top" button functionality
+    const goToTopModule = (function() {
+        // Private variables
+        const btn = document.getElementById("goToTopBtn");
+        const scrollThreshold = 300; // Show button after scrolling this many pixels
+        
+        // Private methods
+        function scrollToTop() {
+            window.scrollTo({
+                top: 0,
+                behavior: "smooth"
+            });
+        }
+        
+        function toggleButtonVisibility() {
+            if (document.body.scrollTop > scrollThreshold || document.documentElement.scrollTop > scrollThreshold) {
+                btn.style.display = "block";
+            } else {
+                btn.style.display = "none";
+            }
+        }
+        
+        // Public methods (API)
+        return {
+            initialize: function() {
+                // Add event listeners
+                window.addEventListener("scroll", toggleButtonVisibility);
+                btn.addEventListener("click", scrollToTop);
+                
+                // Initial check
+                toggleButtonVisibility();
+            },
+            updateThreshold: function(newThreshold) {
+                // Allow threshold to be updated if needed
+                if (typeof newThreshold === 'number') {
+                    scrollThreshold = newThreshold;
+                }
+            },
+            updateAppearance: function(options) {
+                // Allow styling to be modified
+                if (options.backgroundColor) btn.style.backgroundColor = options.backgroundColor;
+                if (options.color) btn.style.color = options.color;
+                if (options.size) {
+                    btn.style.width = options.size + 'px';
+                    btn.style.height = options.size + 'px';
+                }
+                if (options.bottom) btn.style.bottom = options.bottom + 'px';
+                if (options.right) btn.style.right = options.right + 'px';
+            }
+        };
+    })();
+    
+    // Initialize the module when the page is loaded
+    document.addEventListener('DOMContentLoaded', function() {
+        goToTopModule.initialize();
+        
+        // Example of how to use the module to modify the button
+        // Uncomment to customize
+        /*
+        goToTopModule.updateAppearance({
+            backgroundColor: '#9c27b0',
+            size: 60,
+            bottom: 30,
+            right: 30
+        });
+        */
+    });
+    </script>
+    
     <?php
-
-    // Calculate progress (Edit the $phases array above to mark tasks as true when completed)
+    // Calculate progress with the restructured task array
     function calculateProgress($phases) {
         $totalTasks = 0;
         $completedTasks = 0;
         
         foreach ($phases as $phase) {
-            foreach ($phase['tasks'] as $task => $completed) {
+            foreach ($phase['tasks'] as $taskId => $task) {
                 $totalTasks++;
-                if ($completed) {
+                if ($task['value']) {
                     $completedTasks++;
                 }
             }
@@ -597,7 +762,7 @@
     // Update the progress display
     $progress = calculateProgress($phases);
     
-    // Update task status in the UI based on PHP array
+    // Update task status in the UI based on restructured PHP array
     echo "<script>
         document.addEventListener('DOMContentLoaded', function() {
             // Update progress bar
@@ -618,11 +783,11 @@
                 if (phaseElement) {
                     const taskItems = phaseElement.querySelectorAll('.task-item');
                     
-                    for (const taskName in tasks) {
+                    for (const taskId in tasks) {
                         if (taskIndex < taskItems.length) {
                             const statusIcon = taskItems[taskIndex].querySelector('span');
                             
-                            if (tasks[taskName]) {
+                            if (tasks[taskId].value) {
                                 // Task completed
                                 statusIcon.className = 'checkmark';
                                 statusIcon.innerHTML = '<i class=\"bi bi-check-circle-fill\"></i>';
