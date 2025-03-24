@@ -110,7 +110,7 @@
                 ],
                 'configure_service_communication' => [
                     'name' => 'Configure inter-service communication',
-                    'value' => false,
+                    'value' => true,
                     'description' => 'Configure inter-service communication'
                 ]
             ]
@@ -174,6 +174,33 @@
                     'name' => 'Prepare portfolio presentation',
                     'value' => false,
                     'description' => 'Prepare portfolio presentation'
+                ]
+            ]
+        ],
+        'phase-clients' => [
+            'name' => 'Overlooked implementations - CLIENTS',
+            'title' => 'Phase CLIENTS: Things i missed on my first design #1',
+            'tasks' => [
+                'clients_class' => [
+                    'name' => 'Clients',
+                    'value' => true,
+                    'description' => 'Create model for clients, update user table'
+                ],
+                'clients_crud' => [
+                    'name' => 'Clients CRUD',
+                    'value' => false,
+                    'description' => 'Class for managing clients'
+                ]
+            ]
+        ],
+        'phase-portfolio' => [
+            'name' => 'Overlooked implementations - PORTFOLIO',
+            'title' => 'Phase PORTFOLIO: Website / Tool',
+            'tasks' => [
+                'porftolio-index' => [
+                    'name' => 'Portfolio website',
+                    'value' => false,
+                    'description' => 'A simple tool or website that gives me some cheat functionality for logging in to or managing memory lane'
                 ]
             ]
         ]
