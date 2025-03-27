@@ -1,8 +1,8 @@
 <?php
 namespace MemoryLane;
-class User {
+class Client {
     private $db;
-    private static $table = 'users';
+    private static $table = 'clients';
     
     public function __construct(\PDO $dbConnection) {
         $this->db = $dbConnection;
@@ -51,35 +51,5 @@ class User {
         } catch (\PDOException $e) {
             die('Entity list error: ' . $e->getMessage());
         }
-    }
-    public function authenticate(string $client_id, string $username, string $password, string $device ): array {
-		try {
-            $sql = "SELECT 
-                        users.id,
-                        users.username, 
-                        clients.id AS client_id,
-                        clients.client_name
-                    FROM users
-                    JOIN clients ON users.client_id = clients.id
-                    WHERE users.username = :username AND users.password = :password AND users.client_id = :client_id";
-            $stmt = $this->db->prepare($sql);
-            $stmt->execute([
-                ':client_id'    => $client_id,
-                ':username'     => $username,
-                ':password'     => $password
-            ]);
-            $user = $stmt->fetch();
-        } catch (\Throwable $th) {
-            die($th->getMessage());
-        }
-        
-        // Needs error code and or error explanation
-        if ($user === false) return response(false); // 
-        if ($user["client_id"] != $client_id) return response(false, $user, "BAD_CLIENT"); // 
-        
-        return response( true, [
-            "user" => $user,
-            "jwt" => generate_token($user, $device)
-        ]);
     }
 }
