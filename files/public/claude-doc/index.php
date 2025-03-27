@@ -193,14 +193,19 @@
                 ]
             ]
         ],
-        'phase-portfolio' => [
-            'name' => 'Overlooked implementations - PORTFOLIO',
-            'title' => 'Phase PORTFOLIO: Website / Tool',
+        'phase-websites' => [
+            'name' => 'Overlooked implementations - Front ends',
+            'title' => 'Websites / Tools',
             'tasks' => [
                 'porftolio-index' => [
                     'name' => 'Portfolio website',
                     'value' => false,
                     'description' => 'A simple tool or website that gives me some cheat functionality for logging in to or managing memory lane'
+                ],
+                'admin' => [
+                    'name' => 'Administrative website',
+                    'value' => true,
+                    'description' => 'Administrative website, mostly for CRUD interaction'
                 ]
             ]
         ]
