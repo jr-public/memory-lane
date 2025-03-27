@@ -8,6 +8,10 @@ $entity_types = [
     'Client' => [
         'display_name' => 'Clients',
         'add_button_text' => 'Add New Client'
+    ],
+    'Task' => [
+        'display_name' => 'Tasks',
+        'add_button_text' => 'Add New Task'
     ]
 ];
 

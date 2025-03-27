@@ -3,6 +3,7 @@
 require_once(getenv("PROJECT_ROOT") . 'vendor/autoload.php');
 $User = new MemoryLane\User(DB);
 $Client = new MemoryLane\Client(DB);
+$Task = new MemoryLane\Task(DB);
 
 
 ?>
