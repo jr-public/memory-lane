@@ -52,7 +52,7 @@ function device_id() {
 }
 
 
-function api_call( $controller, $action, $request ) {
+function api_call( $controller, $action, $request = [] ) {
     $backtrace  = debug_backtrace();
     $caller     = basename($backtrace[0]['file']);
 
