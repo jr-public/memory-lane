@@ -8,6 +8,18 @@ $entity_types = [
     'Client' => [
         'display_name' => 'Clients',
         'add_button_text' => 'Add New Client'
+    ],
+    'Task' => [
+        'display_name' => 'Tasks',
+        'add_button_text' => 'Add New Task'
+    ],
+    'TaskAssignment' => [
+        'display_name' => 'Task Assignments',
+        'add_button_text' => 'Add New Task Assignment'
+    ],
+    'TaskComment' => [
+        'display_name' => 'Task Comments',
+        'add_button_text' => 'Add New Task Comment'
     ]
 ];
 
@@ -24,9 +36,9 @@ if ( !isset(${$entity_type}) ) {
 }
 try {
     $Instance = ${$entity_type};
-	$list = $Instance->list();
+	$list = $Instance->list(['with'=> '*']);
 } catch (\Throwable $th) {
-	die("BAD TYPE2");
+	die("BAD TYPE2: ".$th->getMessage());
 }
 
 ?>
@@ -68,7 +80,12 @@ try {
             <?php foreach ($list AS $entity): ?>
             <tr>
                 <?php foreach (array_values($entity) AS $val): ?>
-                    <td><?= $val ?></td>
+                    <td>
+                        <?php 
+                        if (!is_iterable($val)) echo $val;
+                        else echo json_encode($val);
+                        ?>
+                    </td>
                 <?php endforeach; ?>
                 <td class="actions">
                     <a href="#" class="btn-icon edit" title="Edit">✏️</a>
