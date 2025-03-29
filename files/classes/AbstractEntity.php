@@ -8,7 +8,6 @@ abstract class AbstractEntity	 {
     public function __construct(\PDO $dbConnection) {
         $this->db = $dbConnection;
     }
-    
     public function create(array $data) {
         try {
             $fields = implode(', ', array_keys($data));
@@ -26,89 +25,117 @@ abstract class AbstractEntity	 {
     
     public function get(string $id) {
         try {
-            $sql = 'SELECT * FROM ' . static::$table . ' WHERE id = :id';
-            $stmt = $this->db->prepare($sql);
-            $stmt->execute(['id' => $id]);
+            // Use the query builder with a filter for ID
+            $options = [
+                'filters' => ['id = :id'],
+                'perPage' => 1,
+                'page' => 1
+            ];
+            
+            $query = $this->build_query($options);
+            
+            // Update the params to include the ID
+            $query['params']['id'] = $id;
+            
+            // Execute the query
+            $stmt = $this->db->prepare($query['sql']);
+            $stmt->execute($query['params']);
             return $stmt->fetch();
         } catch (\PDOException $e) {
             die('Entity get error: ' . $e->getMessage());
         }
     }
-    
-    public function _list(int $page = 1, int $perPage = 10) {
+    public function list(array $options = []) {
         try {
-            $offset = ($page - 1) * $perPage;
+            $with = $options['with'] ?? [];
             
-            $sql = 'SELECT * FROM ' . static::$table . '
-                    ORDER BY id DESC
-                    LIMIT :limit
-                    OFFSET :offset';
-            $stmt = $this->db->prepare($sql);
-            $stmt->execute([
-                'limit' => $perPage,
-                'offset' => $offset
-            ]);
-            return $stmt->fetchAll();
-        } catch (\PDOException $e) {
-            die('Entity list error: ' . $e->getMessage());
-        }
-    }
-    public function list(array $config = []) {
-        try {
-            $page       = $config['page'] ?? 1;
-            $perPage    = $config['perPage'] ?? 10;
-            $with       = $config['with'] ?? [];
-            $filters    = $config['filters'] ?? [];
-            $order      = $config['order'] ?? [];
+            // Build the query
+            $query = $this->build_query($options);
             
-            
-            // Calculate offset for pagination
-            $offset = ($page - 1) * $perPage;
-            
-            // Start building the base query
-            $select = 'SELECT id, ' . static::$table . '.*';
-            $from = ' FROM ' . static::$table;
-            $joins = '';
-            $where = (!empty($filters)) ? ' WHERE ' . implode(' AND ', $config['filters']) : '';
-            $groupBy = '';
-            $orderBy = ' ORDER BY ' . (!empty($order) ? implode(', ', $config['order']) : static::$table . '.id DESC');
-            $limit = ' LIMIT :limit OFFSET :offset';
-            
-            // Params for prepared statement
-            $params = [
-                'limit' => $perPage,
-                'offset' => $offset
-            ];
-            
-            // Assemble the complete query
-            $sql = $select . $from . $joins . $where . $groupBy . $orderBy . $limit;
-            // echo $sql . "<br /><br />";
-
-            // Prepare and execute
-            $stmt = $this->db->prepare($sql);
-            $stmt->execute($params);
+            // Execute the query
+            $stmt = $this->db->prepare($query['sql']);
+            $stmt->execute($query['params']);
             $list = $stmt->fetchAll(\PDO::FETCH_UNIQUE);
-            // Process relationships if any are requested
-            if (!empty($list) && !empty($with) && !empty(static::$related_tables)) {
-                $relation_ids = array_column($list, 'id');
-                foreach (static::$related_tables as $name => $rel_config) {
-                    $api_call_config = [
-                        'config' => [
-                            'filters'   => [ $rel_config['relation_field'] . ' IN (' . implode(',',$relation_ids) . ')' ],
-                            'order'     => [ $rel_config['relation_field'] . ' ASC' ]
-                        ]
-                    ];
-                    $relation_result = api_call($rel_config['controller'],'list',$api_call_config) ?? [];
-                    foreach ($relation_result AS $row) {
-                        $pointer = &$list[$row[$rel_config['relation_field']]];
-                        if ( !isset($pointer[$name]) ) $pointer[$name] = [];
-                        $pointer[$name][] = $row;
-                    }
-                }
-            }
+            if (empty($list)) return [];
+            
+            $list = $this->load_relations( $list, $with );
             return array_values($list);
         } catch (\PDOException $e) {
             die('Entity list error: ' . $e->getMessage());
         }
+    }
+
+
+    
+    private function get_relations( $with = [] ) {
+        if (empty($with)) 
+            $relations = [];
+        elseif ( $with == '*' ) 
+            $relations = static::$related_tables;
+        else {
+            $relations = array_filter(
+                static::$related_tables, 
+                function($key) use ($with) {
+                    return in_array($key, $with);
+                }, 
+                ARRAY_FILTER_USE_KEY
+            );
+        }
+        return $relations;
+    }    
+    private function load_relations( $list = [], $with = [] ) {
+        $related_tables = $this->get_relations($with);
+        if (empty($related_tables)) return $list;
+        foreach ($related_tables as $name => $rel_config) {
+            $result = api_call(
+                $rel_config['controller'],
+                'list',
+                [
+                    'options' => [
+                        'filters' => [$rel_config['relation_field'] . ' IN (' . implode(',', array_column($list, 'id')) . ')'],
+                        'order'   => [$rel_config['relation_field'] . ' ASC']
+                    ]
+                ]
+            );
+            $rel_field = $rel_config['relation_field'];
+            // Attach related entities to their parent entities
+            foreach ($result as $row) {
+                $parent_entity = &$list[$row[$rel_field]];
+                if (!isset($parent_entity[$name])) 
+                    $parent_entity[$name] = [];
+                $parent_entity[$name][] = $row;
+            }
+        }
+        
+        return $list;
+    }
+    protected function build_query(array $options = []) {
+        $perPage    = $options['perPage'] ?? 10;
+        $page       = $options['page'] ?? 1;
+        $filters    = $options['filters'] ?? [];
+        $order      = $options['order'] ?? [];
+        
+        $offset = ($page - 1) * $perPage;
+        
+        $select = 'SELECT id, *';
+        $from = ' FROM ' . static::$table;
+        $joins = '';
+        $where = (!empty($filters)) ? ' WHERE ' . implode(' AND ', $filters) : '';
+        $groupBy = '';
+        $orderBy = ' ORDER BY ' . (!empty($order) ? implode(', ', $order) : 'id DESC');
+        $limit = ' LIMIT :limit OFFSET :offset';
+        
+        $params = [
+            'limit' => $perPage,
+            'offset' => $offset
+        ];
+        
+        // Assemble the complete query
+        $sql = $select . $from . $joins . $where . $groupBy . $orderBy . $limit;
+        
+        return [
+            'sql' => $sql,
+            'params' => $params
+        ];
     }
 }
