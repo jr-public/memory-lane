@@ -15,6 +15,12 @@ $current_action = isset($_GET['action']) ? $_GET['action'] : 'dashboard';
             </a>
         </li>
         <li class="nav-item">
+            <a href="main.php?action=projects" class="nav-link <?php echo ($current_action == 'projects') ? 'active' : ''; ?>">
+                <span class="nav-icon">📊</span>
+                <span class="nav-link-text">Projects</span>
+            </a>
+        </li>
+        <li class="nav-item">
             <a href="main.php?action=database" class="nav-link <?php echo ($current_action == 'database') ? 'active' : ''; ?>">
                 <span class="nav-icon">🗄️</span>
                 <span class="nav-link-text">Database</span>
