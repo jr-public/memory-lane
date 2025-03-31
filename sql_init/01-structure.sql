@@ -49,6 +49,8 @@ CREATE TABLE tasks (
     user_id INTEGER NOT NULL REFERENCES users(id), -- User that created the task
     title VARCHAR(255) NOT NULL,              -- Short title describing the task
     description TEXT NULL,                    -- Detailed task description
+    parent_id INTEGER REFERENCES tasks(id) ON DELETE CASCADE,
+    depth INTEGER NOT NULL DEFAULT 0,
     status_id INTEGER NOT NULL REFERENCES task_statuses(id),
     due_date TIMESTAMP NULL,                  -- When the task is due (optional)
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
@@ -76,6 +78,7 @@ CREATE TABLE task_comments (
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
+
 -- -----------------------------------------------------------------------------
 -- Database functions and triggers
 -- -----------------------------------------------------------------------------
@@ -102,6 +105,8 @@ CREATE TRIGGER update_task_comments_updated_at
 -- Indexes
 -- -----------------------------------------------------------------------------
 CREATE INDEX idx_tasks_user_id ON tasks(user_id);
+CREATE INDEX idx_tasks_parent_id ON tasks(parent_id);
+CREATE INDEX idx_tasks_depth ON tasks(depth);
 CREATE INDEX idx_tasks_status_id ON tasks(status_id);
 CREATE INDEX idx_task_assignments_task_id ON task_assignments(task_id);
 CREATE INDEX idx_task_assignments_assigned_to ON task_assignments(assigned_to);
