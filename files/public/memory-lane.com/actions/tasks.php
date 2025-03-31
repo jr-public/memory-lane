@@ -1,156 +1,24 @@
 <?php
-// Task Management action file
-// This would be placed in the actions/tasks.php directory and included via main.php
 
-// In a real implementation, these tasks would be fetched from the database
-// using the Task model and its relationships
-$tasks = [
-    [
-        'id' => 1,
-        'title' => 'Website Redesign',
-        'description' => 'Complete redesign of the corporate website with new branding',
-        'status' => 'in_progress',
-        'due_date' => '2025-04-30',
-        'priority' => 'high',
-        'assigned_to' => 'Jane Smith',
-        'parent_id' => null,
-        'depth' => 0,
-        'children' => [
-            [
-                'id' => 101,
-                'title' => 'Design mockups approval',
-                'description' => 'Get approval for the new design mockups',
-                'status' => 'completed',
-                'due_date' => '2025-02-01',
-                'priority' => 'medium',
-                'assigned_to' => 'Design Team',
-                'parent_id' => 1,
-                'depth' => 1,
-                'children' => []
-            ],
-            [
-                'id' => 102,
-                'title' => 'Frontend implementation',
-                'description' => 'Implement the frontend based on approved designs',
-                'status' => 'in_progress',
-                'due_date' => '2025-03-15',
-                'priority' => 'high',
-                'assigned_to' => 'Development Team',
-                'parent_id' => 1,
-                'depth' => 1,
-                'children' => [
-                    [
-                        'id' => 1021,
-                        'title' => 'Homepage development',
-                        'description' => 'Develop the new homepage',
-                        'status' => 'in_progress',
-                        'due_date' => '2025-02-28',
-                        'priority' => 'high',
-                        'assigned_to' => 'John Doe',
-                        'parent_id' => 102,
-                        'depth' => 2,
-                        'children' => []
-                    ],
-                    [
-                        'id' => 1022,
-                        'title' => 'About page development',
-                        'description' => 'Develop the about page',
-                        'status' => 'pending',
-                        'due_date' => '2025-03-05',
-                        'priority' => 'medium',
-                        'assigned_to' => 'Sarah Johnson',
-                        'parent_id' => 102,
-                        'depth' => 2,
-                        'children' => []
-                    ]
-                ]
-            ],
-            [
-                'id' => 103,
-                'title' => 'Content migration',
-                'description' => 'Migrate content from old site to new site',
-                'status' => 'pending',
-                'due_date' => '2025-04-15',
-                'priority' => 'medium',
-                'assigned_to' => 'Content Team',
-                'parent_id' => 1,
-                'depth' => 1,
-                'children' => []
-            ]
-        ]
-    ],
-    [
-        'id' => 2,
-        'title' => 'Mobile App Development',
-        'description' => 'Development of a cross-platform mobile application',
-        'status' => 'in_progress',
-        'due_date' => '2025-06-30',
-        'priority' => 'high',
-        'assigned_to' => 'John Doe',
-        'parent_id' => null,
-        'depth' => 0,
-        'children' => [
-            [
-                'id' => 201,
-                'title' => 'Requirements gathering',
-                'description' => 'Gather and document all requirements',
-                'status' => 'completed',
-                'due_date' => '2025-02-15',
-                'priority' => 'high',
-                'assigned_to' => 'Project Manager',
-                'parent_id' => 2,
-                'depth' => 1,
-                'children' => []
-            ],
-            [
-                'id' => 202,
-                'title' => 'UI/UX design',
-                'description' => 'Design user interface and experience',
-                'status' => 'in_progress',
-                'due_date' => '2025-03-30',
-                'priority' => 'high',
-                'assigned_to' => 'Design Team',
-                'parent_id' => 2,
-                'depth' => 1,
-                'children' => []
-            ]
-        ]
-    ],
-    [
-        'id' => 3,
-        'title' => 'Marketing Campaign',
-        'description' => 'Plan and execute Q2 marketing campaign',
-        'status' => 'pending',
-        'due_date' => '2025-05-15',
-        'priority' => 'medium',
-        'assigned_to' => 'Marketing Team',
-        'parent_id' => null,
-        'depth' => 0,
-        'children' => []
-    ]
-];
-
-// Get task counts by status
-$task_counts = [
-    'completed' => 0,
-    'in_progress' => 0,
-    'pending' => 0,
-    'backlogged' => 0
-];
-
-// Function to count tasks by status recursively
-function countTasksByStatus(&$task_counts, $tasks) {
-    foreach ($tasks as $task) {
-        if (isset($task_counts[$task['status']])) {
-            $task_counts[$task['status']]++;
-        }
-        if (!empty($task['children'])) {
-            countTasksByStatus($task_counts, $task['children']);
-        }
-    }
+if (true) { // TREE
+	$res = api_call("Task", "tree", [
+		"options" => [
+			"with" => ["assignments"]
+		]
+	]);
+}
+else { // FLAT LIST
+	$res = api_call("Task", "list", [
+		"options" => [
+			"filters" => ["parent_id IS NULL"], // COMMENT FOR ALL RESULTS
+			"with" => ["assignments"]
+		]
+	]);
 }
 
-countTasksByStatus($task_counts, $tasks);
+//
+require_once("tasks-rows.php");
+$tasks = $res;
 
 // Function to get status badge class
 function getStatusBadgeClass($status) {
@@ -201,6 +69,12 @@ function getStatusIconClass($status) {
 // Recursive function to render task tree
 function renderTaskTree($tasks, $level = 0) {
     foreach ($tasks as $task) {
+
+		//
+		if ( !isset($task['status']) ) $task['status'] = 'not_set';
+		if ( !isset($task['priority']) ) $task['priority'] = 'not_set';
+
+
         $hasChildren = !empty($task['children']);
         $taskId = $task['id'];
         $indentation = str_repeat('&nbsp;&nbsp;&nbsp;&nbsp;', $level);
@@ -224,8 +98,8 @@ function renderTaskTree($tasks, $level = 0) {
         echo '<span class="priority-indicator ' . getPriorityBadgeClass($task['priority']) . '">' . ucfirst($task['priority']) . '</span>';
         echo '</div>';
         echo '<div class="task-assignee">';
-        echo '<span>👤</span>';
-        echo htmlspecialchars($task['assigned_to']);
+        // echo '<span>👤</span>';
+        // echo htmlspecialchars($task['assigned_to']);
         echo '</div>';
         echo '<div class="task-due-date">';
         echo '<span>📅</span>';
@@ -501,38 +375,6 @@ function renderTaskTree($tasks, $level = 0) {
 <div class="task-container">
     <div class="task-header">
         <h1>Task Management</h1>
-    </div>
-    
-    <div class="task-overview">
-        <div class="task-card">
-            <div class="stat-title">Total Tasks</div>
-            <div class="stat-value"><?php echo array_sum($task_counts); ?></div>
-            <div class="task-stats">
-                <div><span class="checkmark">✓</span> <?php echo $task_counts['completed']; ?> Completed</div>
-                <div><span style="color: #3498db;">●</span> <?php echo $task_counts['in_progress']; ?> In Progress</div>
-                <div><span style="color: #f39c12;">●</span> <?php echo $task_counts['pending']; ?> Pending</div>
-                <div><span style="color: #7f8c8d;">●</span> <?php echo $task_counts['backlogged']; ?> Backlogged</div>
-            </div>
-        </div>
-        
-        <div class="task-card">
-            <div class="stat-title">My Tasks</div>
-            <div class="stat-value">8</div>
-            <div class="task-stats">
-                <div><span style="color: #e74c3c;">●</span> 3 High Priority</div>
-                <div><span style="color: #f39c12;">●</span> 4 Medium Priority</div>
-                <div><span style="color: #3498db;">●</span> 1 Low Priority</div>
-            </div>
-        </div>
-        
-        <div class="task-card">
-            <div class="stat-title">Upcoming Deadlines</div>
-            <div class="stat-value">5</div>
-            <div class="task-stats">
-                <div><span style="color: #e74c3c;">●</span> 2 This Week</div>
-                <div><span style="color: #f39c12;">●</span> 3 Next Week</div>
-            </div>
-        </div>
     </div>
     
     <div class="task-list-container">
