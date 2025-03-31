@@ -64,12 +64,12 @@
             'tasks' => [
                 'create_tasks_tables' => [
                     'name' => 'Create tasks tables',
-                    'value' => false,
+                    'value' => true,
                     'description' => 'Create tasks and related tables'
                 ],
                 'implement_task_crud' => [
                     'name' => 'Implement task CRUD operations',
-                    'value' => false,
+                    'value' => true,
                     'description' => 'Implement task CRUD operations'
                 ],
                 'build_assignment_management' => [
@@ -84,7 +84,7 @@
                 ],
                 'create_api_endpoints' => [
                     'name' => 'Create API endpoints',
-                    'value' => false,
+                    'value' => true,
                     'description' => 'Create API endpoints'
                 ]
             ]
@@ -188,7 +188,7 @@
                 ],
                 'clients_crud' => [
                     'name' => 'Clients CRUD',
-                    'value' => false,
+                    'value' => true,
                     'description' => 'Class for managing clients'
                 ]
             ]
@@ -199,7 +199,7 @@
             'tasks' => [
                 'porftolio-index' => [
                     'name' => 'Portfolio website',
-                    'value' => false,
+                    'value' => true,
                     'description' => 'A simple tool or website that gives me some cheat functionality for logging in to or managing memory lane'
                 ],
                 'admin' => [
