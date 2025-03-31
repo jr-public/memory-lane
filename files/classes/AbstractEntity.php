@@ -51,7 +51,8 @@ abstract class AbstractEntity	 {
             
             // Build the query
             $query = $this->build_query($options);
-            
+            // echo $query['sql'];
+            // die();
             // Execute the query
             $stmt = $this->db->prepare($query['sql']);
             $stmt->execute($query['params']);
@@ -64,7 +65,39 @@ abstract class AbstractEntity	 {
             die('Entity list error: ' . $e->getMessage());
         }
     }
+    public function tree(array $options = []) {
 
+        $rows = $this->list($options);
+        
+        // Return original rows if empty or parent_id doesn't exist in the first row
+        if (empty($rows) || !isset($rows[0]['parent_id'])) {
+            return $rows;
+        }
+        
+        $result = [];
+        $itemMap = [];
+        
+        // First pass: map all items
+        foreach ($rows as $row) {
+            $item = $row;
+            $item['children'] = [];
+            $itemMap[$item['id']] = $item;
+        }
+        
+        // Second pass: build the hierarchy
+        foreach ($itemMap as $id => $item) {
+            // Check if this item has a parent and if the parent exists in our dataset
+            if (!empty($item['parent_id']) && isset($itemMap[$item['parent_id']])) {
+                // Add to parent's children
+                $itemMap[$item['parent_id']]['children'][] = &$itemMap[$id];
+            } else {
+                // If parent doesn't exist in our dataset, treat as a root node
+                $result[] = &$itemMap[$id];
+            }
+        }
+        
+        return $result;
+    }
 
     
     private function get_relations( $with = [] ) {
@@ -110,6 +143,9 @@ abstract class AbstractEntity	 {
         return $list;
     }
     protected function build_query(array $options = []) {
+
+        // ESTO NECESITA UN TRY CATCH Y POR LO TANTO UNA RESPUESTA MAS COMPLEJA
+
         $perPage    = $options['perPage'] ?? 10;
         $page       = $options['page'] ?? 1;
         $filters    = $options['filters'] ?? [];
