@@ -436,3 +436,116 @@ body.sidebar-collapsed .content {
         flex: 1;
     }
 }
+
+
+
+/* ENTITY CREATION */
+
+
+    /* Additional styles with ce- prefix (create-entity) */
+    .ce-container {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    
+    .ce-form-container {
+        background-color: #2a2a2a;
+        border-radius: 8px;
+        padding: 2rem;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    }
+    
+    .ce-form-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #444;
+    }
+    
+    .ce-form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .ce-form-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+        color: #e0e0e0;
+    }
+    
+    .ce-form-input,
+    .ce-form-select,
+    .ce-form-textarea {
+        width: 100%;
+        padding: 0.75rem;
+        border-radius: 4px;
+        border: 1px solid #444;
+        background-color: #333;
+        color: #e0e0e0;
+        font-size: 1rem;
+    }
+    
+    .ce-form-textarea {
+        min-height: 120px;
+        resize: vertical;
+    }
+    
+    .ce-form-input:focus,
+    .ce-form-select:focus,
+    .ce-form-textarea:focus {
+        outline: none;
+        border-color: #3498db;
+        box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.25);
+    }
+    
+    .ce-form-buttons {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 2rem;
+    }
+    
+    .ce-type-selector {
+        display: flex;
+        margin-bottom: 1.5rem;
+        background-color: #333;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+    
+    .ce-type-option {
+        flex: 1;
+        text-align: center;
+        padding: 0.75rem 1rem;
+        background-color: #333;
+        color: #e0e0e0;
+        cursor: pointer;
+        border: none;
+        transition: all 0.2s ease;
+    }
+    
+    .ce-type-option.active {
+        background-color: #3498db;
+        color: #121212;
+    }
+    
+    .ce-type-option:hover:not(.active) {
+        background-color: #444;
+    }
+    
+    .ce-required-indicator {
+        color: #e74c3c;
+        margin-left: 4px;
+    }
+    
+    @media (max-width: 768px) {
+        .ce-form-buttons {
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .ce-form-buttons .btn {
+            width: 100%;
+        }
+    }
