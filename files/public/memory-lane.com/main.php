@@ -8,6 +8,16 @@ $TaskAssignment = new MemoryLane\TaskAssignment(DB);
 $TaskComment = new MemoryLane\TaskComment(DB);
 
 
+$current_url = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
+
+if ( $_SERVER['REQUEST_METHOD'] == 'POST' ) {
+    $controller = $_POST['entity_name'];
+    unset($_POST['entity_name']);
+    $res = api_call($controller, 'create', ["data" => $_POST]);
+    header('Location: '.$current_url);
+    die();
+}
+
 ?>
 <!DOCTYPE html>
 <html lang="en">

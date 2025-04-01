@@ -7,7 +7,6 @@
 
 CREATE TABLE clients (
     id SERIAL PRIMARY KEY,
-    client_id VARCHAR(50) UNIQUE NOT NULL,
     client_name VARCHAR(100) NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     email VARCHAR(100),
@@ -112,4 +111,3 @@ CREATE INDEX idx_task_assignments_task_id ON task_assignments(task_id);
 CREATE INDEX idx_task_assignments_assigned_to ON task_assignments(assigned_to);
 CREATE INDEX idx_task_comments_task_id ON task_comments(task_id);
 CREATE INDEX idx_task_comments_user_id ON task_comments(user_id);
-CREATE INDEX idx_clients_client_id ON clients(client_id);

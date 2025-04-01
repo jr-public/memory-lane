@@ -27,27 +27,9 @@ $current_action = isset($_GET['action']) ? $_GET['action'] : 'dashboard';
             </a>
         </li>
         <li class="nav-item">
-            <a href="main.php?action=database" class="nav-link <?php echo ($current_action == 'database') ? 'active' : ''; ?>">
-                <span class="nav-icon">🗄️</span>
-                <span class="nav-link-text">Database</span>
-            </a>
-        </li>
-        <li class="nav-item">
-            <a href="main.php?action=api" class="nav-link <?php echo ($current_action == 'api') ? 'active' : ''; ?>">
-                <span class="nav-icon">🔌</span>
-                <span class="nav-link-text">API Configuration</span>
-            </a>
-        </li>
-        <li class="nav-item">
-            <a href="main.php?action=logs" class="nav-link <?php echo ($current_action == 'logs') ? 'active' : ''; ?>">
-                <span class="nav-icon">📝</span>
-                <span class="nav-link-text">Logs</span>
-            </a>
-        </li>
-        <li class="nav-item">
-            <a href="main.php?action=settings" class="nav-link <?php echo ($current_action == 'settings') ? 'active' : ''; ?>">
-                <span class="nav-icon">⚙️</span>
-                <span class="nav-link-text">Settings</span>
+            <a href="main.php?action=create_entity" class="nav-link <?php echo ($current_action == 'create_entity') ? 'active' : ''; ?>">
+                <span class="nav-icon">📊</span>
+                <span class="nav-link-text">Create entities</span>
             </a>
         </li>
     </ul>
