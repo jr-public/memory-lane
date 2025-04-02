@@ -4,7 +4,8 @@ abstract class AbstractEntity	 {
     protected $db;
     protected static $table;
     protected static $related_tables;
-    
+    protected static $editable_columns;
+
     public function __construct(\PDO $dbConnection) {
         $this->db = $dbConnection;
     }
@@ -98,6 +99,37 @@ abstract class AbstractEntity	 {
         
         return $result;
     }
+    public function update(string $id, array $data) {
+        
+        if (empty(static::$editable_columns)) return false;
+        if (!empty(array_diff(array_keys($data), static::$editable_columns))) return false;
+        
+        try {
+            // Build SET clause with placeholders
+            $setClause = [];
+            foreach (array_keys($data) as $field) {
+                $setClause[] = "$field = :$field";
+            }
+            
+            // Combine SET clauses
+            $setClauseStr = implode(', ', $setClause);
+            
+            // Prepare the UPDATE query
+            $query = 'UPDATE ' . static::$table . ' SET ' . $setClauseStr . ' WHERE id = :id';
+            
+            // Add ID to the data array for the WHERE clause
+            $data['id'] = $id;
+            
+            // Prepare and execute the statement
+            $stmt = $this->db->prepare($query);
+            $stmt->execute($data);
+            
+            // Return number of affected rows to indicate success
+            return $stmt->rowCount() > 0;
+        } catch (\PDOException $e) {
+            die('Entity update error: ' . $e->getMessage());
+        }
+    }
 
     
     private function get_relations( $with = [] ) {
@@ -130,6 +162,10 @@ abstract class AbstractEntity	 {
                     ]
                 ]
             );
+            if ( !$result['success'] ) {
+                die("load relations failed");
+            }
+            $result = $result['data'];
             $rel_field = $rel_config['relation_field'];
             // Attach related entities to their parent entities
             foreach ($result as $row) {

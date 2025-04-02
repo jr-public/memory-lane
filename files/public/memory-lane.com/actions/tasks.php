@@ -15,10 +15,12 @@ else { // FLAT LIST
 		]
 	]);
 }
-
+if ( !$res['success'] ) {
+    die('Tasks list failed');
+}
 //
 require_once("tasks-rows.php");
-$tasks = $res;
+$tasks = $res['data'];
 
 // Function to get status badge class
 function getStatusBadgeClass($status) {
