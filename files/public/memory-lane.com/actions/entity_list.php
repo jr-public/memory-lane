@@ -480,10 +480,22 @@ if (isset($_GET['delete']) && isset($_GET['id'])) {
     <?php endif; ?>
 </div>
 
+<!-- Add this hidden form to the bottom of your entity_list.php file -->
+<form id="delete-form" method="post" action="<?= $current_url ?>" style="display: none;">
+    <input type="hidden" name="entity_name" id="delete-entity-name" value="">
+    <input type="hidden" name="entity_action" value="delete">
+    <input type="hidden" name="id" id="delete-entity-id" value="">
+</form>
+
 <script>
     function confirmDelete(id, name) {
         if (confirm('Are you sure you want to delete ' + name + '?')) {
-            window.location.href = 'main.php?action=entity_list&type=<?php echo $entity_type; ?>&id=' + id + '&delete=1';
+            // Set the form values
+            document.getElementById('delete-entity-name').value = '<?php echo ucfirst($entity_type); ?>';
+            document.getElementById('delete-entity-id').value = id;
+            
+            // Submit the form
+            document.getElementById('delete-form').submit();
         }
     }
 </script>

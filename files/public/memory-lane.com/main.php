@@ -24,6 +24,12 @@ if ( $_SERVER['REQUEST_METHOD'] == 'POST' ) {
             "data" => $_POST
         ];
     }
+    elseif ( $action == 'delete' ) {
+        $data = ['id' => $_POST['id']];
+    }
+    else {
+        $data = [];
+    }
     $res = api_call($controller, $action, $data);
     if ( !$res['success'] ) {
         echo json_encode($res['data'])."<br/>";
