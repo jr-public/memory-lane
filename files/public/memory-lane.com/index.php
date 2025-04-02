@@ -306,7 +306,12 @@ if ( $_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["form_name"]) ) {
 
     <script>
         // Sample user array
-        const users = <?= json_encode($User->list()) ?>;
+        <?php
+        $res = $User->list();
+        if ( !$res['success'] ) $users = [];
+        else $users = $res['data'];
+        ?>
+        const users = <?= json_encode($users) ?>;
 
         // Sample form templates
         const templates = [

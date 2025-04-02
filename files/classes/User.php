@@ -19,13 +19,14 @@ class User extends AbstractEntity {
                 ':password'     => $password
             ]);
             $user = $stmt->fetch();
-        } catch (\Throwable $th) {
-            die($th->getMessage());
+        } catch (\PDOException $e) {
+            // LOG ERROR
+            return response(false, null, 'Auth error: ' . $e->getMessage(), $e->getCode());
         }
         
         // Needs error code and or error explanation
-        if ($user === false) return response(false); // 
-        if ($user["client_id"] != $client_id) return response(false, $user, "BAD_CLIENT"); // 
+        if ($user === false) return response(false, null, 'BAD_USER'); // 
+        if ($user["client_id"] != $client_id) return response(false, null, "BAD_CLIENT"); // 
         
         return response( true, [
             "user" => $user,
