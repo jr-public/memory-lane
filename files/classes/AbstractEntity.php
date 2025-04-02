@@ -130,7 +130,17 @@ abstract class AbstractEntity	 {
             die('Entity update error: ' . $e->getMessage());
         }
     }
-
+    public function delete(string $id) {
+        try {
+            $query = 'DELETE FROM ' . static::$table . ' WHERE id = :id';
+            $stmt = $this->db->prepare($query);
+            $stmt->execute(['id' => $id]);
+            
+            return $stmt->rowCount() > 0;
+        } catch (\PDOException $e) {
+            die('Entity delete error: ' . $e->getMessage());
+        }
+    }
     
     private function get_relations( $with = [] ) {
         if (empty($with)) 
