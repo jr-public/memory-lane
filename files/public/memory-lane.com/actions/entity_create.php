@@ -3,7 +3,10 @@
 $entity_type = isset($_GET['type']) ? $_GET['type'] : 'user';
 
 $clients = api_call("Client","list");
-$clients = array_combine(array_column($clients, 'id'), array_column($clients, 'client_name'));
+if ( !$clients['success'] ) {
+    die('entity create -> client list failed');
+}
+$clients = array_combine(array_column($clients['data'], 'id'), array_column($clients['data'], 'client_name'));
 // Entity type specific configurations
 $entity_configs = [
     'user' => [
@@ -55,7 +58,7 @@ $current_config = isset($entity_configs[$entity_type]) ? $entity_configs[$entity
         
         <div class="entity-selector">
             <label for="entity-type">Select Entity Type:</label>
-            <select id="entity-type" onchange="window.location.href='main.php?action=create_entity&type='+this.value">
+            <select id="entity-type" onchange="window.location.href='main.php?action=entity_create&type='+this.value">
                 <option value="user" <?php echo ($entity_type == 'user') ? 'selected' : ''; ?>>User</option>
                 <option value="client" <?php echo ($entity_type == 'client') ? 'selected' : ''; ?>>Client</option>
                 <option value="task" <?php echo ($entity_type == 'task') ? 'selected' : ''; ?>>Task</option>
@@ -64,9 +67,9 @@ $current_config = isset($entity_configs[$entity_type]) ? $entity_configs[$entity
     </div>
     
     <div class="ce-type-selector">
-        <a href="main.php?action=create_entity&type=user" class="ce-type-option <?php echo ($entity_type == 'user') ? 'active' : ''; ?>">User</a>
-        <a href="main.php?action=create_entity&type=client" class="ce-type-option <?php echo ($entity_type == 'client') ? 'active' : ''; ?>">Client</a>
-        <a href="main.php?action=create_entity&type=task" class="ce-type-option <?php echo ($entity_type == 'task') ? 'active' : ''; ?>">Task</a>
+        <a href="main.php?action=entity_create&type=user" class="ce-type-option <?php echo ($entity_type == 'user') ? 'active' : ''; ?>">User</a>
+        <a href="main.php?action=entity_create&type=client" class="ce-type-option <?php echo ($entity_type == 'client') ? 'active' : ''; ?>">Client</a>
+        <a href="main.php?action=entity_create&type=task" class="ce-type-option <?php echo ($entity_type == 'task') ? 'active' : ''; ?>">Task</a>
     </div>
     
     <div class="ce-form-container">
@@ -76,6 +79,7 @@ $current_config = isset($entity_configs[$entity_type]) ? $entity_configs[$entity
         
         <form method="post" action="<?= $current_url ?>" class="ce-entity-form">
             <input type='hidden' name='entity_name' value='<?= ucfirst($entity_type) ?>'>
+            <input type='hidden' name='entity_action' value='create'>
             <?php foreach ($current_config['fields'] as $field_name => $field_config): ?>
                 <div class="ce-form-group">
                     <label for="<?php echo $field_name; ?>" class="ce-form-label">

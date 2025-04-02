@@ -12,8 +12,23 @@ $current_url = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https"
 
 if ( $_SERVER['REQUEST_METHOD'] == 'POST' ) {
     $controller = $_POST['entity_name'];
+    $action     = $_POST['entity_action'];
     unset($_POST['entity_name']);
-    $res = api_call($controller, 'create', ["data" => $_POST]);
+    unset($_POST['entity_action']);
+    if ( $action == 'create' ) $data = ["data" => $_POST];
+    elseif ( $action == 'update' ) {
+        $u_id = $_POST["id"];
+        unset($_POST["id"]);
+        $data = [
+            "id"    => $u_id,
+            "data" => $_POST
+        ];
+    }
+    $res = api_call($controller, $action, $data);
+    if ( !$res['success'] ) {
+        echo json_encode($res['data'])."<br/>";
+        die('main post api call:<br/>'.$res['message']);
+    }
     header('Location: '.$current_url);
     die();
 }
