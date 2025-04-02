@@ -1,11 +1,11 @@
 <?php
 
 require_once(getenv("PROJECT_ROOT") . 'vendor/autoload.php');
-$User = new MemoryLane\User(DB);
-$Client = new MemoryLane\Client(DB);
-$Task = new MemoryLane\Task(DB);
-$TaskAssignment = new MemoryLane\TaskAssignment(DB);
-$TaskComment = new MemoryLane\TaskComment(DB);
+// $User = new MemoryLane\User(DB);
+// $Client = new MemoryLane\Client(DB);
+// $Task = new MemoryLane\Task(DB);
+// $TaskAssignment = new MemoryLane\TaskAssignment(DB);
+// $TaskComment = new MemoryLane\TaskComment(DB);
 
 
 $current_url = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
@@ -30,11 +30,17 @@ if ( $_SERVER['REQUEST_METHOD'] == 'POST' ) {
     else {
         $data = [];
     }
+
+    $args = '';
     $res = api_call($controller, $action, $data);
     if ( !$res['success'] ) {
-        echo json_encode($res['data'])."<br/>";
-        die('main post api call:<br/>'.$res['message']);
+        if (empty($res['message'])) $res['message'] = 'UNKNOWN ERROR';
+        $args = $_GET;
+        $args['error'] = $res['message'];
+        $args = http_build_query($args);
+        $current_url = strtok($current_url, '?') . '?' . $args;
     }
+    
     header('Location: '.$current_url);
     die();
 }
