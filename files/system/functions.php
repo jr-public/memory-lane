@@ -83,7 +83,7 @@ function api_call( $controller, $action, $request = [] ) {
         }
         $c_params[] = $request[$param_name] ?? $param->getDefaultValue();
     }
-    return response(true, $reflection->invokeArgs($instance, $c_params));
+    return $reflection->invokeArgs($instance, $c_params);
 }
 function response( bool $success = true, $data = null, ?string $message = null, ?int $code = null ): array {
     $response = [
