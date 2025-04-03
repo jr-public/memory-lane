@@ -68,7 +68,8 @@ if ($entity_type === 'task') {
 
 $entities = api_call($controller, "list", $params);
 if (!$entities['success']) {
-    die("entity list -> entities lsit failed");
+    echo json_encode($entities);
+    die();
 }
 $entities = $entities['data'];
 
@@ -111,15 +112,6 @@ function getStatusText($status, $entity_type) {
     }
 }
 
-// Handle delete action
-if (isset($_GET['delete']) && isset($_GET['id'])) {
-    $id_to_delete = (int)$_GET['id'];
-    api_call($controller, "delete", ["id" => $id_to_delete]);
-    die("THERE IS NO DELETE ACTION");
-    // Redirect to remove the delete parameter
-    header('Location: main.php?action=entity_list&type=' . $entity_type);
-    exit;
-}
 ?>
 
 

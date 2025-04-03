@@ -13,3 +13,5 @@ try {
 	die("Connection failed: " . $e->getMessage());
 }
 define("DB",$db);
+
+define("SIMULATE_EXTERNAL_SERVER", true);
