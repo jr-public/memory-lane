@@ -1,20 +1,36 @@
 <?php
 require_once(getenv("PROJECT_ROOT") . 'vendor/autoload.php');
-$User = new MemoryLane\User(DB);
 
 if ( $_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["form_name"]) ) {
 
     if ( $_POST["form_name"] == "register" ) {
-        $userData = [
+        $payload = [
             'username'  => $_POST["username"],
             'email'     => $_POST["email"],
             'password'  => $_POST["password"],
             'role_id'   => 2
         ];
-        $User->create($userData);
+        if (SIMULATE_EXTERNAL_SERVER) 
+            external_api_call('User', 'create', $payload);
+        else 
+            api_call('User', 'create', $payload);
+        // A REAL REGISTRATION PROCESS WOULD DO SOMETHING ABOUT NOW
     }
 
-    $auth = $User->authenticate(1, $_POST["username"],$_POST["password"], device_id());
+    $payload = [
+        'client_id' => 1,
+        'username'  => $_POST["username"],
+        'password'  => $_POST["password"],
+        'device'    => device_id()
+    ];
+
+    if (SIMULATE_EXTERNAL_SERVER) {
+        $auth = external_api_call('User', 'authenticate', $payload);
+    }
+    else {
+        $auth = api_call('User', 'authenticate', $payload);
+    }
+
     if ( !$auth["success"] ) {
         header("Location: index.php?e=".$auth["message"]);
         die();
