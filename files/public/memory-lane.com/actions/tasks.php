@@ -1,387 +1,108 @@
 <?php
-
+// Fetch task data using API call
 if (true) { // TREE
-	$res = api_call("Task", "tree", [
-		"options" => [
-			"with" => ["assignments"]
-		]
-	]);
+    $res = api_call("Task", "tree", [
+        "options" => [
+            "with" => ["assignments"]
+        ]
+    ]);
 }
-else { // FLAT LIST
-	$res = api_call("Task", "list", [
-		"options" => [
-			"filters" => ["parent_id IS NULL"], // COMMENT FOR ALL RESULTS
-			"with" => ["assignments"]
-		]
-	]);
-}
-if ( !$res['success'] ) {
+if (!$res['success']) {
     die('Tasks list failed');
 }
-//
-require_once("tasks-rows.php");
+
+// Store tasks data
 $tasks = $res['data'];
 
-// Function to get status badge class
+// Helper functions for task display
 function getStatusBadgeClass($status) {
-    switch ($status) {
-        case 'completed':
-            return 'status-active';
-        case 'in_progress':
-            return 'status-in-progress';
-        case 'pending':
-            return 'status-pending';
-        case 'backlogged':
-            return 'status-inactive';
-        default:
-            return 'status-pending';
-    }
+    $statusClasses = [
+        'completed' => 'status-active',
+        'in_progress' => 'status-in-progress',
+        'pending' => 'status-pending',
+        'backlogged' => 'status-inactive',
+        'not_set' => 'status-pending'
+    ];
+    
+    return $statusClasses[$status] ?? 'status-pending';
 }
 
-// Function to get priority badge class
 function getPriorityBadgeClass($priority) {
-    switch ($priority) {
-        case 'high':
-            return 'priority-high';
-        case 'medium':
-            return 'priority-medium';
-        case 'low':
-            return 'priority-low';
-        default:
-            return 'priority-medium';
-    }
+    $priorityClasses = [
+        'high' => 'priority-high',
+        'medium' => 'priority-medium',
+        'low' => 'priority-low',
+        'not_set' => 'priority-medium'
+    ];
+    
+    return $priorityClasses[$priority] ?? 'priority-medium';
 }
 
-// Function to get status icon class
 function getStatusIconClass($status) {
-    switch ($status) {
-        case 'completed':
-            return 'status-completed-icon';
-        case 'in_progress':
-            return 'status-in-progress-icon';
-        case 'pending':
-            return 'status-pending-icon';
-        case 'backlogged':
-            return 'status-on-hold-icon';
-        default:
-            return 'status-pending-icon';
-    }
+    $iconClasses = [
+        'completed' => 'status-completed-icon',
+        'in_progress' => 'status-in-progress-icon',
+        'pending' => 'status-pending-icon',
+        'backlogged' => 'status-on-hold-icon',
+        'not_set' => 'status-pending-icon'
+    ];
+    
+    return $iconClasses[$status] ?? 'status-pending-icon';
 }
 
-// Recursive function to render task tree
-function renderTaskTree($tasks, $level = 0) {
+// Build task tree data structure for template
+function buildTaskTreeData($tasks) {
+    $result = [];
+    
     foreach ($tasks as $task) {
-
-		//
-		if ( !isset($task['status']) ) $task['status'] = 'not_set';
-		if ( !isset($task['priority']) ) $task['priority'] = 'not_set';
-
-
-        $hasChildren = !empty($task['children']);
-        $taskId = $task['id'];
-        $indentation = str_repeat('&nbsp;&nbsp;&nbsp;&nbsp;', $level);
+        // Set default values if not present
+        if (!isset($task['status'])) $task['status'] = 'not_set';
+        if (!isset($task['priority'])) $task['priority'] = 'not_set';
         
-        echo '<div class="task-item" data-task-id="' . $taskId . '" data-status="' . $task['status'] . '" data-level="' . $level . '">';
-        echo '<div class="task-info">';
-        echo $indentation;
+        $taskData = [
+            'id' => $task['id'],
+            'title' => $task['title'],
+            'status' => $task['status'],
+            'priority' => $task['priority'],
+            'due_date' => $task['due_date'],
+            'status_class' => getStatusIconClass($task['status']),
+            'status_badge_class' => getStatusBadgeClass($task['status']),
+            'priority_class' => getPriorityBadgeClass($task['priority']),
+            'has_children' => !empty($task['children']),
+            'assignments' => $task['assignments'] ?? [],
+            'children' => []
+        ];
         
-        if ($hasChildren) {
-            echo '<span class="toggle-icon" data-task-id="' . $taskId . '">▼</span>';
-        } else {
-            echo '<span class="toggle-icon-placeholder"></span>';
+        // Process children if they exist
+        if (!empty($task['children'])) {
+            $taskData['children'] = buildTaskTreeData($task['children']);
         }
         
-        echo '<div class="task-status-icon ' . getStatusIconClass($task['status']) . '"></div>';
-        echo '<div class="task-name">' . htmlspecialchars($task['title']) . '</div>';
-        echo '</div>';
-        
-        echo '<div class="task-meta">';
-        echo '<div class="task-priority">';
-        echo '<span class="priority-indicator ' . getPriorityBadgeClass($task['priority']) . '">' . ucfirst($task['priority']) . '</span>';
-        echo '</div>';
-        echo '<div class="task-assignee">';
-        // echo '<span>👤</span>';
-        // echo htmlspecialchars($task['assigned_to']);
-        echo '</div>';
-        echo '<div class="task-due-date">';
-        echo '<span>📅</span>';
-        echo date('M d', strtotime($task['due_date']));
-        echo '</div>';
-        echo '<div class="task-status-badge ' . getStatusBadgeClass($task['status']) . '">';
-        echo ucfirst($task['status']);
-        echo '</div>';
-        echo '</div>';
-        echo '</div>';
-        
-        // Render children if they exist
-        if ($hasChildren) {
-            echo '<div class="task-children" id="children-' . $taskId . '">';
-            renderTaskTree($task['children'], $level + 1);
-            echo '</div>';
-        }
+        $result[] = $taskData;
     }
+    
+    return $result;
 }
+
+// Process task data
+$taskTreeData = buildTaskTreeData($tasks);
+
+// Encode task data for JavaScript
+$taskDataJson = json_encode($taskTreeData);
 ?>
 
-<style>
-    /* Task Management Specific Styles */
-    .task-container {
-        padding: 20px;
-    }
-    
-    .task-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1.5rem;
-    }
-    
-    .task-overview {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 1rem;
-        margin-bottom: 2rem;
-    }
-    
-    .task-card {
-        background-color: #2a2a2a;
-        border-radius: 8px;
-        padding: 1.5rem;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-    }
-    
-    .stat-title {
-        color: #909090;
-        font-size: 0.9rem;
-        margin-bottom: 0.5rem;
-    }
-    
-    .stat-value {
-        font-size: 1.8rem;
-        font-weight: bold;
-        color: #e0e0e0;
-        margin-bottom: 0.5rem;
-    }
-    
-    .task-actions {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1rem;
-    }
-    
-    .btn-action {
-        background-color: #3498db;
-        color: #121212;
-        border: none;
-        padding: 8px 15px;
-        border-radius: 4px;
-        cursor: pointer;
-        font-weight: 500;
-        font-size: 0.9rem;
-    }
-    
-    .task-filters {
-        display: flex;
-        gap: 0.5rem;
-    }
-    
-    .filter-btn {
-        background-color: #333;
-        border: none;
-        color: #e0e0e0;
-        padding: 0.25rem 0.5rem;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 0.8rem;
-    }
-    
-    .filter-btn.active {
-        background-color: #3498db;
-        color: #121212;
-    }
-    
-    .task-list-container {
-        background-color: #2a2a2a;
-        border-radius: 8px;
-        padding: 1rem;
-        margin-bottom: 2rem;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-    }
-    
-    .task-list-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1rem;
-        padding-bottom: 0.5rem;
-        border-bottom: 1px solid #444;
-    }
-    
-    .task-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 0.75rem 1rem;
-        border-bottom: 1px solid #444;
-        transition: all 0.2s ease;
-    }
-    
-    .task-item:hover {
-        background-color: #333;
-    }
-    
-    .task-info {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        flex: 2;
-    }
-    
-    .task-meta {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        color: #909090;
-        font-size: 0.85rem;
-        flex: 1;
-        justify-content: flex-end;
-    }
-    
-    .task-status-icon {
-        width: 16px;
-        height: 16px;
-        border-radius: 50%;
-        flex-shrink: 0;
-    }
-    
-    .status-completed-icon {
-        background-color: #2ecc71;
-    }
-    
-    .status-in-progress-icon {
-        background-color: #3498db;
-    }
-    
-    .status-pending-icon {
-        background-color: #f39c12;
-    }
-    
-    .status-on-hold-icon {
-        background-color: #7f8c8d;
-    }
-    
-    .task-name {
-        font-weight: 500;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        max-width: 300px;
-    }
-    
-    .task-assignee, .task-due-date {
-        display: flex;
-        align-items: center;
-        gap: 0.25rem;
-        white-space: nowrap;
-    }
-    
-    .task-status-badge {
-        padding: 0.25rem 0.5rem;
-        border-radius: 4px;
-        font-size: 0.75rem;
-        white-space: nowrap;
-    }
-    
-    .status-active {
-        background-color: #2ecc71;
-        color: #121212;
-    }
-    
-    .status-in-progress {
-        background-color: #3498db;
-        color: #121212;
-    }
-    
-    .status-pending {
-        background-color: #f39c12;
-        color: #121212;
-    }
-    
-    .status-inactive {
-        background-color: #7f8c8d;
-        color: #121212;
-    }
-    
-    .priority-indicator {
-        padding: 0.25rem 0.5rem;
-        border-radius: 4px;
-        font-size: 0.75rem;
-        white-space: nowrap;
-    }
-    
-    .priority-high {
-        background-color: #e74c3c;
-        color: white;
-    }
-    
-    .priority-medium {
-        background-color: #f39c12;
-        color: #121212;
-    }
-    
-    .priority-low {
-        background-color: #3498db;
-        color: #121212;
-    }
-    
-    .toggle-icon, .toggle-icon-placeholder {
-        cursor: pointer;
-        width: 16px;
-        display: inline-block;
-        text-align: center;
-        font-size: 0.8rem;
-    }
-    
-    .toggle-icon-placeholder {
-        visibility: hidden;
-    }
-    
-    .task-children {
-        padding-left: 0.5rem;
-    }
-    
-    /* Responsive adjustments */
-    @media (max-width: 768px) {
-        .task-overview {
-            grid-template-columns: 1fr;
-        }
-        
-        .task-meta {
-            flex-direction: column;
-            align-items: flex-end;
-            gap: 0.25rem;
-        }
-        
-        .task-item {
-            flex-direction: column;
-            align-items: flex-start;
-        }
-        
-        .task-info {
-            margin-bottom: 0.5rem;
-        }
-    }
-</style>
-
+<!-- Task Management Container -->
 <div class="task-container">
+    <!-- Header -->
     <div class="task-header">
         <h1>Task Management</h1>
     </div>
     
+    <!-- Task List Container -->
     <div class="task-list-container">
+        <!-- Actions & Filters -->
         <div class="task-actions">
-            <button class="btn-action">+ Add New Task</button>
+            <button class="btn-action" id="add-task-btn">+ Add New Task</button>
             
             <div class="task-filters">
                 <button class="filter-btn active" data-filter="all">All</button>
@@ -391,21 +112,266 @@ function renderTaskTree($tasks, $level = 0) {
             </div>
         </div>
         
+        <!-- Table Header -->
         <div class="task-list-header">
             <div style="flex: 2;">Task</div>
             <div style="flex: 1; text-align: right;">Details</div>
         </div>
         
-        <div class="task-list">
-            <?php renderTaskTree($tasks); ?>
+        <!-- Task List - Will be populated by JavaScript -->
+        <div class="task-list" id="task-list"></div>
+    </div>
+</div>
+
+<!-- Assignment Details Modal -->
+<div id="assignment-modal">
+    <div class="assignment-modal-content">
+        <div class="assignment-modal-header">
+            <div class="assignment-modal-title">Task Assignments</div>
+            <span class="assignment-modal-close">&times;</span>
+        </div>
+        <div class="assignment-list" id="assignment-list">
+            <!-- Assignment items will be inserted here by JavaScript -->
         </div>
     </div>
 </div>
 
+<!-- Task CSS -->
+<?php require_once('tasks-css.php'); ?>
+
+<!-- Task JavaScript -->
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Task data from PHP
+        const taskData = <?php echo $taskDataJson; ?>;
+        
+        // Initialize task list
+        renderTaskTree(taskData);
+        
         // Task filtering functionality
+        initTaskFilters();
+        
+        // Add task button functionality
+        document.getElementById('add-task-btn').addEventListener('click', function() {
+            // Redirect to task creation page
+            window.location.href = 'main.php?action=entity_create&type=task';
+        });
+        
+        // Modal functionality for assignments
+        const modal = document.getElementById('assignment-modal');
+        const closeBtn = document.querySelector('.assignment-modal-close');
+        
+        closeBtn.addEventListener('click', function() {
+            modal.style.display = 'none';
+        });
+        
+        window.addEventListener('click', function(event) {
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        });
+    });
+    
+    // Render task list recursively
+    function renderTaskTree(tasks, parentElement = null, level = 0) {
+        const taskList = parentElement || document.getElementById('task-list');
+        
+        tasks.forEach(task => {
+            // Create task item container
+            const taskItem = document.createElement('div');
+            taskItem.className = 'task-item';
+            taskItem.dataset.taskId = task.id;
+            taskItem.dataset.status = task.status;
+            taskItem.dataset.level = level;
+            
+            // Task info (left side)
+            const taskInfo = document.createElement('div');
+            taskInfo.className = 'task-info';
+            
+            // Add indentation based on level
+            if (level > 0) {
+                const indentation = document.createElement('span');
+                indentation.innerHTML = '&nbsp;'.repeat(level * 4);
+                taskInfo.appendChild(indentation);
+            }
+            
+            // Toggle icon for expandable tasks
+            if (task.has_children) {
+                const toggleIcon = document.createElement('span');
+                toggleIcon.className = 'toggle-icon';
+                toggleIcon.dataset.taskId = task.id;
+                toggleIcon.textContent = '▼';
+                toggleIcon.addEventListener('click', toggleChildren);
+                taskInfo.appendChild(toggleIcon);
+            } else {
+                const placeholder = document.createElement('span');
+                placeholder.className = 'toggle-icon-placeholder';
+                taskInfo.appendChild(placeholder);
+            }
+            
+            // Status icon
+            const statusIcon = document.createElement('div');
+            statusIcon.className = `task-status-icon ${task.status_class}`;
+            taskInfo.appendChild(statusIcon);
+            
+            // Task name
+            const taskName = document.createElement('div');
+            taskName.className = 'task-name';
+            taskName.textContent = task.title;
+            taskInfo.appendChild(taskName);
+            
+            taskItem.appendChild(taskInfo);
+            
+            // Task meta (right side)
+            const taskMeta = document.createElement('div');
+            taskMeta.className = 'task-meta';
+            
+            // Task assignments
+            const taskAssignments = document.createElement('div');
+            taskAssignments.className = 'task-assignments';
+            taskAssignments.appendChild(createAvatarsElement(task));
+            taskMeta.appendChild(taskAssignments);
+            
+            // Priority indicator
+            const taskPriority = document.createElement('div');
+            taskPriority.className = 'task-priority';
+            const priorityIndicator = document.createElement('span');
+            priorityIndicator.className = `priority-indicator ${task.priority_class}`;
+            priorityIndicator.textContent = task.priority.charAt(0).toUpperCase() + task.priority.slice(1);
+            taskPriority.appendChild(priorityIndicator);
+            taskMeta.appendChild(taskPriority);
+            
+            // Due date
+            const taskDueDate = document.createElement('div');
+            taskDueDate.className = 'task-due-date';
+            const dateIcon = document.createElement('span');
+            dateIcon.textContent = '📅';
+            taskDueDate.appendChild(dateIcon);
+            
+            const dateText = document.createElement('span');
+            const dueDate = new Date(task.due_date);
+            dateText.textContent = `${dueDate.toLocaleString('default', { month: 'short' })} ${dueDate.getDate()}`;
+            taskDueDate.appendChild(dateText);
+            taskMeta.appendChild(taskDueDate);
+            
+            // Status badge
+            const statusBadge = document.createElement('div');
+            statusBadge.className = `task-status-badge ${task.status_badge_class}`;
+            statusBadge.textContent = task.status.charAt(0).toUpperCase() + task.status.slice(1);
+            taskMeta.appendChild(statusBadge);
+            
+            taskItem.appendChild(taskMeta);
+            
+            // Add to task list
+            taskList.appendChild(taskItem);
+            
+            // Render children if they exist
+            if (task.has_children) {
+                // Create container for children
+                const childrenContainer = document.createElement('div');
+                childrenContainer.className = 'task-children';
+                childrenContainer.id = `children-${task.id}`;
+                childrenContainer.dataset.visible = 'true';
+                taskList.appendChild(childrenContainer);
+                
+                // Recursively render children within this container
+                renderTaskTree(task.children, childrenContainer, level + 1);
+            }
+        });
+    }
+    
+    // Create avatar elements for task assignments
+    function createAvatarsElement(task) {
+        const container = document.createElement('div');
+        const assignments = task.assignments || [];
+        const maxAvatarsToShow = 3;
+        
+        // If no assignments, show empty state
+        if (assignments.length === 0) {
+            container.className = 'task-avatars-empty';
+            container.textContent = 'No users assigned';
+            return container;
+        }
+        
+        // Create avatar container
+        container.className = 'task-avatars-container';
+        
+        // For click event - stringify assignments data
+        const assignmentsData = JSON.stringify(assignments);
+        container.setAttribute('onclick', `showAssignmentDetails('${escapeString(assignmentsData)}', '${escapeString(task.title)}')`);
+        
+        // Show avatars up to the maximum
+        const avatarsToShow = Math.min(assignments.length, maxAvatarsToShow);
+        for (let i = 0; i < avatarsToShow; i++) {
+            const username = assignments[i].username || 'User';
+            const initial = username.charAt(0).toUpperCase();
+            
+            const avatar = document.createElement('div');
+            avatar.className = 'task-avatar';
+            avatar.title = username;
+            avatar.textContent = initial;
+            
+            // Different color for each avatar
+            avatar.style.backgroundColor = getAvatarColor(i);
+            
+            container.appendChild(avatar);
+        }
+        
+        // If there are more avatars than we can show, add the +X indicator
+        if (assignments.length > maxAvatarsToShow) {
+            const moreIndicator = document.createElement('div');
+            moreIndicator.className = 'task-avatar-more';
+            moreIndicator.textContent = `+${assignments.length - maxAvatarsToShow}`;
+            container.appendChild(moreIndicator);
+        }
+        
+        return container;
+    }
+    
+    // Get avatar color based on index
+    function getAvatarColor(index) {
+        const colors = [
+            '#3498db', // Blue
+            '#9b59b6', // Purple
+            '#e74c3c', // Red
+            '#2ecc71', // Green
+            '#f39c12', // Orange
+            '#1abc9c', // Teal
+            '#d35400'  // Dark Orange
+        ];
+        return colors[index % colors.length];
+    }
+    
+    // Escape string for safe use in HTML attributes
+    function escapeString(str) {
+        return str
+            .replace(/\\/g, '\\\\')
+            .replace(/'/g, "\\'")
+            .replace(/"/g, '\\"');
+    }
+    
+    // Toggle task children visibility
+    function toggleChildren(event) {
+        const taskId = this.dataset.taskId;
+        const childrenContainer = document.getElementById(`children-${taskId}`);
+        
+        if (childrenContainer) {
+            if (childrenContainer.style.display === 'none') {
+                childrenContainer.style.display = 'block';
+                this.textContent = '▼';
+                childrenContainer.dataset.visible = 'true';
+            } else {
+                childrenContainer.style.display = 'none';
+                this.textContent = '▶';
+                childrenContainer.dataset.visible = 'false';
+            }
+        }
+    }
+    
+    // Initialize task filters
+    function initTaskFilters() {
         const filterButtons = document.querySelectorAll('.filter-btn');
+        
         filterButtons.forEach(btn => {
             btn.addEventListener('click', function() {
                 // Update active button
@@ -415,57 +381,102 @@ function renderTaskTree($tasks, $level = 0) {
                 // Get filter value
                 const filter = this.getAttribute('data-filter');
                 
-                // Filter tasks
-                const taskItems = document.querySelectorAll('.task-item');
-                taskItems.forEach(item => {
-                    const status = item.getAttribute('data-status');
-                    if (filter === 'all' || status === filter) {
-                        item.style.display = 'flex';
-                        
-                        // If parent is visible, also show its children if they were previously visible
-                        const parentId = item.getAttribute('data-task-id');
-                        const childrenContainer = document.getElementById('children-' + parentId);
-                        if (childrenContainer && childrenContainer.classList.contains('visible')) {
-                            childrenContainer.style.display = 'block';
-                        }
-                    } else {
-                        item.style.display = 'none';
-                        
-                        // Hide children as well
-                        const parentId = item.getAttribute('data-task-id');
-                        const childrenContainer = document.getElementById('children-' + parentId);
-                        if (childrenContainer) {
-                            childrenContainer.style.display = 'none';
-                        }
-                    }
-                });
+                // Apply filter
+                filterTasks(filter);
             });
         });
+    }
+    
+    // Filter tasks by status
+    function filterTasks(filter) {
+        const taskItems = document.querySelectorAll('.task-item');
         
-        // Task collapse/expand functionality
-        const toggleIcons = document.querySelectorAll('.toggle-icon');
-        toggleIcons.forEach(icon => {
-            const taskId = icon.getAttribute('data-task-id');
-            const childrenContainer = document.getElementById('children-' + taskId);
+        taskItems.forEach(item => {
+            const status = item.getAttribute('data-status');
             
-            // Mark initially as visible
-            if (childrenContainer) {
-                childrenContainer.classList.add('visible');
-            }
-            
-            icon.addEventListener('click', function() {
-                if (childrenContainer) {
-                    if (childrenContainer.style.display === 'none') {
-                        childrenContainer.style.display = 'block';
-                        icon.textContent = '▼';
-                        childrenContainer.classList.add('visible');
-                    } else {
-                        childrenContainer.style.display = 'none';
-                        icon.textContent = '▶';
-                        childrenContainer.classList.remove('visible');
-                    }
+            if (filter === 'all' || status === filter) {
+                item.style.display = 'flex';
+                
+                // Also show parent containers if they were previously visible
+                const taskId = item.getAttribute('data-task-id');
+                const childrenContainer = document.getElementById(`children-${taskId}`);
+                
+                if (childrenContainer && childrenContainer.dataset.visible === 'true') {
+                    childrenContainer.style.display = 'block';
                 }
-            });
+            } else {
+                item.style.display = 'none';
+                
+                // Hide children containers
+                const taskId = item.getAttribute('data-task-id');
+                const childrenContainer = document.getElementById(`children-${taskId}`);
+                
+                if (childrenContainer) {
+                    childrenContainer.style.display = 'none';
+                }
+            }
         });
-    });
+    }
+    
+    // Function to show assignment details in modal
+    function showAssignmentDetails(assignmentsJson, taskTitle) {
+        const modal = document.getElementById('assignment-modal');
+        const assignmentList = document.getElementById('assignment-list');
+        const modalTitle = document.querySelector('.assignment-modal-title');
+        
+        // Update modal title with task name
+        modalTitle.textContent = `Assignments for: ${taskTitle}`;
+        
+        // Clear previous assignments
+        assignmentList.innerHTML = '';
+        
+        try {
+            // Parse the JSON string to get actual assignments
+            const assignments = JSON.parse(assignmentsJson);
+            
+            if (assignments.length === 0) {
+                assignmentList.innerHTML = '<div class="assignment-item">No users assigned to this task.</div>';
+            } else {
+                // Create an element for each assignment
+                assignments.forEach((assignment, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'assignment-item';
+                    
+                    const username = assignment.username || `User ${index + 1}`;
+                    const initial = username.charAt(0).toUpperCase();
+                    const role = assignment.role_id ? getRoleName(assignment.role_id) : 'Contributor';
+                    
+                    // Use avatar color based on index
+                    const color = getAvatarColor(index);
+                    
+                    item.innerHTML = `
+                        <div class="assignment-avatar" style="background-color: ${color};">${initial}</div>
+                        <div class="assignment-details">
+                            <div class="assignment-name">${username}</div>
+                            <div class="assignment-role">${role}</div>
+                        </div>
+                    `;
+                    
+                    assignmentList.appendChild(item);
+                });
+            }
+        } catch (error) {
+            console.error("Error parsing assignments:", error);
+            assignmentList.innerHTML = '<div class="assignment-item">Error displaying assignments</div>';
+        }
+        
+        // Display the modal
+        modal.style.display = 'block';
+    }
+    
+    // Helper function to get role name from role ID
+    function getRoleName(roleId) {
+        const roles = {
+            1: 'Administrator',
+            2: 'Manager',
+            3: 'User',
+            4: 'Guest'
+        };
+        return roles[roleId] || 'Contributor';
+    }
 </script>
