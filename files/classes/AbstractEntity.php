@@ -83,10 +83,10 @@ abstract class AbstractEntity {
     public function tree(array $options = []): array {
         $res = $this->list($options);
         if (!$res['success']) return $res;
-
         $rows = $res['data'];
+
         // Return original rows if empty or parent_id doesn't exist in the first row
-        if (empty($rows) || !isset($rows[0]['parent_id'])) {
+        if (empty($rows) || !array_key_exists('parent_id', $rows[0])) {
             return response(true, $rows);
         }
         
