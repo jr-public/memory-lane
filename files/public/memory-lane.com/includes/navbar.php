@@ -38,5 +38,11 @@ $current_action = isset($_GET['action']) ? $_GET['action'] : 'dashboard';
                 <span class="nav-link-text">List entities</span>
             </a>
         </li>
+        <li class="nav-item">
+            <a href="index.php" class="nav-link">
+                <span class="nav-icon">📋</span>
+                <span class="nav-link-text">LOGOUT</span>
+            </a>
+        </li>
     </ul>
 </aside>
