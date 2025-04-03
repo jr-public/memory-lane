@@ -14,6 +14,26 @@ if (!$res['success']) {
 // Store tasks data
 $tasks = $res['data'];
 
+// Fetch users from API for the select dropdown
+$usersResponse = api_call("User", "list");
+if (!$usersResponse['success']) {
+    $users = [];
+} else {
+    $users = $usersResponse['data'];
+}
+
+// Function to generate options for select dropdown
+function generateUserOptions($users) {
+    $options = '<option value="">Select a user</option>';
+    foreach ($users as $user) {
+        $options .= '<option value="' . $user['id'] . '">' . htmlspecialchars($user['username']) . '</option>';
+    }
+    return $options;
+}
+
+// Generate user options HTML
+$userOptionsHtml = generateUserOptions($users);
+
 // Helper functions for task display
 function getStatusBadgeClass($status) {
     $statusClasses = [
@@ -89,6 +109,9 @@ $taskTreeData = buildTaskTreeData($tasks);
 
 // Encode task data for JavaScript
 $taskDataJson = json_encode($taskTreeData);
+
+// Encode user options for JavaScript
+$userOptionsJson = json_encode($userOptionsHtml);
 ?>
 
 <!-- Task Management Container -->
@@ -141,6 +164,9 @@ $taskDataJson = json_encode($taskTreeData);
 
 <!-- Task JavaScript -->
 <script>
+    // Store user options as a global variable
+    const userOptionsHTML = <?php echo $userOptionsJson; ?>;
+    
     document.addEventListener('DOMContentLoaded', function() {
         // Task data from PHP
         const taskData = <?php echo $taskDataJson; ?>;
@@ -286,10 +312,20 @@ $taskDataJson = json_encode($taskTreeData);
         const assignments = task.assignments || [];
         const maxAvatarsToShow = 3;
         
-        // If no assignments, show empty state
+        // If no assignments, show a plus icon instead of empty state text
         if (assignments.length === 0) {
-            container.className = 'task-avatars-empty';
-            container.textContent = 'No users assigned';
+            container.className = 'task-avatars-container';
+            
+            // Create a plus icon element
+            const plusIcon = document.createElement('div');
+            plusIcon.className = 'task-avatar-add';
+            plusIcon.title = 'Add assignment';
+            plusIcon.textContent = '+';
+            container.appendChild(plusIcon);
+            
+            // Make it clickable to open the modal - same as with assigned users
+            container.setAttribute('onclick', `showAssignmentDetails('[]', '${escapeString(task.title)}', ${task.id})`);
+            
             return container;
         }
         
@@ -298,7 +334,7 @@ $taskDataJson = json_encode($taskTreeData);
         
         // For click event - stringify assignments data
         const assignmentsData = JSON.stringify(assignments);
-        container.setAttribute('onclick', `showAssignmentDetails('${escapeString(assignmentsData)}', '${escapeString(task.title)}')`);
+        container.setAttribute('onclick', `showAssignmentDetails('${escapeString(assignmentsData)}', '${escapeString(task.title)}', ${task.id})`);
         
         // Show avatars up to the maximum
         const avatarsToShow = Math.min(assignments.length, maxAvatarsToShow);
@@ -418,56 +454,99 @@ $taskDataJson = json_encode($taskTreeData);
         });
     }
     
-    // Function to show assignment details in modal
-    function showAssignmentDetails(assignmentsJson, taskTitle) {
-        const modal = document.getElementById('assignment-modal');
-        const assignmentList = document.getElementById('assignment-list');
-        const modalTitle = document.querySelector('.assignment-modal-title');
+// Function to show assignment details in modal
+function showAssignmentDetails(assignmentsJson, taskTitle, taskId) {
+    const modal = document.getElementById('assignment-modal');
+    const assignmentList = document.getElementById('assignment-list');
+    const modalTitle = document.querySelector('.assignment-modal-title');
+    
+    // Update modal title with task name
+    modalTitle.textContent = `Assignments for: ${taskTitle}`;
+    
+    // Clear previous assignments
+    assignmentList.innerHTML = '';
+    
+    try {
+        // Parse the JSON string to get actual assignments
+        const assignments = JSON.parse(assignmentsJson);
         
-        // Update modal title with task name
-        modalTitle.textContent = `Assignments for: ${taskTitle}`;
+        // Create the assignment content container
+        const contentContainer = document.createElement('div');
+        contentContainer.className = 'assignment-content';
         
-        // Clear previous assignments
-        assignmentList.innerHTML = '';
-        
-        try {
-            // Parse the JSON string to get actual assignments
-            const assignments = JSON.parse(assignmentsJson);
-            
-            if (assignments.length === 0) {
-                assignmentList.innerHTML = '<div class="assignment-item">No users assigned to this task.</div>';
-            } else {
-                // Create an element for each assignment
-                assignments.forEach((assignment, index) => {
-                    const item = document.createElement('div');
-                    item.className = 'assignment-item';
-                    
-                    const username = assignment.username || `User ${index + 1}`;
-                    const initial = username.charAt(0).toUpperCase();
-                    const role = assignment.role_id ? getRoleName(assignment.role_id) : 'Contributor';
-                    
-                    // Use avatar color based on index
-                    const color = getAvatarColor(index);
-                    
-                    item.innerHTML = `
-                        <div class="assignment-avatar" style="background-color: ${color};">${initial}</div>
-                        <div class="assignment-details">
-                            <div class="assignment-name">${username}</div>
-                            <div class="assignment-role">${role}</div>
-                        </div>
-                    `;
-                    
-                    assignmentList.appendChild(item);
-                });
-            }
-        } catch (error) {
-            console.error("Error parsing assignments:", error);
-            assignmentList.innerHTML = '<div class="assignment-item">Error displaying assignments</div>';
+        if (assignments.length === 0) {
+            // Show empty state message
+            const emptyState = document.createElement('div');
+            emptyState.className = 'assignment-empty';
+            emptyState.innerHTML = `
+                <div class="empty-icon">👥</div>
+                <div class="empty-text">No users assigned to this task</div>
+            `;
+            contentContainer.appendChild(emptyState);
+        } else {
+            // Create an element for each assignment
+            assignments.forEach((assignment, index) => {
+                const item = document.createElement('div');
+                item.className = 'assignment-item';
+                
+                const username = assignment.username || `User ${index + 1}`;
+                const initial = username.charAt(0).toUpperCase();
+                const role = assignment.role_id ? getRoleName(assignment.role_id) : 'Contributor';
+                
+                // Use avatar color based on index
+                const color = getAvatarColor(index);
+                
+                item.innerHTML = `
+                    <div class="assignment-avatar" style="background-color: ${color};">${initial}</div>
+                    <div class="assignment-details">
+                        <div class="assignment-name">${username}</div>
+                        <div class="assignment-role">${role}</div>
+                    </div>
+                `;
+                
+                contentContainer.appendChild(item);
+            });
         }
         
-        // Display the modal
-        modal.style.display = 'block';
+        // Add the content container to the assignment list
+        assignmentList.appendChild(contentContainer);
+        
+        // Always add the same assignment form at the bottom
+        const assignmentForm = document.createElement('form');
+        assignmentForm.id = 'assignment-form';
+        assignmentForm.className = 'assignment-form';
+        assignmentForm.action = '<?= $current_url ?>';
+        assignmentForm.method = 'post';
+        
+        assignmentForm.innerHTML = `
+            <input type="hidden" name="entity_name" value="TaskAssignment">
+            <input type="hidden" name="entity_action" value="create">
+            <input type="hidden" name="task_id" value="${taskId}">
+            <input type="hidden" name="user_id" value="1">
+            <div class="form-row">
+                <select id="user-select" name="assigned_to" class="user-select" required>
+                    ${userOptionsHTML}
+                </select>
+                <button type="submit" class="btn-add-assignment">Add Assignment</button>
+            </div>
+        `;
+        
+        // Add a separator before the form
+        const separator = document.createElement('div');
+        separator.className = 'assignment-separator';
+        assignmentList.appendChild(separator);
+        
+        // Add the form to the list
+        assignmentList.appendChild(assignmentForm);
+        
+    } catch (error) {
+        console.error("Error parsing assignments:", error);
+        assignmentList.innerHTML = '<div class="assignment-item">Error displaying assignments</div>';
     }
+    
+    // Display the modal
+    modal.style.display = 'block';
+}
     
     // Helper function to get role name from role ID
     function getRoleName(roleId) {
