@@ -35,7 +35,7 @@ if (json_last_error() != 0) {
 
 try {
     $result = api_call( $class, $action, $request );
-    echo json_encode(response(true, $result));
+    echo json_encode($result);
 } catch (Exception $e) {
     echo json_encode(response(false, null, $e->getMessage()));
     die();
