@@ -55,6 +55,7 @@ CREATE TABLE tasks (
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
+ALTER TABLE users ADD CONSTRAINT unique_username_per_client UNIQUE (client_id, username);
 
 -- Task assignments table
 -- Tracks which users are assigned to which tasks
@@ -65,6 +66,7 @@ CREATE TABLE task_assignments (
     assigned_to INTEGER NOT NULL REFERENCES users(id), -- User that has been assigned the task
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
+ALTER TABLE task_assignments ADD CONSTRAINT unique_task_assignment UNIQUE (task_id, assigned_to);
 
 -- Task comments table
 -- Stores comments and updates made on tasks
