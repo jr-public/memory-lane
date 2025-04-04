@@ -1,41 +1,25 @@
 <?php
-// Fetch task data using API call
-if (true) { // TREE
-    $res = api_call("Task", "tree", [
-        "options" => [
-            "with" => ["assignments"]
-        ]
-    ]);
-}
+$res = api_call("Task", "tree", [
+    "options" => [
+        "with" => ["assignments"]
+    ]
+]);
 if (!$res['success']) {
-    die('Tasks list failed');
+    echo json_encode($res);
+    die();
 }
-
-// Store tasks data
 $tasks = $res['data'];
 
 // Fetch users from API for the select dropdown
-$usersResponse = api_call("User", "list");
-if (!$usersResponse['success']) {
+$users_res = api_call("User", "list");
+if (!$users_res['success']) {
     $users = [];
 } else {
-    $users = $usersResponse['data'];
+    $users = $users_res['data'];
 }
 
-// Function to generate options for select dropdown
-function generateUserOptions($users) {
-    $options = '<option value="">Select a user</option>';
-    foreach ($users as $user) {
-        $options .= '<option value="' . $user['id'] . '">' . htmlspecialchars($user['username']) . '</option>';
-    }
-    return $options;
-}
-
-// Generate user options HTML
-$userOptionsHtml = generateUserOptions($users);
-
-// Helper functions for task display
-function getStatusBadgeClass($status) {
+// Build task tree data structure for template
+function buildTaskTreeData($tasks) {
     $statusClasses = [
         'completed' => 'status-active',
         'in_progress' => 'status-in-progress',
@@ -43,22 +27,12 @@ function getStatusBadgeClass($status) {
         'backlogged' => 'status-inactive',
         'not_set' => 'status-pending'
     ];
-    
-    return $statusClasses[$status] ?? 'status-pending';
-}
-
-function getPriorityBadgeClass($priority) {
     $priorityClasses = [
         'high' => 'priority-high',
         'medium' => 'priority-medium',
         'low' => 'priority-low',
         'not_set' => 'priority-medium'
     ];
-    
-    return $priorityClasses[$priority] ?? 'priority-medium';
-}
-
-function getStatusIconClass($status) {
     $iconClasses = [
         'completed' => 'status-completed-icon',
         'in_progress' => 'status-in-progress-icon',
@@ -67,13 +41,7 @@ function getStatusIconClass($status) {
         'not_set' => 'status-pending-icon'
     ];
     
-    return $iconClasses[$status] ?? 'status-pending-icon';
-}
-
-// Build task tree data structure for template
-function buildTaskTreeData($tasks) {
     $result = [];
-    
     foreach ($tasks as $task) {
         // Set default values if not present
         if (!isset($task['status'])) $task['status'] = 'not_set';
@@ -85,9 +53,9 @@ function buildTaskTreeData($tasks) {
             'status' => $task['status'],
             'priority' => $task['priority'],
             'due_date' => $task['due_date'],
-            'status_class' => getStatusIconClass($task['status']),
-            'status_badge_class' => getStatusBadgeClass($task['status']),
-            'priority_class' => getPriorityBadgeClass($task['priority']),
+            'status_class' => $iconClasses[$task['status']] ?? 'status-pending-icon',
+            'status_badge_class' => $statusClasses[$task['status']] ?? 'status-pending',
+            'priority_class' => $priorityClasses[$task['priority']] ?? 'priority-medium',
             'has_children' => !empty($task['children']),
             'assignments' => $task['assignments'] ?? [],
             'children' => []
@@ -106,12 +74,6 @@ function buildTaskTreeData($tasks) {
 
 // Process task data
 $taskTreeData = buildTaskTreeData($tasks);
-
-// Encode task data for JavaScript
-$taskDataJson = json_encode($taskTreeData);
-
-// Encode user options for JavaScript
-$userOptionsJson = json_encode($userOptionsHtml);
 ?>
 
 <!-- Task Management Container -->
@@ -146,30 +108,17 @@ $userOptionsJson = json_encode($userOptionsHtml);
     </div>
 </div>
 
-<!-- Assignment Details Modal -->
-<div id="assignment-modal">
-    <div class="assignment-modal-content">
-        <div class="assignment-modal-header">
-            <div class="assignment-modal-title">Task Assignments</div>
-            <span class="assignment-modal-close">&times;</span>
-        </div>
-        <div class="assignment-list" id="assignment-list">
-            <!-- Assignment items will be inserted here by JavaScript -->
-        </div>
-    </div>
-</div>
-
-<!-- Task CSS -->
-<?php require_once('tasks-css.php'); ?>
+<!-- Include assignment modal code (if available) -->
+<?php 
+require_once('actions/assignment_modal.php');
+require_once('tasks-css.php'); 
+?>
 
 <!-- Task JavaScript -->
 <script>
-    // Store user options as a global variable
-    const userOptionsHTML = <?php echo $userOptionsJson; ?>;
-    
     document.addEventListener('DOMContentLoaded', function() {
         // Task data from PHP
-        const taskData = <?php echo $taskDataJson; ?>;
+        const taskData = <?= json_encode($taskTreeData) ?>;
         
         // Initialize task list
         renderTaskTree(taskData);
@@ -182,21 +131,21 @@ $userOptionsJson = json_encode($userOptionsHtml);
             // Redirect to task creation page
             window.location.href = 'main.php?action=entity_create&type=task';
         });
-        
-        // Modal functionality for assignments
-        const modal = document.getElementById('assignment-modal');
-        const closeBtn = document.querySelector('.assignment-modal-close');
-        
-        closeBtn.addEventListener('click', function() {
-            modal.style.display = 'none';
-        });
-        
-        window.addEventListener('click', function(event) {
-            if (event.target === modal) {
-                modal.style.display = 'none';
-            }
-        });
     });
+    
+    // Get avatar color based on index
+    function getAvatarColor(index) {
+        const colors = [
+            '#3498db', // Blue
+            '#9b59b6', // Purple
+            '#e74c3c', // Red
+            '#2ecc71', // Green
+            '#f39c12', // Orange
+            '#1abc9c', // Teal
+            '#d35400'  // Dark Orange
+        ];
+        return colors[index % colors.length];
+    }
     
     // Render task list recursively
     function renderTaskTree(tasks, parentElement = null, level = 0) {
@@ -312,7 +261,7 @@ $userOptionsJson = json_encode($userOptionsHtml);
         const assignments = task.assignments || [];
         const maxAvatarsToShow = 3;
         
-        // If no assignments, show a plus icon instead of empty state text
+        // If no assignments, show a plus icon
         if (assignments.length === 0) {
             container.className = 'task-avatars-container';
             
@@ -323,8 +272,11 @@ $userOptionsJson = json_encode($userOptionsHtml);
             plusIcon.textContent = '+';
             container.appendChild(plusIcon);
             
-            // Make it clickable to open the modal - same as with assigned users
-            container.setAttribute('onclick', `showAssignmentDetails('[]', '${escapeString(task.title)}', ${task.id})`);
+            // Add data attributes instead of onclick
+            container.dataset.taskId = task.id;
+            container.dataset.taskTitle = task.title;
+            container.dataset.assignments = '[]';
+            container.dataset.action = 'show-assignments';
             
             return container;
         }
@@ -332,9 +284,11 @@ $userOptionsJson = json_encode($userOptionsHtml);
         // Create avatar container
         container.className = 'task-avatars-container';
         
-        // For click event - stringify assignments data
-        const assignmentsData = JSON.stringify(assignments);
-        container.setAttribute('onclick', `showAssignmentDetails('${escapeString(assignmentsData)}', '${escapeString(task.title)}', ${task.id})`);
+        // Add data attributes instead of onclick
+        container.dataset.taskId = task.id;
+        container.dataset.taskTitle = task.title;
+        container.dataset.assignments = JSON.stringify(assignments);
+        container.dataset.action = 'show-assignments';
         
         // Show avatars up to the maximum
         const avatarsToShow = Math.min(assignments.length, maxAvatarsToShow);
@@ -362,28 +316,6 @@ $userOptionsJson = json_encode($userOptionsHtml);
         }
         
         return container;
-    }
-    
-    // Get avatar color based on index
-    function getAvatarColor(index) {
-        const colors = [
-            '#3498db', // Blue
-            '#9b59b6', // Purple
-            '#e74c3c', // Red
-            '#2ecc71', // Green
-            '#f39c12', // Orange
-            '#1abc9c', // Teal
-            '#d35400'  // Dark Orange
-        ];
-        return colors[index % colors.length];
-    }
-    
-    // Escape string for safe use in HTML attributes
-    function escapeString(str) {
-        return str
-            .replace(/\\/g, '\\\\')
-            .replace(/'/g, "\\'")
-            .replace(/"/g, '\\"');
     }
     
     // Toggle task children visibility
@@ -452,110 +384,5 @@ $userOptionsJson = json_encode($userOptionsHtml);
                 }
             }
         });
-    }
-    
-// Function to show assignment details in modal
-function showAssignmentDetails(assignmentsJson, taskTitle, taskId) {
-    const modal = document.getElementById('assignment-modal');
-    const assignmentList = document.getElementById('assignment-list');
-    const modalTitle = document.querySelector('.assignment-modal-title');
-    
-    // Update modal title with task name
-    modalTitle.textContent = `Assignments for: ${taskTitle}`;
-    
-    // Clear previous assignments
-    assignmentList.innerHTML = '';
-    
-    try {
-        // Parse the JSON string to get actual assignments
-        const assignments = JSON.parse(assignmentsJson);
-        
-        // Create the assignment content container
-        const contentContainer = document.createElement('div');
-        contentContainer.className = 'assignment-content';
-        
-        if (assignments.length === 0) {
-            // Show empty state message
-            const emptyState = document.createElement('div');
-            emptyState.className = 'assignment-empty';
-            emptyState.innerHTML = `
-                <div class="empty-icon">👥</div>
-                <div class="empty-text">No users assigned to this task</div>
-            `;
-            contentContainer.appendChild(emptyState);
-        } else {
-            // Create an element for each assignment
-            assignments.forEach((assignment, index) => {
-                const item = document.createElement('div');
-                item.className = 'assignment-item';
-                
-                const username = assignment.username || `User ${index + 1}`;
-                const initial = username.charAt(0).toUpperCase();
-                const role = assignment.role_id ? getRoleName(assignment.role_id) : 'Contributor';
-                
-                // Use avatar color based on index
-                const color = getAvatarColor(index);
-                
-                item.innerHTML = `
-                    <div class="assignment-avatar" style="background-color: ${color};">${initial}</div>
-                    <div class="assignment-details">
-                        <div class="assignment-name">${username}</div>
-                        <div class="assignment-role">${role}</div>
-                    </div>
-                `;
-                
-                contentContainer.appendChild(item);
-            });
-        }
-        
-        // Add the content container to the assignment list
-        assignmentList.appendChild(contentContainer);
-        
-        // Always add the same assignment form at the bottom
-        const assignmentForm = document.createElement('form');
-        assignmentForm.id = 'assignment-form';
-        assignmentForm.className = 'assignment-form';
-        assignmentForm.action = '<?= $current_url ?>';
-        assignmentForm.method = 'post';
-        
-        assignmentForm.innerHTML = `
-            <input type="hidden" name="entity_name" value="TaskAssignment">
-            <input type="hidden" name="entity_action" value="create">
-            <input type="hidden" name="task_id" value="${taskId}">
-            <input type="hidden" name="user_id" value="1">
-            <div class="form-row">
-                <select id="user-select" name="assigned_to" class="user-select" required>
-                    ${userOptionsHTML}
-                </select>
-                <button type="submit" class="btn-add-assignment">Add Assignment</button>
-            </div>
-        `;
-        
-        // Add a separator before the form
-        const separator = document.createElement('div');
-        separator.className = 'assignment-separator';
-        assignmentList.appendChild(separator);
-        
-        // Add the form to the list
-        assignmentList.appendChild(assignmentForm);
-        
-    } catch (error) {
-        console.error("Error parsing assignments:", error);
-        assignmentList.innerHTML = '<div class="assignment-item">Error displaying assignments</div>';
-    }
-    
-    // Display the modal
-    modal.style.display = 'block';
-}
-    
-    // Helper function to get role name from role ID
-    function getRoleName(roleId) {
-        const roles = {
-            1: 'Administrator',
-            2: 'Manager',
-            3: 'User',
-            4: 'Guest'
-        };
-        return roles[roleId] || 'Contributor';
     }
 </script>
