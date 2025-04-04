@@ -360,6 +360,7 @@
 .assignment-item {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     padding: 10px;
     border-bottom: 1px solid #444;
     transition: all 0.2s ease;
@@ -372,7 +373,37 @@
 .assignment-item:hover {
     background-color: #333;
 }
+.assignment-main-content {
+    display: flex;
+    align-items: center;
+    flex: 1;
+}
 
+/* Delete button styles */
+.assignment-delete-form {
+    margin-left: 10px;
+}
+
+.assignment-delete-btn {
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.assignment-delete-btn:hover {
+    background-color: #c0392b;
+    transform: scale(1.1);
+}
 .assignment-avatar {
     width: 40px;
     height: 40px;
