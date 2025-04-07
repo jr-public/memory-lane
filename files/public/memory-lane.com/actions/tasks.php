@@ -9,13 +9,6 @@ if (!$res['success']) {
     die();
 }
 $tasks = $res['data'];
-// Fetch users from API for the select dropdown
-$users_res = api_call("User", "list");
-if (!$users_res['success']) {
-    $users = [];
-} else {
-    $users = $users_res['data'];
-}
 ?>
 
 <!-- Task Management Container -->
@@ -29,7 +22,7 @@ if (!$users_res['success']) {
     <div class="task-list-container">
         <!-- Actions & Filters -->
         <div class="task-actions">
-            <button class="btn-action" id="add-task-btn">+ Add New Task</button>
+            <a class="btn-action" id="add-task-btn" href="main.php?action=entity_create&type=task">+ Add New Task</a>
             
             <div class="task-filters">
                 <button class="filter-btn active" data-filter="all">All</button>
@@ -66,12 +59,6 @@ require_once('tasks-css.php');
         
         // Task filtering functionality
         initTaskFilters();
-        
-        // Add task button functionality
-        document.getElementById('add-task-btn').addEventListener('click', function() {
-            // Redirect to task creation page
-            window.location.href = 'main.php?action=entity_create&type=task';
-        });
     });
         
 

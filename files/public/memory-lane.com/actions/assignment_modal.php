@@ -184,7 +184,7 @@ $ass_users = $ass_res['data'];
                 <input type="hidden" name="user_id" value="1">
                 <div class="form-row">
                     <select id="user-select" name="assigned_to" class="user-select" required>
-                        ${generateUserOptions(<?= json_encode($users); ?>)}
+                        ${generateUserOptions(<?= json_encode($ass_users); ?>)}
                     </select>
                     <button type="submit" class="btn-add-assignment">Add Assignment</button>
                 </div>
