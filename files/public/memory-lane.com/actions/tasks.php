@@ -1,79 +1,26 @@
 <?php
-$res = api_call("Task", "tree", [
+$tree_res = api_call("Task", "tree", [
     "options" => [
         "with" => ["assignments"]
     ]
 ]);
-if (!$res['success']) {
-    echo json_encode($res);
+if (!$tree_res['success']) {
+    echo json_encode($tree_res);
     die();
 }
-$tasks = $res['data'];
-
-// Fetch users from API for the select dropdown
-$users_res = api_call("User", "list");
+$users_res = api_call("User", "list", [
+    "options" => [
+        "unique" => true
+    ]
+]);
 if (!$users_res['success']) {
-    $users = [];
-} else {
-    $users = $users_res['data'];
+    echo json_encode($users_res);
+    die();
 }
 
-// Build task tree data structure for template
-function buildTaskTreeData($tasks) {
-    $statusClasses = [
-        'completed' => 'status-active',
-        'in_progress' => 'status-in-progress',
-        'pending' => 'status-pending',
-        'backlogged' => 'status-inactive',
-        'not_set' => 'status-pending'
-    ];
-    $priorityClasses = [
-        'high' => 'priority-high',
-        'medium' => 'priority-medium',
-        'low' => 'priority-low',
-        'not_set' => 'priority-medium'
-    ];
-    $iconClasses = [
-        'completed' => 'status-completed-icon',
-        'in_progress' => 'status-in-progress-icon',
-        'pending' => 'status-pending-icon',
-        'backlogged' => 'status-on-hold-icon',
-        'not_set' => 'status-pending-icon'
-    ];
-    
-    $result = [];
-    foreach ($tasks as $task) {
-        // Set default values if not present
-        if (!isset($task['status'])) $task['status'] = 'not_set';
-        if (!isset($task['priority'])) $task['priority'] = 'not_set';
-        
-        $taskData = [
-            'id' => $task['id'],
-            'title' => $task['title'],
-            'status' => $task['status'],
-            'priority' => $task['priority'],
-            'due_date' => $task['due_date'],
-            'status_class' => $iconClasses[$task['status']] ?? 'status-pending-icon',
-            'status_badge_class' => $statusClasses[$task['status']] ?? 'status-pending',
-            'priority_class' => $priorityClasses[$task['priority']] ?? 'priority-medium',
-            'has_children' => !empty($task['children']),
-            'assignments' => $task['assignments'] ?? [],
-            'children' => []
-        ];
-        
-        // Process children if they exist
-        if (!empty($task['children'])) {
-            $taskData['children'] = buildTaskTreeData($task['children']);
-        }
-        
-        $result[] = $taskData;
-    }
-    
-    return $result;
-}
-
-// Process task data
-$taskTreeData = buildTaskTreeData($tasks);
+//
+$tasks = $tree_res['data'];
+$tasked_users = $users_res['data'];
 ?>
 
 <!-- Task Management Container -->
@@ -87,7 +34,7 @@ $taskTreeData = buildTaskTreeData($tasks);
     <div class="task-list-container">
         <!-- Actions & Filters -->
         <div class="task-actions">
-            <button class="btn-action" id="add-task-btn">+ Add New Task</button>
+            <a class="btn-action" id="add-task-btn" href="main.php?action=entity_create&type=task">+ Add New Task</a>
             
             <div class="task-filters">
                 <button class="filter-btn active" data-filter="all">All</button>
@@ -116,21 +63,14 @@ require_once('tasks-css.php');
 
 <!-- Task JavaScript -->
 <script>
+    const tasked_users = <?= json_encode($tasked_users) ?>;
+    const rawTaskData = <?= json_encode($tasks) ?>;
     document.addEventListener('DOMContentLoaded', function() {
-        // Task data from PHP
-        const taskData = <?= json_encode($taskTreeData) ?>;
-        
-        // Initialize task list
+        const taskData = buildTaskTreeData(rawTaskData);
         renderTaskTree(taskData);
         
         // Task filtering functionality
         initTaskFilters();
-        
-        // Add task button functionality
-        document.getElementById('add-task-btn').addEventListener('click', function() {
-            // Redirect to task creation page
-            window.location.href = 'main.php?action=entity_create&type=task';
-        });
     });
         
 

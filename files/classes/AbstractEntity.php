@@ -58,7 +58,8 @@ abstract class AbstractEntity {
 
     public function list(array $options = []): array {
         $with = $options['with'] ?? [];
-        
+        $unique = $options['unique'] ?? false;
+
         try {
             // Build the query
             $query = $this->build_query($options);
@@ -77,7 +78,8 @@ abstract class AbstractEntity {
         $res = $this->load_relations($list, $with);
         if (!$res['success']) return $res;
 
-        return response(true, array_values($res['data']));
+        if (!$unique) return response(true, array_values($res['data']));
+        else return response(true, $res['data']);
     }
 
     public function tree(array $options = []): array {

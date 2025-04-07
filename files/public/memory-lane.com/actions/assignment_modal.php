@@ -1,13 +1,3 @@
-<?php
-$ass_res = api_call("User", "list");
-if (!$ass_res['success']) {
-    echo json_encode($ass_res);
-    die();
-}
-
-$ass_users = $ass_res['data'];
-?>
-
 <!-- Assignment Details Modal -->
 <div id="assignment-modal">
     <div class="assignment-modal-content">
@@ -80,19 +70,8 @@ $ass_users = $ass_res['data'];
             .replace(/"/g, '\\"');
     }
     
-    // Get avatar color based on index
-    function getAvatarColor(index) {
-        const colors = [
-            '#3498db', // Blue
-            '#9b59b6', // Purple
-            '#e74c3c', // Red
-            '#2ecc71', // Green
-            '#f39c12', // Orange
-            '#1abc9c', // Teal
-            '#d35400'  // Dark Orange
-        ];
-        return colors[index % colors.length];
-    }
+    // Note: We're using createAvatarElement from tasks.js instead of defining our own
+    // The getAvatarColor function is also used from tasks.js
     
     // Show assignment details in the modal
     function showAssignmentDetails(assignmentsJson, taskTitle, taskId) {
@@ -129,23 +108,32 @@ $ass_users = $ass_res['data'];
                     const item = document.createElement('div');
                     item.className = 'assignment-item';
                     
-                    const username = assignment.username || `User ${index + 1}`;
-                    const initial = username.charAt(0).toUpperCase();
-                    const role = assignment.role_id ? getRoleName(assignment.role_id) : 'Contributor';
                     
-                    // Use avatar color based on index
-                    const color = getAvatarColor(index);
+                    const users 	= ( typeof tasked_users == 'undefined' ) ? {} : tasked_users;
+                    const user 		= users[assignment.assigned_to] ?? {};
+                    const username 	= user.username ?? 'User ' + (index+1);
+                    const role = assignment.role_id ? getRoleName(assignment.role_id) : 'Contributor';
                     
                     // Create the main assignment content
                     const mainContent = document.createElement('div');
                     mainContent.className = 'assignment-main-content';
-                    mainContent.innerHTML = `
-                        <div class="assignment-avatar" style="background-color: ${color};">${initial}</div>
-                        <div class="assignment-details">
-                            <div class="assignment-name">${username}</div>
-                            <div class="assignment-role">${role}</div>
-                        </div>
+                    
+                    // Use the createAvatarElement function from tasks.js
+                    const avatarElement = createAvatarElement(assignment, index);
+                    // Adjust any styling needed for the modal context
+                    avatarElement.style.marginRight = '10px';
+                    avatarElement.classList.add('assignment-avatar');
+                    
+                    mainContent.appendChild(avatarElement);
+                    
+                    const detailsDiv = document.createElement('div');
+                    detailsDiv.className = 'assignment-details';
+                    detailsDiv.innerHTML = `
+                        <div class="assignment-name">${username}</div>
+                        <div class="assignment-role">${role}</div>
                     `;
+                    
+                    mainContent.appendChild(detailsDiv);
                     
                     // Create the delete button as a form
                     const deleteForm = document.createElement('form');
@@ -184,7 +172,7 @@ $ass_users = $ass_res['data'];
                 <input type="hidden" name="user_id" value="1">
                 <div class="form-row">
                     <select id="user-select" name="assigned_to" class="user-select" required>
-                        ${generateUserOptions(<?= json_encode($users); ?>)}
+                        ${generateUserOptions(<?= json_encode(array_values($tasked_users)); ?>)}
                     </select>
                     <button type="submit" class="btn-add-assignment">Add Assignment</button>
                 </div>
