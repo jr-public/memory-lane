@@ -7,19 +7,80 @@ function renderTaskTree(tasks, parentElement = null, level = 0) {
         const taskItem = createTaskItem(task, level);
         taskList.appendChild(taskItem);
         
-        // Render children if they exist
+        // Create container for children (even if no children exist)
+        const childrenContainer = document.createElement('div');
+        childrenContainer.className = 'task-children';
+        childrenContainer.id = `children-${task.id}`;
+        childrenContainer.dataset.visible = 'false';
+        childrenContainer.style.display = 'none';
+        taskList.appendChild(childrenContainer);
+        
+        // If task has children, render them inside the container
         if (task.has_children) {
-            // Create container for children
-            const childrenContainer = document.createElement('div');
-            childrenContainer.className = 'task-children';
-            childrenContainer.id = `children-${task.id}`;
-            childrenContainer.dataset.visible = 'true';
-            taskList.appendChild(childrenContainer);
-            
             // Recursively render children within this container
             renderTaskTree(task.children, childrenContainer, level + 1);
+        } else {
+            // Add a new task creation form in the container
+            childrenContainer.appendChild(createNewTaskForm(task.id, level + 1));
         }
     });
+}
+
+// Create new task input form
+function createNewTaskForm(parentId, level) {
+    const formContainer = document.createElement('div');
+    formContainer.className = 'task-item new-task-form';
+    formContainer.dataset.level = level;
+    
+    // Create form element
+    const form = document.createElement('form');
+    form.action = 'main.php';
+    form.method = 'post';
+    form.className = 'task-new-form';
+    form.style.width = '100%';
+    form.innerHTML = `
+        <input type="hidden" name="entity_name" value="Task">
+        <input type="hidden" name="entity_action" value="create">
+        <input type="hidden" name="parent_id" value="${parentId}">
+        <input type="hidden" name="user_id" value="1">
+        <input type="hidden" name="status_id" value="1">
+        <div class="task-info" style="width: 100%">
+            <span>${'&nbsp;'.repeat((level) * 4)}</span>
+            <span class="toggle-icon-placeholder"></span>
+            <div class="task-status-icon status-pending-icon"></div>
+            <input type="text" name="title" class="ce-form-input" placeholder="New subtask name..." style="flex: 1; margin-left: 5px; height: 30px; padding: 5px 10px;">
+        </div>
+    `;
+    
+    // Add event listeners for form submission
+    form.addEventListener('submit', function(e) {
+        if (form.querySelector('input[name="title"]').value.trim() === '') {
+            e.preventDefault();
+        }
+    });
+    
+    // Add blur event to submit when clicking outside
+    const inputField = document.createElement('input');
+    inputField.type = 'text';
+    inputField.name = 'title';
+    inputField.className = 'ce-form-input';
+    inputField.placeholder = 'New subtask name...';
+    inputField.style.flex = '1';
+    inputField.style.marginLeft = '5px';
+    inputField.style.height = '30px';
+    inputField.style.padding = '5px 10px';
+    
+    inputField.addEventListener('blur', function() {
+        if (this.value.trim() !== '') {
+            form.submit();
+        }
+    });
+    
+    // Replace the input in the form with our enhanced input
+    form.querySelector('input[name="title"]').replaceWith(inputField);
+    
+    formContainer.appendChild(form);
+    return formContainer;
 }
 
 // Create the main task item element
@@ -52,19 +113,13 @@ function createTaskInfo(task, level) {
         taskInfo.appendChild(indentation);
     }
     
-    // Add toggle icon or placeholder
-    if (task.has_children) {
-        const toggleIcon = document.createElement('span');
-        toggleIcon.className = 'toggle-icon';
-        toggleIcon.dataset.taskId = task.id;
-        toggleIcon.textContent = '▼';
-        toggleIcon.addEventListener('click', toggleChildren);
-        taskInfo.appendChild(toggleIcon);
-    } else {
-        const placeholder = document.createElement('span');
-        placeholder.className = 'toggle-icon-placeholder';
-        taskInfo.appendChild(placeholder);
-    }
+    // Add toggle icon for all tasks, regardless of whether they have children
+    const toggleIcon = document.createElement('span');
+    toggleIcon.className = 'toggle-icon';
+    toggleIcon.dataset.taskId = task.id;
+    toggleIcon.textContent = '▶'; // Default to collapsed state (right arrow)
+    toggleIcon.addEventListener('click', toggleChildren);
+    taskInfo.appendChild(toggleIcon);
     
     // Status icon
     const statusIcon = document.createElement('div');
@@ -78,6 +133,24 @@ function createTaskInfo(task, level) {
     taskInfo.appendChild(taskName);
     
     return taskInfo;
+}
+
+// Toggle task children visibility (modified to handle empty containers with forms)
+function toggleChildren(event) {
+    const taskId = this.dataset.taskId;
+    const childrenContainer = document.getElementById(`children-${taskId}`);
+    
+    if (childrenContainer) {
+        if (childrenContainer.style.display === 'none') {
+            childrenContainer.style.display = 'block';
+            this.textContent = '▼';
+            childrenContainer.dataset.visible = 'true';
+        } else {
+            childrenContainer.style.display = 'none';
+            this.textContent = '▶';
+            childrenContainer.dataset.visible = 'false';
+        }
+    }
 }
 
 // Create the task meta section (right side with details)
@@ -158,30 +231,12 @@ function createStatusBadge(task) {
     return statusBadge;
 }
 
-// Toggle task children visibility (no changes needed)
-function toggleChildren(event) {
-    const taskId = this.dataset.taskId;
-    const childrenContainer = document.getElementById(`children-${taskId}`);
-    
-    if (childrenContainer) {
-        if (childrenContainer.style.display === 'none') {
-            childrenContainer.style.display = 'block';
-            this.textContent = '▼';
-            childrenContainer.dataset.visible = 'true';
-        } else {
-            childrenContainer.style.display = 'none';
-            this.textContent = '▶';
-            childrenContainer.dataset.visible = 'false';
-        }
-    }
-}
-
 // Create avatar elements for task assignments (minimal changes)
 function createAvatarsElement(task) {
     const container = document.createElement('div');
     const assignments = task.assignments || [];
     const maxAvatarsToShow = 3;
-    console.log(assignments)
+    
     // If no assignments, show a plus icon
     if (assignments.length === 0) {
         container.className = 'task-avatars-container';
@@ -230,14 +285,14 @@ function createAvatarsElement(task) {
 
 // Create a single avatar element
 function createAvatarElement(assignment, index) {
-	const users 	= ( typeof tasked_users == 'undefined' ) ? {} : tasked_users;
-	const user 		= users[assignment.assigned_to] ?? {};
-	const username 	= user.username ?? 'User';
-    const initial 	= username.charAt(0).toUpperCase();
+    const users = (typeof tasked_users == 'undefined') ? {} : tasked_users;
+    const user = users[assignment.assigned_to] ?? {};
+    const username = user.username ?? 'User';
+    const initial = username.charAt(0).toUpperCase();
 
-    const av 		= document.createElement('div');
-    av.className 	= 'task-avatar';
-    av.title 		= username;
+    const av = document.createElement('div');
+    av.className = 'task-avatar';
+    av.title = username;
     av.textContent = initial;
     
     // Different color for each avatar
@@ -304,11 +359,6 @@ function buildTaskTreeData(tasks) {
         const status = task.status || 'not_set';
         const priority = task.priority || 'not_set';
         const dueDate = task.due_date || null;
-        
-        // Log problem tasks for debugging
-        // if (task.id && (!task.status || !task.priority)) {
-        //     console.log('Task with missing properties:', task.id, task);
-        // }
         
         const taskData = {
             id: task.id || 0,

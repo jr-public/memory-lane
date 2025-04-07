@@ -1,6 +1,7 @@
 <?php
 $tree_res = api_call("Task", "tree", [
     "options" => [
+        'filters' => $task_filters ?? [],
         "with" => ["assignments"]
     ]
 ]);
@@ -55,10 +56,48 @@ $tasked_users = $users_res['data'];
     </div>
 </div>
 
+<!-- Include additional CSS for new task form -->
+<style>
+/* Add these styles to your existing CSS */
+.task-new-form {
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.task-new-form .task-info {
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.new-task-form {
+    transition: all 0.2s ease;
+    border-bottom: 1px dashed #444;
+}
+
+.new-task-form:hover {
+    background-color: #333;
+}
+
+.new-task-form .ce-form-input {
+    background-color: #333;
+    border: 1px solid #444;
+    color: #e0e0e0;
+    border-radius: 4px;
+}
+
+.new-task-form .ce-form-input:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.25);
+}
+</style>
+
 <!-- Include assignment modal code (if available) -->
 <?php 
 require_once('actions/assignment_modal.php');
-require_once('tasks-css.php'); 
+require_once('actions/tasks-css.php'); 
 ?>
 
 <!-- Task JavaScript -->
@@ -94,7 +133,7 @@ require_once('tasks-css.php');
     }
     // Filter tasks by status
     function filterTasks(filter) {
-        const taskItems = document.querySelectorAll('.task-item');
+        const taskItems = document.querySelectorAll('.task-item:not(.new-task-form)');
         
         taskItems.forEach(item => {
             const status = item.getAttribute('data-status');
