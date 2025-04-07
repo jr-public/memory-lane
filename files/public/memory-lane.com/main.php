@@ -1,12 +1,6 @@
 <?php
 
 require_once(getenv("PROJECT_ROOT") . 'vendor/autoload.php');
-// $User = new MemoryLane\User(DB);
-// $Client = new MemoryLane\Client(DB);
-// $Task = new MemoryLane\Task(DB);
-// $TaskAssignment = new MemoryLane\TaskAssignment(DB);
-// $TaskComment = new MemoryLane\TaskComment(DB);
-
 
 $current_url = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
 $params = $_GET;
@@ -56,6 +50,8 @@ if ( $_SERVER['REQUEST_METHOD'] == 'POST' ) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>API Admin Panel</title>
     <link rel="stylesheet" href="assets/style.css">
+    <script src="assets/tasks.js" defer></script>
+
 </head>
 <body>
     <header>
