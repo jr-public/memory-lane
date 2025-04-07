@@ -1,6 +1,7 @@
 <?php
 $tree_res = api_call("Task", "tree", [
     "options" => [
+        'order' => ['id ASC'],
         'filters' => $task_filters ?? [],
         "with" => ["assignments"]
     ]
@@ -64,6 +65,7 @@ require_once('actions/tasks-css.php');
 <script>
     const tasked_users = <?= json_encode($tasked_users) ?>;
     const rawTaskData = <?= json_encode($tasks) ?>;
+    const currentUrl = <?= json_encode($current_url) ?>;
     document.addEventListener('DOMContentLoaded', function() {
     const taskData = buildTaskTreeData(rawTaskData);
     renderTaskTree(taskData);

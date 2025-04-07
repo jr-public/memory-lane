@@ -24,14 +24,15 @@ const taskTreeConfig = {
           childrenContainer.dataset.visible = shouldExpand ? 'true' : 'false';
           childrenContainer.style.display = shouldExpand ? 'block' : 'none';
           
+          // Always add a new task creation form
+          childrenContainer.appendChild(createNewTaskForm(task.id, level + 1));
+          
           // If task has children, render them inside the container
           if (task.has_children) {
               // Recursively render children within this container
               renderTaskTree(task.children, childrenContainer, level + 1);
           }
          
-          // Always add a new task creation form at the end of each container
-          childrenContainer.appendChild(createNewTaskForm(task.id, level + 1));
           
           // Append the children container to the task list
           taskList.appendChild(childrenContainer);
@@ -119,7 +120,7 @@ function createNewTaskForm(parentId, level) {
     
     // Create form element
     const form = document.createElement('form');
-    form.action = 'main.php';
+    form.action = currentUrl;
     form.method = 'post';
     form.className = 'task-new-form';
     form.style.width = '100%';
