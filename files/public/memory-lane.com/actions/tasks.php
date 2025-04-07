@@ -1,6 +1,8 @@
 <?php
 $tree_res = api_call("Task", "tree", [
     "options" => [
+        'order' => ['id ASC'],
+        'filters' => $task_filters ?? [],
         "with" => ["assignments"]
     ]
 ]);
@@ -53,25 +55,46 @@ $tasked_users = $users_res['data'];
         <!-- Task List - Will be populated by JavaScript -->
         <div class="task-list" id="task-list"></div>
     </div>
-</div>
 
-<!-- Include assignment modal code (if available) -->
 <?php 
 require_once('actions/assignment_modal.php');
-require_once('tasks-css.php'); 
+require_once('actions/tasks-css.php'); 
 ?>
 
 <!-- Task JavaScript -->
 <script>
     const tasked_users = <?= json_encode($tasked_users) ?>;
     const rawTaskData = <?= json_encode($tasks) ?>;
+    const currentUrl = <?= json_encode($current_url) ?>;
     document.addEventListener('DOMContentLoaded', function() {
-        const taskData = buildTaskTreeData(rawTaskData);
-        renderTaskTree(taskData);
+    const taskData = buildTaskTreeData(rawTaskData);
+    renderTaskTree(taskData);
+    
+    // Task filtering functionality
+    initTaskFilters();
+    
+    // Add expand/collapse all buttons to the task actions
+    const taskActions = document.querySelector('.task-actions');
+    if (taskActions) {
+        const expandCollapseContainer = document.createElement('div');
+        expandCollapseContainer.className = 'task-expand-controls';
         
-        // Task filtering functionality
-        initTaskFilters();
-    });
+        const expandAllBtn = document.createElement('button');
+        expandAllBtn.className = 'btn-expand-all';
+        expandAllBtn.textContent = 'Expand All';
+        expandAllBtn.addEventListener('click', expandAllTasks);
+        
+        const collapseAllBtn = document.createElement('button');
+        collapseAllBtn.className = 'btn-collapse-all';
+        collapseAllBtn.textContent = 'Collapse All';
+        collapseAllBtn.addEventListener('click', collapseAllTasks);
+        
+        expandCollapseContainer.appendChild(expandAllBtn);
+        expandCollapseContainer.appendChild(collapseAllBtn);
+        
+        taskActions.appendChild(expandCollapseContainer);
+    }
+});
         
 
     // Initialize task filters
@@ -94,7 +117,7 @@ require_once('tasks-css.php');
     }
     // Filter tasks by status
     function filterTasks(filter) {
-        const taskItems = document.querySelectorAll('.task-item');
+        const taskItems = document.querySelectorAll('.task-item:not(.new-task-form)');
         
         taskItems.forEach(item => {
             const status = item.getAttribute('data-status');

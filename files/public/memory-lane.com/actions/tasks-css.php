@@ -560,4 +560,74 @@
         margin: 5% auto;
     }
 }
+
+/* Add these styles to your existing CSS */
+.task-new-form {
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.task-new-form .task-info {
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.new-task-form {
+    transition: all 0.2s ease;
+    border-bottom: 1px dashed #444;
+}
+
+.new-task-form:hover {
+    background-color: #333;
+}
+
+.new-task-form .ce-form-input {
+    background-color: #333;
+    border: 1px solid #444;
+    color: #e0e0e0;
+    border-radius: 4px;
+}
+
+.new-task-form .ce-form-input:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.25);
+}
+
+
+.task-new-form {
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.task-new-form .task-info {
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.new-task-form {
+    transition: all 0.2s ease;
+    border-bottom: 1px dashed #444;
+}
+
+.new-task-form:hover {
+    background-color: #333;
+}
+
+.new-task-form .ce-form-input {
+    background-color: #333;
+    border: 1px solid #444;
+    color: #e0e0e0;
+    border-radius: 4px;
+}
+
+.new-task-form .ce-form-input:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.25);
+}
 </style>

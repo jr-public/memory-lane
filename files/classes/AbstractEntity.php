@@ -83,14 +83,21 @@ abstract class AbstractEntity {
     }
 
     public function tree(array $options = []): array {
+        // THIS IS NEEDED FOR THE CURRENT IMPLEMENTATION.
+        // If we dont sort it in this way, the tree building fails
+        if (!isset($options['order']) || !is_array($options['order'])) {
+            $options['order'] = [];
+        }
+        array_unshift($options['order'], 'parent_id ASC NULLS FIRST');
+        
         $res = $this->list($options);
         if (!$res['success']) return $res;
         $rows = $res['data'];
-
         // Return original rows if empty or parent_id doesn't exist in the first row
         if (empty($rows) || !array_key_exists('parent_id', $rows[0])) {
             return response(true, $rows);
         }
+
         
         $result = [];
         $itemMap = [];
@@ -230,7 +237,7 @@ abstract class AbstractEntity {
 
     protected function build_query(array $options = []): array {
         try {
-            $perPage = $options['perPage'] ?? 10;
+            $perPage = $options['perPage'] ?? 1000;
             $page = $options['page'] ?? 1;
             $filters = $options['filters'] ?? [];
             $order = $options['order'] ?? [];
