@@ -1,31 +1,116 @@
-// Render task list recursively
-function renderTaskTree(tasks, parentElement = null, level = 0) {
-    const taskList = parentElement || document.getElementById('task-list');
-    
-    tasks.forEach(task => {
-        // Create task item
-        const taskItem = createTaskItem(task, level);
-        taskList.appendChild(taskItem);
-        
-        // Create container for children (even if no children exist)
-        const childrenContainer = document.createElement('div');
-        childrenContainer.className = 'task-children';
-        childrenContainer.id = `children-${task.id}`;
-        childrenContainer.dataset.visible = 'false';
-        childrenContainer.style.display = 'none';
-        taskList.appendChild(childrenContainer);
-        
-        // If task has children, render them inside the container
-        if (task.has_children) {
-            // Recursively render children within this container
-            renderTaskTree(task.children, childrenContainer, level + 1);
-        } else {
-            // Add a new task creation form in the container
-            childrenContainer.appendChild(createNewTaskForm(task.id, level + 1));
-        }
-    });
-}
-
+// Define a configuration object at the top of your tasks.js file
+const taskTreeConfig = {
+    expandByDefault: false, // Set to true to expand all tasks by default
+    maxExpandLevel: 1,      // Maximum level to auto-expand (0 = just root level)
+  };
+  
+  // Modified renderTaskTree function with configurable expansion
+  function renderTaskTree(tasks, parentElement = null, level = 0) {
+      const taskList = parentElement || document.getElementById('task-list');
+     
+      tasks.forEach(task => {
+          // Create task item
+          const taskItem = createTaskItem(task, level);
+          taskList.appendChild(taskItem);
+         
+          // Create container for children (even if no children exist)
+          const childrenContainer = document.createElement('div');
+          childrenContainer.className = 'task-children';
+          childrenContainer.id = `children-${task.id}`;
+          
+          // Determine if this level should be expanded based on configuration
+          const shouldExpand = taskTreeConfig.expandByDefault || level < taskTreeConfig.maxExpandLevel;
+          
+          childrenContainer.dataset.visible = shouldExpand ? 'true' : 'false';
+          childrenContainer.style.display = shouldExpand ? 'block' : 'none';
+          
+          // If task has children, render them inside the container
+          if (task.has_children) {
+              // Recursively render children within this container
+              renderTaskTree(task.children, childrenContainer, level + 1);
+          }
+         
+          // Always add a new task creation form at the end of each container
+          childrenContainer.appendChild(createNewTaskForm(task.id, level + 1));
+          
+          // Append the children container to the task list
+          taskList.appendChild(childrenContainer);
+          
+          // Update toggle icon to match expansion state
+          const toggleIcon = taskItem.querySelector('.toggle-icon');
+          if (toggleIcon) {
+              toggleIcon.textContent = shouldExpand ? '▼' : '▶';
+          }
+      });
+  }
+  
+  // Modified createTaskInfo function to reflect the expansion state
+  function createTaskInfo(task, level) {
+      const taskInfo = document.createElement('div');
+      taskInfo.className = 'task-info';
+      
+      // Add indentation based on level
+      if (level > 0) {
+          const indentation = document.createElement('span');
+          indentation.innerHTML = '&nbsp;'.repeat(level * 4);
+          taskInfo.appendChild(indentation);
+      }
+      
+      // Add toggle icon for all tasks, regardless of whether they have children
+      const toggleIcon = document.createElement('span');
+      toggleIcon.className = 'toggle-icon';
+      toggleIcon.dataset.taskId = task.id;
+      
+      // Set icon based on default expansion state
+      const shouldExpand = taskTreeConfig.expandByDefault || level < taskTreeConfig.maxExpandLevel;
+      toggleIcon.textContent = shouldExpand ? '▼' : '▶';
+      
+      toggleIcon.addEventListener('click', toggleChildren);
+      taskInfo.appendChild(toggleIcon);
+      
+      // Status icon
+      const statusIcon = document.createElement('div');
+      statusIcon.className = `task-status-icon ${task.status_class}`;
+      taskInfo.appendChild(statusIcon);
+      
+      // Task name
+      const taskName = document.createElement('div');
+      taskName.className = 'task-name';
+      taskName.textContent = task.title;
+      taskInfo.appendChild(taskName);
+      
+      return taskInfo;
+  }
+  
+  // Helper function to expand all tasks (can be called from a button or programmatically)
+  function expandAllTasks() {
+      const allContainers = document.querySelectorAll('.task-children');
+      const allToggleIcons = document.querySelectorAll('.toggle-icon');
+      
+      allContainers.forEach(container => {
+          container.style.display = 'block';
+          container.dataset.visible = 'true';
+      });
+      
+      allToggleIcons.forEach(icon => {
+          icon.textContent = '▼';
+      });
+  }
+  
+  // Helper function to collapse all tasks
+  function collapseAllTasks() {
+      const allContainers = document.querySelectorAll('.task-children');
+      const allToggleIcons = document.querySelectorAll('.toggle-icon');
+      
+      allContainers.forEach(container => {
+          container.style.display = 'none';
+          container.dataset.visible = 'false';
+      });
+      
+      allToggleIcons.forEach(icon => {
+          icon.textContent = '▶';
+      });
+  }
 // Create new task input form
 function createNewTaskForm(parentId, level) {
     const formContainer = document.createElement('div');
@@ -99,40 +184,6 @@ function createTaskItem(task, level) {
     taskItem.appendChild(createTaskMeta(task));
     
     return taskItem;
-}
-
-// Create the task info section (left side with title and status)
-function createTaskInfo(task, level) {
-    const taskInfo = document.createElement('div');
-    taskInfo.className = 'task-info';
-    
-    // Add indentation based on level
-    if (level > 0) {
-        const indentation = document.createElement('span');
-        indentation.innerHTML = '&nbsp;'.repeat(level * 4);
-        taskInfo.appendChild(indentation);
-    }
-    
-    // Add toggle icon for all tasks, regardless of whether they have children
-    const toggleIcon = document.createElement('span');
-    toggleIcon.className = 'toggle-icon';
-    toggleIcon.dataset.taskId = task.id;
-    toggleIcon.textContent = '▶'; // Default to collapsed state (right arrow)
-    toggleIcon.addEventListener('click', toggleChildren);
-    taskInfo.appendChild(toggleIcon);
-    
-    // Status icon
-    const statusIcon = document.createElement('div');
-    statusIcon.className = `task-status-icon ${task.status_class}`;
-    taskInfo.appendChild(statusIcon);
-    
-    // Task name
-    const taskName = document.createElement('div');
-    taskName.className = 'task-name';
-    taskName.textContent = task.title;
-    taskInfo.appendChild(taskName);
-    
-    return taskInfo;
 }
 
 // Toggle task children visibility (modified to handle empty containers with forms)

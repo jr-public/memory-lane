@@ -54,47 +54,7 @@ $tasked_users = $users_res['data'];
         <!-- Task List - Will be populated by JavaScript -->
         <div class="task-list" id="task-list"></div>
     </div>
-</div>
 
-<!-- Include additional CSS for new task form -->
-<style>
-/* Add these styles to your existing CSS */
-.task-new-form {
-    display: flex;
-    align-items: center;
-    width: 100%;
-}
-
-.task-new-form .task-info {
-    display: flex;
-    align-items: center;
-    width: 100%;
-}
-
-.new-task-form {
-    transition: all 0.2s ease;
-    border-bottom: 1px dashed #444;
-}
-
-.new-task-form:hover {
-    background-color: #333;
-}
-
-.new-task-form .ce-form-input {
-    background-color: #333;
-    border: 1px solid #444;
-    color: #e0e0e0;
-    border-radius: 4px;
-}
-
-.new-task-form .ce-form-input:focus {
-    outline: none;
-    border-color: #3498db;
-    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.25);
-}
-</style>
-
-<!-- Include assignment modal code (if available) -->
 <?php 
 require_once('actions/assignment_modal.php');
 require_once('actions/tasks-css.php'); 
@@ -105,12 +65,34 @@ require_once('actions/tasks-css.php');
     const tasked_users = <?= json_encode($tasked_users) ?>;
     const rawTaskData = <?= json_encode($tasks) ?>;
     document.addEventListener('DOMContentLoaded', function() {
-        const taskData = buildTaskTreeData(rawTaskData);
-        renderTaskTree(taskData);
+    const taskData = buildTaskTreeData(rawTaskData);
+    renderTaskTree(taskData);
+    
+    // Task filtering functionality
+    initTaskFilters();
+    
+    // Add expand/collapse all buttons to the task actions
+    const taskActions = document.querySelector('.task-actions');
+    if (taskActions) {
+        const expandCollapseContainer = document.createElement('div');
+        expandCollapseContainer.className = 'task-expand-controls';
         
-        // Task filtering functionality
-        initTaskFilters();
-    });
+        const expandAllBtn = document.createElement('button');
+        expandAllBtn.className = 'btn-expand-all';
+        expandAllBtn.textContent = 'Expand All';
+        expandAllBtn.addEventListener('click', expandAllTasks);
+        
+        const collapseAllBtn = document.createElement('button');
+        collapseAllBtn.className = 'btn-collapse-all';
+        collapseAllBtn.textContent = 'Collapse All';
+        collapseAllBtn.addEventListener('click', collapseAllTasks);
+        
+        expandCollapseContainer.appendChild(expandAllBtn);
+        expandCollapseContainer.appendChild(collapseAllBtn);
+        
+        taskActions.appendChild(expandCollapseContainer);
+    }
+});
         
 
     // Initialize task filters
