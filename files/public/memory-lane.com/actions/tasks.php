@@ -60,7 +60,8 @@ require_once('tasks-css.php');
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Initialize task list
-        const taskData = <?= json_encode($tasks) ?>;
+        const rawTaskData = <?= json_encode($tasks) ?>;
+        const taskData = buildTaskTreeData(rawTaskData);
         renderTaskTree(taskData);
         
         // Task filtering functionality

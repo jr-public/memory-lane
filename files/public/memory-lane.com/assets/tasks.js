@@ -258,23 +258,6 @@ function getAvatarColor(index) {
     return colors[index % colors.length];
 }
 
-// Toggle task children visibility
-function toggleChildren(event) {
-	const taskId = this.dataset.taskId;
-	const childrenContainer = document.getElementById(`children-${taskId}`);
-	
-	if (childrenContainer) {
-		if (childrenContainer.style.display === 'none') {
-			childrenContainer.style.display = 'block';
-			this.textContent = '▼';
-			childrenContainer.dataset.visible = 'true';
-		} else {
-			childrenContainer.style.display = 'none';
-			this.textContent = '▶';
-			childrenContainer.dataset.visible = 'false';
-		}
-	}
-}
 
 // Transform raw task data into the format needed for rendering
 function buildTaskTreeData(tasks) {
