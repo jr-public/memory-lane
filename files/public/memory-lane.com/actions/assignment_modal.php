@@ -80,19 +80,8 @@ $ass_users = $ass_res['data'];
             .replace(/"/g, '\\"');
     }
     
-    // Get avatar color based on index
-    function getAvatarColor(index) {
-        const colors = [
-            '#3498db', // Blue
-            '#9b59b6', // Purple
-            '#e74c3c', // Red
-            '#2ecc71', // Green
-            '#f39c12', // Orange
-            '#1abc9c', // Teal
-            '#d35400'  // Dark Orange
-        ];
-        return colors[index % colors.length];
-    }
+    // Note: We're using createAvatarElement from tasks.js instead of defining our own
+    // The getAvatarColor function is also used from tasks.js
     
     // Show assignment details in the modal
     function showAssignmentDetails(assignmentsJson, taskTitle, taskId) {
@@ -130,22 +119,28 @@ $ass_users = $ass_res['data'];
                     item.className = 'assignment-item';
                     
                     const username = assignment.username || `User ${index + 1}`;
-                    const initial = username.charAt(0).toUpperCase();
                     const role = assignment.role_id ? getRoleName(assignment.role_id) : 'Contributor';
-                    
-                    // Use avatar color based on index
-                    const color = getAvatarColor(index);
                     
                     // Create the main assignment content
                     const mainContent = document.createElement('div');
                     mainContent.className = 'assignment-main-content';
-                    mainContent.innerHTML = `
-                        <div class="assignment-avatar" style="background-color: ${color};">${initial}</div>
-                        <div class="assignment-details">
-                            <div class="assignment-name">${username}</div>
-                            <div class="assignment-role">${role}</div>
-                        </div>
+                    
+                    // Use the createAvatarElement function from tasks.js
+                    const avatarElement = createAvatarElement(assignment, index);
+                    // Adjust any styling needed for the modal context
+                    avatarElement.style.marginRight = '10px';
+                    avatarElement.classList.add('assignment-avatar');
+                    
+                    mainContent.appendChild(avatarElement);
+                    
+                    const detailsDiv = document.createElement('div');
+                    detailsDiv.className = 'assignment-details';
+                    detailsDiv.innerHTML = `
+                        <div class="assignment-name">${username}</div>
+                        <div class="assignment-role">${role}</div>
                     `;
+                    
+                    mainContent.appendChild(detailsDiv);
                     
                     // Create the delete button as a form
                     const deleteForm = document.createElement('form');
