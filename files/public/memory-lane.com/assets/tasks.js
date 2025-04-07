@@ -103,13 +103,23 @@ function createTaskMeta(task) {
     return taskMeta;
 }
 
-// Create priority element
+// Create priority element with improved error handling
 function createPriorityElement(task) {
     const taskPriority = document.createElement('div');
     taskPriority.className = 'task-priority';
+    
+    // Safely access priority with default fallback
+    const priority = (task && task.priority) ? task.priority : 'not_set';
+    const priorityClass = (task && task.priority_class) ? task.priority_class : 'priority-medium';
+    
     const priorityIndicator = document.createElement('span');
-    priorityIndicator.className = `priority-indicator ${task.priority_class}`;
-    priorityIndicator.textContent = task.priority.charAt(0).toUpperCase() + task.priority.slice(1);
+    priorityIndicator.className = `priority-indicator ${priorityClass}`;
+    
+    // Format the priority text with fallback
+    priorityIndicator.textContent = priority !== 'not_set' ? 
+        priority.charAt(0).toUpperCase() + priority.slice(1) : 
+        'Medium'; // Default display text
+    
     taskPriority.appendChild(priorityIndicator);
     return taskPriority;
 }
@@ -130,11 +140,21 @@ function createDueDateElement(task) {
     return taskDueDate;
 }
 
-// Create status badge element
+// Create status badge element with improved error handling
 function createStatusBadge(task) {
     const statusBadge = document.createElement('div');
-    statusBadge.className = `task-status-badge ${task.status_badge_class}`;
-    statusBadge.textContent = task.status.charAt(0).toUpperCase() + task.status.slice(1);
+    
+    // Safely access status with default fallback
+    const status = (task && task.status) ? task.status : 'not_set';
+    const statusBadgeClass = (task && task.status_badge_class) ? task.status_badge_class : 'status-pending';
+    
+    statusBadge.className = `task-status-badge ${statusBadgeClass}`;
+    
+    // Format the status text with fallback
+    statusBadge.textContent = status !== 'not_set' ? 
+        status.charAt(0).toUpperCase() + status.slice(1) : 
+        'Pending'; // Default display text
+    
     return statusBadge;
 }
 
@@ -256,3 +276,74 @@ function toggleChildren(event) {
 	}
 }
 
+// Transform raw task data into the format needed for rendering
+function buildTaskTreeData(tasks) {
+    // Define mapping for classes
+    const statusClasses = {
+        'completed': 'status-active',
+        'in_progress': 'status-in-progress',
+        'pending': 'status-pending',
+        'backlogged': 'status-inactive',
+        'not_set': 'status-pending'
+    };
+    
+    const priorityClasses = {
+        'high': 'priority-high',
+        'medium': 'priority-medium',
+        'low': 'priority-low',
+        'not_set': 'priority-medium'
+    };
+    
+    const iconClasses = {
+        'completed': 'status-completed-icon',
+        'in_progress': 'status-in-progress-icon',
+        'pending': 'status-pending-icon',
+        'backlogged': 'status-on-hold-icon',
+        'not_set': 'status-pending-icon'
+    };
+    
+    // Guard against tasks not being an array
+    if (!Array.isArray(tasks)) {
+        console.error('Expected tasks to be an array, got:', typeof tasks);
+        return [];
+    }
+    
+    return tasks.map(task => {
+        // Guard against null/undefined task
+        if (!task) {
+            console.error('Encountered null or undefined task');
+            return null;
+        }
+        
+        // Safely get properties with defaults
+        const status = task.status || 'not_set';
+        const priority = task.priority || 'not_set';
+        const dueDate = task.due_date || null;
+        
+        // Log problem tasks for debugging
+        if (task.id && (!task.status || !task.priority)) {
+            console.log('Task with missing properties:', task.id, task);
+        }
+        
+        const taskData = {
+            id: task.id || 0,
+            title: task.title || 'Untitled Task',
+            status: status,
+            priority: priority,
+            due_date: dueDate,
+            status_class: iconClasses[status] || 'status-pending-icon',
+            status_badge_class: statusClasses[status] || 'status-pending',
+            priority_class: priorityClasses[priority] || 'priority-medium',
+            has_children: Array.isArray(task.children) && task.children.length > 0,
+            assignments: Array.isArray(task.assignments) ? task.assignments : [],
+            children: []
+        };
+        
+        // Process children if they exist
+        if (Array.isArray(task.children) && task.children.length > 0) {
+            taskData.children = buildTaskTreeData(task.children);
+        }
+        
+        return taskData;
+    }).filter(task => task !== null); // Remove any null tasks
+}

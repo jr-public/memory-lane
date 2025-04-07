@@ -9,7 +9,6 @@ if (!$res['success']) {
     die();
 }
 $tasks = $res['data'];
-
 // Fetch users from API for the select dropdown
 $users_res = api_call("User", "list");
 if (!$users_res['success']) {
@@ -17,63 +16,6 @@ if (!$users_res['success']) {
 } else {
     $users = $users_res['data'];
 }
-
-// Build task tree data structure for template
-function buildTaskTreeData($tasks) {
-    $statusClasses = [
-        'completed' => 'status-active',
-        'in_progress' => 'status-in-progress',
-        'pending' => 'status-pending',
-        'backlogged' => 'status-inactive',
-        'not_set' => 'status-pending'
-    ];
-    $priorityClasses = [
-        'high' => 'priority-high',
-        'medium' => 'priority-medium',
-        'low' => 'priority-low',
-        'not_set' => 'priority-medium'
-    ];
-    $iconClasses = [
-        'completed' => 'status-completed-icon',
-        'in_progress' => 'status-in-progress-icon',
-        'pending' => 'status-pending-icon',
-        'backlogged' => 'status-on-hold-icon',
-        'not_set' => 'status-pending-icon'
-    ];
-    
-    $result = [];
-    foreach ($tasks as $task) {
-        // Set default values if not present
-        if (!isset($task['status'])) $task['status'] = 'not_set';
-        if (!isset($task['priority'])) $task['priority'] = 'not_set';
-        
-        $taskData = [
-            'id' => $task['id'],
-            'title' => $task['title'],
-            'status' => $task['status'],
-            'priority' => $task['priority'],
-            'due_date' => $task['due_date'],
-            'status_class' => $iconClasses[$task['status']] ?? 'status-pending-icon',
-            'status_badge_class' => $statusClasses[$task['status']] ?? 'status-pending',
-            'priority_class' => $priorityClasses[$task['priority']] ?? 'priority-medium',
-            'has_children' => !empty($task['children']),
-            'assignments' => $task['assignments'] ?? [],
-            'children' => []
-        ];
-        
-        // Process children if they exist
-        if (!empty($task['children'])) {
-            $taskData['children'] = buildTaskTreeData($task['children']);
-        }
-        
-        $result[] = $taskData;
-    }
-    
-    return $result;
-}
-
-// Process task data
-$taskTreeData = buildTaskTreeData($tasks);
 ?>
 
 <!-- Task Management Container -->
@@ -117,10 +59,8 @@ require_once('tasks-css.php');
 <!-- Task JavaScript -->
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Task data from PHP
-        const taskData = <?= json_encode($taskTreeData) ?>;
-        
         // Initialize task list
+        const taskData = <?= json_encode($tasks) ?>;
         renderTaskTree(taskData);
         
         // Task filtering functionality
