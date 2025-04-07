@@ -110,7 +110,7 @@
                     
                     
                     const users 	= ( typeof tasked_users == 'undefined' ) ? {} : tasked_users;
-                    const user 		= users[assignment.user_id] ?? {};
+                    const user 		= users[assignment.assigned_to] ?? {};
                     const username 	= user.username ?? 'User ' + (index+1);
                     const role = assignment.role_id ? getRoleName(assignment.role_id) : 'Contributor';
                     

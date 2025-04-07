@@ -181,7 +181,7 @@ function createAvatarsElement(task) {
     const container = document.createElement('div');
     const assignments = task.assignments || [];
     const maxAvatarsToShow = 3;
-    
+    console.log(assignments)
     // If no assignments, show a plus icon
     if (assignments.length === 0) {
         container.className = 'task-avatars-container';
@@ -231,7 +231,7 @@ function createAvatarsElement(task) {
 // Create a single avatar element
 function createAvatarElement(assignment, index) {
 	const users 	= ( typeof tasked_users == 'undefined' ) ? {} : tasked_users;
-	const user 		= users[assignment.user_id] ?? {};
+	const user 		= users[assignment.assigned_to] ?? {};
 	const username 	= user.username ?? 'User';
     const initial 	= username.charAt(0).toUpperCase();
 
@@ -306,9 +306,9 @@ function buildTaskTreeData(tasks) {
         const dueDate = task.due_date || null;
         
         // Log problem tasks for debugging
-        if (task.id && (!task.status || !task.priority)) {
-            console.log('Task with missing properties:', task.id, task);
-        }
+        // if (task.id && (!task.status || !task.priority)) {
+        //     console.log('Task with missing properties:', task.id, task);
+        // }
         
         const taskData = {
             id: task.id || 0,
