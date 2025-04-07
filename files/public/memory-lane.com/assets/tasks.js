@@ -230,18 +230,20 @@ function createAvatarsElement(task) {
 
 // Create a single avatar element
 function createAvatarElement(assignment, index) {
-    const username = assignment.username || 'User';
-    const initial = username.charAt(0).toUpperCase();
-    
-    const avatar = document.createElement('div');
-    avatar.className = 'task-avatar';
-    avatar.title = username;
-    avatar.textContent = initial;
+	const users 	= ( typeof tasked_users == 'undefined' ) ? {} : tasked_users;
+	const user 		= users[assignment.user_id] ?? {};
+	const username 	= user.username ?? 'User';
+    const initial 	= username.charAt(0).toUpperCase();
+
+    const av 		= document.createElement('div');
+    av.className 	= 'task-avatar';
+    av.title 		= username;
+    av.textContent = initial;
     
     // Different color for each avatar
-    avatar.style.backgroundColor = getAvatarColor(index);
+    av.style.backgroundColor = getAvatarColor(index);
     
-    return avatar;
+    return av;
 }
 
 // Get avatar color based on index (unchanged)

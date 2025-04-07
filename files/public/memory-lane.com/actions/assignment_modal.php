@@ -1,13 +1,3 @@
-<?php
-$ass_res = api_call("User", "list");
-if (!$ass_res['success']) {
-    echo json_encode($ass_res);
-    die();
-}
-
-$ass_users = $ass_res['data'];
-?>
-
 <!-- Assignment Details Modal -->
 <div id="assignment-modal">
     <div class="assignment-modal-content">
@@ -118,7 +108,10 @@ $ass_users = $ass_res['data'];
                     const item = document.createElement('div');
                     item.className = 'assignment-item';
                     
-                    const username = assignment.username || `User ${index + 1}`;
+                    
+                    const users 	= ( typeof tasked_users == 'undefined' ) ? {} : tasked_users;
+                    const user 		= users[assignment.user_id] ?? {};
+                    const username 	= user.username ?? 'User ' + (index+1);
                     const role = assignment.role_id ? getRoleName(assignment.role_id) : 'Contributor';
                     
                     // Create the main assignment content
@@ -179,7 +172,7 @@ $ass_users = $ass_res['data'];
                 <input type="hidden" name="user_id" value="1">
                 <div class="form-row">
                     <select id="user-select" name="assigned_to" class="user-select" required>
-                        ${generateUserOptions(<?= json_encode($ass_users); ?>)}
+                        ${generateUserOptions(<?= json_encode(array_values($tasked_users)); ?>)}
                     </select>
                     <button type="submit" class="btn-add-assignment">Add Assignment</button>
                 </div>

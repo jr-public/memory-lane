@@ -1,14 +1,26 @@
 <?php
-$res = api_call("Task", "tree", [
+$tree_res = api_call("Task", "tree", [
     "options" => [
         "with" => ["assignments"]
     ]
 ]);
-if (!$res['success']) {
-    echo json_encode($res);
+if (!$tree_res['success']) {
+    echo json_encode($tree_res);
     die();
 }
-$tasks = $res['data'];
+$users_res = api_call("User", "list", [
+    "options" => [
+        "unique" => true
+    ]
+]);
+if (!$users_res['success']) {
+    echo json_encode($users_res);
+    die();
+}
+
+//
+$tasks = $tree_res['data'];
+$tasked_users = $users_res['data'];
 ?>
 
 <!-- Task Management Container -->
@@ -51,9 +63,9 @@ require_once('tasks-css.php');
 
 <!-- Task JavaScript -->
 <script>
+    const tasked_users = <?= json_encode($tasked_users) ?>;
+    const rawTaskData = <?= json_encode($tasks) ?>;
     document.addEventListener('DOMContentLoaded', function() {
-        // Initialize task list
-        const rawTaskData = <?= json_encode($tasks) ?>;
         const taskData = buildTaskTreeData(rawTaskData);
         renderTaskTree(taskData);
         
