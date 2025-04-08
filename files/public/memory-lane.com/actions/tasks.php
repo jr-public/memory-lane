@@ -3,7 +3,8 @@ $tree_res = api_call("Task", "tree", [
     "options" => [
         'order' => ['id ASC'],
         'filters' => $task_filters ?? [],
-        "with" => ["assignments"]
+        "with" => ["assignments"],
+        "unique" => true
     ]
 ]);
 if (!$tree_res['success']) {
@@ -66,35 +67,61 @@ require_once('actions/tasks-css.php');
     const tasked_users = <?= json_encode($tasked_users) ?>;
     const rawTaskData = <?= json_encode($tasks) ?>;
     const currentUrl = <?= json_encode($current_url) ?>;
+
+    // Initialize popover functionality
     document.addEventListener('DOMContentLoaded', function() {
-    const taskData = buildTaskTreeData(rawTaskData);
-    renderTaskTree(taskData);
-    
-    // Task filtering functionality
-    initTaskFilters();
-    
-    // Add expand/collapse all buttons to the task actions
-    const taskActions = document.querySelector('.task-actions');
-    if (taskActions) {
-        const expandCollapseContainer = document.createElement('div');
-        expandCollapseContainer.className = 'task-expand-controls';
+        // If you need to add any global initialization for popovers,
+        // you can do it here.
         
-        const expandAllBtn = document.createElement('button');
-        expandAllBtn.className = 'btn-expand-all';
-        expandAllBtn.textContent = 'Expand All';
-        expandAllBtn.addEventListener('click', expandAllTasks);
+        // Example: Delegate clicks to dynamically created task dates
+        document.addEventListener('click', function(event) {
+            // Check if clicked element or its parent has the task-due-date class
+            const dateElement = event.target.closest('.task-due-date');
+            if (dateElement && !event.target.closest('.popover')) {
+                // Get task id from the date element
+                const taskId = dateElement.dataset.taskId;
+                
+                // Find the task data with this ID
+                const taskData = rawTaskData[taskId];
+                
+                if (taskData) {
+                    // Show the date popover for this task
+                    showDatePopover(dateElement, taskData.due_date);
+                }
+            }
+        });
+    });
+
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const taskData = buildTaskTreeData(rawTaskData);
+        renderTaskTree(taskData);
         
-        const collapseAllBtn = document.createElement('button');
-        collapseAllBtn.className = 'btn-collapse-all';
-        collapseAllBtn.textContent = 'Collapse All';
-        collapseAllBtn.addEventListener('click', collapseAllTasks);
+        // Task filtering functionality
+        initTaskFilters();
         
-        expandCollapseContainer.appendChild(expandAllBtn);
-        expandCollapseContainer.appendChild(collapseAllBtn);
-        
-        taskActions.appendChild(expandCollapseContainer);
-    }
-});
+        // Add expand/collapse all buttons to the task actions
+        const taskActions = document.querySelector('.task-actions');
+        if (taskActions) {
+            const expandCollapseContainer = document.createElement('div');
+            expandCollapseContainer.className = 'task-expand-controls';
+            
+            const expandAllBtn = document.createElement('button');
+            expandAllBtn.className = 'btn-expand-all';
+            expandAllBtn.textContent = 'Expand All';
+            expandAllBtn.addEventListener('click', expandAllTasks);
+            
+            const collapseAllBtn = document.createElement('button');
+            collapseAllBtn.className = 'btn-collapse-all';
+            collapseAllBtn.textContent = 'Collapse All';
+            collapseAllBtn.addEventListener('click', collapseAllTasks);
+            
+            expandCollapseContainer.appendChild(expandAllBtn);
+            expandCollapseContainer.appendChild(collapseAllBtn);
+            
+            taskActions.appendChild(expandCollapseContainer);
+        }
+    });
         
 
     // Initialize task filters
