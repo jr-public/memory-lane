@@ -112,7 +112,7 @@ const taskTreeConfig = {
           icon.textContent = '▶';
       });
   }
-// Create new task input form
+// Enhanced createNewTaskForm function
 function createNewTaskForm(parentId, level) {
     const formContainer = document.createElement('div');
     formContainer.className = 'task-item new-task-form';
@@ -124,48 +124,73 @@ function createNewTaskForm(parentId, level) {
     form.method = 'post';
     form.className = 'task-new-form';
     form.style.width = '100%';
-    form.innerHTML = `
+    
+    // Create hidden inputs
+    const hiddenInputs = `
         <input type="hidden" name="entity_name" value="Task">
         <input type="hidden" name="entity_action" value="create">
         <input type="hidden" name="parent_id" value="${parentId}">
         <input type="hidden" name="user_id" value="1">
         <input type="hidden" name="status_id" value="1">
-        <div class="task-info" style="width: 100%">
-            <span>${'&nbsp;'.repeat((level) * 4)}</span>
-            <span class="toggle-icon-placeholder"></span>
-            <div class="task-status-icon status-pending-icon"></div>
-            <input type="text" name="title" class="ce-form-input" placeholder="New subtask name..." style="flex: 1; margin-left: 5px; height: 30px; padding: 5px 10px;">
-        </div>
     `;
     
-    // Add event listeners for form submission
-    form.addEventListener('submit', function(e) {
-        if (form.querySelector('input[name="title"]').value.trim() === '') {
-            e.preventDefault();
-        }
-    });
+    // Create task info container
+    const taskInfo = document.createElement('div');
+    taskInfo.className = 'task-info';
+    taskInfo.style.width = '100%';
     
-    // Add blur event to submit when clicking outside
+    // Add proper indentation
+    const indentation = document.createElement('span');
+    indentation.innerHTML = '&nbsp;'.repeat((level) * 4);
+    taskInfo.appendChild(indentation);
+    
+    // Add placeholder for toggle icon
+    const togglePlaceholder = document.createElement('span');
+    togglePlaceholder.className = 'toggle-icon-placeholder';
+    taskInfo.appendChild(togglePlaceholder);
+    
+    // Add status icon
+    const statusIcon = document.createElement('div');
+    statusIcon.className = 'task-status-icon status-pending-icon';
+    taskInfo.appendChild(statusIcon);
+    
+    // Create enhanced input field
     const inputField = document.createElement('input');
     inputField.type = 'text';
     inputField.name = 'title';
     inputField.className = 'ce-form-input';
-    inputField.placeholder = 'New subtask name...';
+    inputField.placeholder = 'Add new subtask...';
     inputField.style.flex = '1';
     inputField.style.marginLeft = '5px';
-    inputField.style.height = '30px';
-    inputField.style.padding = '5px 10px';
+    
+    // Add event listeners
+    inputField.addEventListener('focus', function() {
+        formContainer.classList.add('focused');
+    });
     
     inputField.addEventListener('blur', function() {
+        formContainer.classList.remove('focused');
         if (this.value.trim() !== '') {
             form.submit();
         }
     });
     
-    // Replace the input in the form with our enhanced input
-    form.querySelector('input[name="title"]').replaceWith(inputField);
+    // Add keypress event for better UX
+    inputField.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            if (this.value.trim() !== '') {
+                form.submit();
+            }
+        }
+    });
     
+    // Add elements to form
+    taskInfo.appendChild(inputField);
+    form.innerHTML = hiddenInputs;
+    form.appendChild(taskInfo);
     formContainer.appendChild(form);
+    
     return formContainer;
 }
 

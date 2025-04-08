@@ -630,4 +630,96 @@
     border-color: #3498db;
     box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.25);
 }
+
+/* Improved styling for new task input */
+.new-task-form {
+    margin: 8px 0;
+    padding: 8px 0;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.new-task-form:hover {
+    background-color: rgba(52, 152, 219, 0.05);
+}
+
+.new-task-form .task-info {
+    align-items: center;
+}
+
+.new-task-form .ce-form-input {
+    background-color: transparent;
+    border: 1px dashed #444;
+    border-radius: 4px;
+    color: #909090;
+    height: 36px !important;
+    padding: 0 12px !important;
+    transition: all 0.2s ease;
+    font-size: 0.95rem;
+}
+
+.new-task-form .ce-form-input:focus {
+    border: 1px solid #3498db;
+    color: #e0e0e0;
+    background-color: rgba(52, 152, 219, 0.1);
+    outline: none;
+}
+
+.new-task-form .ce-form-input::placeholder {
+    color: #666;
+    font-style: italic;
+}
+
+.new-task-form .toggle-icon-placeholder {
+    width: 16px;
+    display: inline-block;
+    margin-right: 4px;
+}
+
+.new-task-form .task-status-icon {
+    opacity: 0.5;
+}
+
+/* Add subtle animation on hover */
+.new-task-form:hover .task-status-icon {
+    opacity: 1;
+}
+
+/* Better styling for the task input parent divider */
+.task-children {
+    position: relative;
+    padding-left: 10px;
+}
+
+.task-children:before {
+    content: '';
+    position: absolute;
+    left: 8px;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: #444;
+    opacity: 0.5;
+}
+
+/* Make the new task form stand out a bit */
+.new-task-form .task-new-form {
+    display: flex;
+    align-items: center;
+}
+
+/* Add a subtle button-like effect for the add task input field */
+.new-task-form:hover .ce-form-input {
+    border-color: #666;
+}
+
+/* Better spacing for input field */
+.new-task-form .task-status-icon {
+    margin-right: 6px;
+}
+
+/* Add a subtle plus icon before the input on hover */
+.new-task-form:hover .ce-form-input::placeholder {
+    color: #909090;
+}
 </style>
