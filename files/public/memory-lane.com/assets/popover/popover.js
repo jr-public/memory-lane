@@ -285,3 +285,165 @@ function updateTaskDate(dateElement, newDate) {
         console.log('Date cleared');
     }
 }
+
+// Function to show assignment details in a popover instead of a modal
+function showAssignmentPopover(clickedElement, assignmentsJson, taskTitle, taskId) {
+    // Create the assignment content container
+    const contentContainer = document.createElement('div');
+    contentContainer.className = 'assignment-popover-content';
+    
+    try {
+        // Parse the JSON string to get assignments
+        const assignments = JSON.parse(assignmentsJson);
+        
+        // Add a header with task name
+        const header = document.createElement('div');
+        header.className = 'assignment-popover-header';
+        header.innerHTML = `<h3>Assignments for: ${escapeHTML(taskTitle)}</h3>`;
+        contentContainer.appendChild(header);
+        
+        // Create the assignment list container
+        const listContainer = document.createElement('div');
+        listContainer.className = 'assignment-popover-list';
+        
+        if (assignments.length === 0) {
+            // Show empty state message
+            const emptyState = document.createElement('div');
+            emptyState.className = 'assignment-empty';
+            emptyState.innerHTML = `
+                <div class="empty-icon">👥</div>
+                <div class="empty-text">No users assigned to this task</div>
+            `;
+            listContainer.appendChild(emptyState);
+        } else {
+            // Create an element for each assignment
+            assignments.forEach((assignment, index) => {
+                const item = document.createElement('div');
+                item.className = 'assignment-item';
+                
+                const users = (typeof tasked_users == 'undefined') ? {} : tasked_users;
+                const user = users[assignment.assigned_to] ?? {};
+                const username = user.username ?? 'User ' + (index+1);
+                const role = assignment.role_id ? getRoleName(assignment.role_id) : 'Contributor';
+                
+                // Create the main assignment content
+                const mainContent = document.createElement('div');
+                mainContent.className = 'assignment-main-content';
+                
+                // Use the createAvatarElement function from tasks.js
+                const avatarElement = createAvatarElement(assignment, index);
+                avatarElement.style.marginRight = '10px';
+                avatarElement.classList.add('assignment-avatar');
+                
+                mainContent.appendChild(avatarElement);
+                
+                const detailsDiv = document.createElement('div');
+                detailsDiv.className = 'assignment-details';
+                detailsDiv.innerHTML = `
+                    <div class="assignment-name">${escapeHTML(username)}</div>
+                    <div class="assignment-role">${escapeHTML(role)}</div>
+                `;
+                
+                mainContent.appendChild(detailsDiv);
+                
+                // Create the delete button as a form
+                const deleteForm = document.createElement('form');
+                deleteForm.className = 'assignment-delete-form';
+                deleteForm.action = currentUrl;
+                deleteForm.method = 'post';
+                deleteForm.innerHTML = `
+                    <input type="hidden" name="entity_name" value="TaskAssignment">
+                    <input type="hidden" name="entity_action" value="delete">
+                    <input type="hidden" name="id" value="${assignment.id}">
+                    <button type="submit" class="assignment-delete-btn" title="Remove Assignment">×</button>
+                `;
+                
+                // Add both elements to the item
+                item.appendChild(mainContent);
+                item.appendChild(deleteForm);
+                
+                listContainer.appendChild(item);
+            });
+        }
+        
+        contentContainer.appendChild(listContainer);
+        
+        // Add a separator
+        const separator = document.createElement('div');
+        separator.className = 'assignment-separator';
+        contentContainer.appendChild(separator);
+        
+        // Add the assignment form
+        const assignmentForm = document.createElement('form');
+        assignmentForm.id = 'assignment-form';
+        assignmentForm.className = 'assignment-form';
+        assignmentForm.action = currentUrl;
+        assignmentForm.method = 'post';
+        
+        assignmentForm.innerHTML = `
+            <input type="hidden" name="entity_name" value="TaskAssignment">
+            <input type="hidden" name="entity_action" value="create">
+            <input type="hidden" name="task_id" value="${taskId}">
+            <input type="hidden" name="user_id" value="1">
+            <div class="form-row">
+                <select id="user-select" name="assigned_to" class="user-select" required>
+                    ${generateUserOptions(tasked_users)}
+                </select>
+                <button type="submit" class="btn-add-assignment">Add</button>
+            </div>
+        `;
+        
+        contentContainer.appendChild(assignmentForm);
+        
+    } catch (error) {
+        console.error("Error parsing assignments:", error);
+        contentContainer.innerHTML = '<div class="assignment-error">Error displaying assignments</div>';
+    }
+    
+    // Show the popover with the content we created
+    return showPopover(clickedElement, contentContainer, {
+        position: 'bottom',
+        className: 'assignment-popover',
+        onOpen: (popoverEl) => {
+            // Add any event listeners needed for the popover content
+        }
+    });
+}
+
+// Function to generate user options HTML
+function generateUserOptions(users) {
+    if (!users || typeof users !== 'object') return '<option value="">No users available</option>';
+    
+    let options = '<option value="">Select a user</option>';
+    const usersArray = Array.isArray(users) ? users : Object.values(users);
+    
+    usersArray.forEach(user => {
+        if (user && user.id && user.username) {
+            options += `<option value="${user.id}">${escapeHTML(user.username)}</option>`;
+        }
+    });
+    
+    return options;
+}
+
+// Helper function to escape HTML
+function escapeHTML(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+// Helper function to get role name from role ID
+function getRoleName(roleId) {
+    const roles = {
+        1: 'Administrator',
+        2: 'Manager',
+        3: 'User',
+        4: 'Guest'
+    };
+    return roles[roleId] || 'Contributor';
+}

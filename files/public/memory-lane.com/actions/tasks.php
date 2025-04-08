@@ -58,7 +58,6 @@ $tasked_users = $users_res['data'];
     </div>
 
 <?php 
-require_once('actions/assignment_modal.php');
 require_once('actions/tasks-css.php'); 
 ?>
 
@@ -91,7 +90,21 @@ require_once('actions/tasks-css.php');
             }
         });
     });
-
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add event delegation for assignment containers
+        document.addEventListener('click', function(event) {
+            // Find the closest assignment container if clicked on or inside one
+            const container = event.target.closest('[data-action="show-assignments"]');
+            if (container) {
+                const taskId = container.dataset.taskId;
+                const taskTitle = container.dataset.taskTitle;
+                const assignments = container.dataset.assignments;
+                
+                // Show assignments in the popover instead of modal
+                showAssignmentPopover(container, assignments, taskTitle, taskId);
+            }
+        });
+    });
 
     document.addEventListener('DOMContentLoaded', function() {
         const taskData = buildTaskTreeData(rawTaskData);
