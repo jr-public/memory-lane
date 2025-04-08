@@ -89,10 +89,24 @@ function updateTaskDate(dateElement, newDate) {
 
 // Function to show assignment details in a popover instead of a modal
 function showAssignmentPopover(clickedElement, taskId) {
-	if ( !task_list ) {
-		console.error("NO TASKS");
-		return false;
-	}
+	
+    // Create the assignment content container
+    const contentContainer = document.createElement('div');
+    contentContainer.className = 'assignment-popover-content';
+    
+	contentContainer.append(document.getElementById('assignment_popover').outerHTML);
+    
+    // Show the popover with the content we created
+    return showPopover(clickedElement, contentContainer, {
+        position: 'bottom',
+        className: 'assignment-popover',
+        onOpen: (popoverEl) => {
+            // Add any event listeners needed for the popover content
+        }
+    });
+}
+function _showAssignmentPopover(clickedElement, taskId) {
+	
     // Create the assignment content container
     const contentContainer = document.createElement('div');
     contentContainer.className = 'assignment-popover-content';

@@ -96,7 +96,14 @@ if ( $_SERVER['REQUEST_METHOD'] == 'POST' ) {
             ?>
         </main>
     </div>
-
+    <div id="popover-templates" style="display: none;">
+        <?php
+        // Include all template files here
+        require_once('includes/popover/assignment.php');
+        // require_once('templates/popovers/date.php');
+        // ... more templates
+        ?>
+    </div>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const sidebar = document.getElementById('sidebar');
