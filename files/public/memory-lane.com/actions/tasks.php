@@ -98,10 +98,9 @@ require_once('actions/tasks-css.php');
             const container = event.target.closest('[data-action="show-assignments"]');
             if (container) {
                 const taskId = container.dataset.taskId;
-                const taskTitle = container.dataset.taskTitle;
                 
                 // Show assignments in the popover instead of modal
-                showAssignmentPopover(container, taskTitle, taskId);
+                showAssignmentPopover(container, taskId);
             }
         });
     });
