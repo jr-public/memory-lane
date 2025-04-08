@@ -64,9 +64,10 @@ require_once('actions/tasks-css.php');
 <!-- Task JavaScript -->
 <script>
     const tasked_users = <?= json_encode($tasked_users) ?>;
-    const rawTaskData = <?= json_encode($tasks) ?>;
+    const rawTaskData = <?= json_encode($tasks['tree']) ?>;
+    const task_list = <?= json_encode($tasks['list']) ?>;
     const currentUrl = <?= json_encode($current_url) ?>;
-
+    
     // Initialize popover functionality
     document.addEventListener('DOMContentLoaded', function() {
         // If you need to add any global initialization for popovers,
@@ -81,7 +82,7 @@ require_once('actions/tasks-css.php');
                 const taskId = dateElement.dataset.taskId;
                 
                 // Find the task data with this ID
-                const taskData = rawTaskData[taskId];
+                const taskData = task_list[taskId];
                 
                 if (taskData) {
                     // Show the date popover for this task
@@ -98,10 +99,9 @@ require_once('actions/tasks-css.php');
             if (container) {
                 const taskId = container.dataset.taskId;
                 const taskTitle = container.dataset.taskTitle;
-                const assignments = container.dataset.assignments;
                 
                 // Show assignments in the popover instead of modal
-                showAssignmentPopover(container, assignments, taskTitle, taskId);
+                showAssignmentPopover(container, taskTitle, taskId);
             }
         });
     });

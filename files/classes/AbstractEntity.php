@@ -89,10 +89,11 @@ abstract class AbstractEntity {
             $options['order'] = [];
         }
         array_unshift($options['order'], 'parent_id ASC NULLS FIRST');
-        
-        $res = $this->list($options);
-        if (!$res['success']) return $res;
-        $rows = array_values($res['data']);
+        $options['unique'] = true;
+
+        $list_res = $this->list($options);
+        if (!$list_res['success']) return $list_res;
+        $rows = array_values($list_res['data']);
         // Return original rows if empty or parent_id doesn't exist in the first row
         if (empty($rows) || !array_key_exists('parent_id', $rows[0])) {
             return response(true, $rows);
@@ -120,8 +121,11 @@ abstract class AbstractEntity {
                 $result[] = &$itemMap[$id];
             }
         }
-        
-        return response(true, $result);
+        $response = [
+            "tree" => $result,
+            "list" => $list_res['data']
+        ];
+        return response(true, $response);
     }
 
     public function update(string $id, array $data): array {

@@ -340,7 +340,6 @@ function createAvatarsElement(task) {
         // Add data attributes instead of onclick
         container.dataset.taskId = task.id;
         container.dataset.taskTitle = task.title;
-        container.dataset.assignments = '[]';
         container.dataset.action = 'show-assignments';
         
         return container;
@@ -352,7 +351,6 @@ function createAvatarsElement(task) {
     // Add data attributes
     container.dataset.taskId = task.id;
     container.dataset.taskTitle = task.title;
-    container.dataset.assignments = JSON.stringify(assignments);
     container.dataset.action = 'show-assignments';
     
     // Show avatars up to the maximum

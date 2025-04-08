@@ -88,14 +88,18 @@ function updateTaskDate(dateElement, newDate) {
 }
 
 // Function to show assignment details in a popover instead of a modal
-function showAssignmentPopover(clickedElement, assignmentsJson, taskTitle, taskId) {
+function showAssignmentPopover(clickedElement, taskTitle, taskId) {
+	if ( !task_list ) {
+		console.error("NO TASKS");
+		return false;
+	}
     // Create the assignment content container
     const contentContainer = document.createElement('div');
     contentContainer.className = 'assignment-popover-content';
     
     try {
         // Parse the JSON string to get assignments
-        const assignments = JSON.parse(assignmentsJson);
+        const assignments = task_list[taskId].assignments ?? [];
         
         // Add a header with task name
         const header = document.createElement('div');
