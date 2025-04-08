@@ -94,7 +94,8 @@ function showAssignmentPopover(clickedElement, taskId) {
     const contentContainer = document.createElement('div');
     contentContainer.className = 'assignment-popover-content';
     
-	contentContainer.append(document.getElementById('assignment_popover').outerHTML);
+	let el = document.getElementById('assignment_popover');
+	contentContainer.append(el.cloneNode(true));
     
     // Show the popover with the content we created
     return showPopover(clickedElement, contentContainer, {
