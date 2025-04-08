@@ -1,0 +1,155 @@
+/**
+ * Popover Component Styles
+ * 
+ * Styling for the popover component used to display contextual panels
+ */
+
+/* Base Popover Styles */
+.popover {
+    position: absolute;
+    z-index: 1000;
+    min-width: 220px;
+    background-color: #2a2a2a;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+    color: #e0e0e0;
+    padding: 0;
+    margin: 0;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    pointer-events: none;
+    border: 1px solid #444;
+    overflow: hidden;
+}
+
+/* Active state (visible) */
+.popover.active {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+/* Position variants */
+.popover.position-top::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-top: 8px solid #2a2a2a;
+}
+
+.popover.position-bottom::after {
+    content: '';
+    position: absolute;
+    top: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-bottom: 8px solid #2a2a2a;
+}
+
+.popover.position-left::after {
+    content: '';
+    position: absolute;
+    right: -8px;
+    top: 50%;
+    transform: translateY(-50%);
+    border-top: 8px solid transparent;
+    border-bottom: 8px solid transparent;
+    border-left: 8px solid #2a2a2a;
+}
+
+.popover.position-right::after {
+    content: '';
+    position: absolute;
+    left: -8px;
+    top: 50%;
+    transform: translateY(-50%);
+    border-top: 8px solid transparent;
+    border-bottom: 8px solid transparent;
+    border-right: 8px solid #2a2a2a;
+}
+
+/* Date Popover Specific Styles */
+.date-popover {
+    width: 280px;
+}
+
+.date-popover-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.date-picker-header {
+    padding: 12px 15px;
+    border-bottom: 1px solid #444;
+    background-color: #333;
+}
+
+.date-picker-header h3 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 500;
+    color: #3498db;
+}
+
+.date-picker-body {
+    padding: 15px;
+}
+
+.date-picker-input {
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: 4px;
+    border: 1px solid #444;
+    background-color: #333;
+    color: #e0e0e0;
+    font-size: 14px;
+}
+
+.date-picker-footer {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 15px;
+    border-top: 1px solid #444;
+    background-color: #333;
+}
+
+.date-picker-footer button {
+    padding: 6px 12px;
+    border-radius: 4px;
+    border: none;
+    font-size: 12px;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.btn-apply-date {
+    background-color: #3498db;
+    color: #121212;
+}
+
+.btn-clear-date {
+    background-color: #e74c3c;
+    color: #121212;
+}
+
+.btn-cancel-date {
+    background-color: #5a5a5a;
+    color: #e0e0e0;
+}
+
+/* Make date elements in tasks look clickable */
+.task-due-date {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.task-due-date:hover {
+    color: #3498db;
+}

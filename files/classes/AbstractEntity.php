@@ -92,7 +92,7 @@ abstract class AbstractEntity {
         
         $res = $this->list($options);
         if (!$res['success']) return $res;
-        $rows = $res['data'];
+        $rows = array_values($res['data']);
         // Return original rows if empty or parent_id doesn't exist in the first row
         if (empty($rows) || !array_key_exists('parent_id', $rows[0])) {
             return response(true, $rows);

@@ -51,6 +51,10 @@ if ( $_SERVER['REQUEST_METHOD'] == 'POST' ) {
     <title>API Admin Panel</title>
     <link rel="stylesheet" href="assets/style.css">
     <script src="assets/tasks.js" defer></script>
+    
+    <!-- CONTEXTUAL POPOVER -->
+    <link rel="stylesheet" href="assets/popover/popover.css">
+    <script src="assets/popover/popover.js" defer></script>
 
 </head>
 <body>

@@ -249,18 +249,30 @@ function createPriorityElement(task) {
     return taskPriority;
 }
 
-// Create due date element
+// Modified createDueDateElement function to use the popover
 function createDueDateElement(task) {
     const taskDueDate = document.createElement('div');
     taskDueDate.className = 'task-due-date';
+    taskDueDate.dataset.taskId = task.id;
+    
     const dateIcon = document.createElement('span');
     dateIcon.textContent = '📅';
     taskDueDate.appendChild(dateIcon);
     
     const dateText = document.createElement('span');
-    const dueDate = new Date(task.due_date);
-    dateText.textContent = `${dueDate.toLocaleString('default', { month: 'short' })} ${dueDate.getDate()}`;
+    if (task.due_date) {
+        const dueDate = new Date(task.due_date);
+        dateText.textContent = `${dueDate.toLocaleString('default', { month: 'short' })} ${dueDate.getDate()}`;
+    } else {
+        dateText.textContent = 'No date';
+    }
     taskDueDate.appendChild(dateText);
+    
+    // Add click event to show date popover
+    taskDueDate.addEventListener('click', function(e) {
+        e.stopPropagation(); // Prevent event bubbling to task toggle
+        showDatePopover(this, task.due_date);
+    });
     
     return taskDueDate;
 }
