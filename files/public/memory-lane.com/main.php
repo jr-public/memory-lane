@@ -96,11 +96,14 @@ if ( $_SERVER['REQUEST_METHOD'] == 'POST' ) {
         </main>
     </div>
     <div id="popover-templates" style="display: none;">
-        <?php
-        // Include all template files here
-        require_once('includes/popover/assignment.php');
-        // require_once('templates/popovers/date.php');
-        // ... more templates
+    <?php
+        $directory = __DIR__ . '/includes/popover'; // Change this to your target folder
+        $excludedFiles = ['exclude1.php', 'exclude2.php']; // Files to skip
+        foreach (glob("$directory/*.php") as $file) {
+            if (!in_array(basename($file), $excludedFiles)) {
+                require $file;
+            }
+        }
         ?>
     </div>
     <script>
