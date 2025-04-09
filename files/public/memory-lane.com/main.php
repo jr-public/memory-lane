@@ -97,15 +97,29 @@ if ( $_SERVER['REQUEST_METHOD'] == 'POST' ) {
     </div>
     <div id="popover-templates" style="display: none;">
     <?php
-        $directory = __DIR__ . '/includes/popover'; // Change this to your target folder
-        $excludedFiles = ['exclude1.php', 'exclude2.php']; // Files to skip
+        $popover_templates = [];
+        $directory = __DIR__ . '/includes/popover';
+        $excludedFiles = ['exclude1', 'exclude2']; // no .php
+
         foreach (glob("$directory/*.php") as $file) {
-            if (!in_array(basename($file), $excludedFiles)) {
+            $filename = pathinfo($file, PATHINFO_FILENAME);
+            if (!in_array($filename, $excludedFiles)) {
+                $popover_templates[] = $filename;
+                echo "<div class=\"popover-template\" data-name=\"{$filename}\">";
                 require $file;
+                echo "</div>";
             }
         }
-        ?>
+    ?>
     </div>
+    <script>
+        const popoverTemplates = {};
+        document.querySelectorAll('#popover-templates .popover-template').forEach(el => {
+            const name = el.dataset.name;//
+            popoverTemplates[name] = el;//.innerHTML.trim(); // or `el.cloneNode(true)` if you want full DOM
+        });
+    </script>
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const sidebar = document.getElementById('sidebar');
