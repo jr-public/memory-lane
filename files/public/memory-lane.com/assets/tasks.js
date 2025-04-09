@@ -326,10 +326,18 @@ function createAvatarsElement(task) {
     const assignments = task.assignments || [];
     const maxAvatarsToShow = 3;
     
+    // Add data attributes
+    container.dataset.taskId = task.id;
+    container.dataset.action = 'show-assignments';
+    container.className = 'task-avatars-container';
+    container.addEventListener('click', function(event) {
+        event.stopPropagation(); // Prevent event bubbling to task toggle
+        const taskId = container.dataset.taskId;
+        showAssignmentPopover(container, taskId);
+    });
+    
     // If no assignments, show a plus icon
     if (assignments.length === 0) {
-        container.className = 'task-avatars-container';
-        
         // Create a plus icon element
         const plusIcon = document.createElement('div');
         plusIcon.className = 'task-avatar-add';
@@ -337,19 +345,9 @@ function createAvatarsElement(task) {
         plusIcon.textContent = '+';
         container.appendChild(plusIcon);
         
-        // Add data attributes instead of onclick
-        container.dataset.taskId = task.id;
-        container.dataset.action = 'show-assignments';
-        
         return container;
     }
     
-    // Create avatar container
-    container.className = 'task-avatars-container';
-    
-    // Add data attributes
-    container.dataset.taskId = task.id;
-    container.dataset.action = 'show-assignments';
     
     // Show avatars up to the maximum
     const avatarsToShow = Math.min(assignments.length, maxAvatarsToShow);

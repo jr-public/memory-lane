@@ -68,43 +68,6 @@ require_once('actions/tasks-css.php');
     const task_list = <?= json_encode($tasks['list']) ?>;
     const currentUrl = <?= json_encode($current_url) ?>;
     
-    // Initialize popover functionality
-    document.addEventListener('DOMContentLoaded', function() {
-        // If you need to add any global initialization for popovers,
-        // you can do it here.
-        
-        // Example: Delegate clicks to dynamically created task dates
-        document.addEventListener('click', function(event) {
-            // Check if clicked element or its parent has the task-due-date class
-            const dateElement = event.target.closest('.task-due-date');
-            if (dateElement && !event.target.closest('.popover')) {
-                // Get task id from the date element
-                const taskId = dateElement.dataset.taskId;
-                
-                // Find the task data with this ID
-                const taskData = task_list[taskId];
-                
-                if (taskData) {
-                    // Show the date popover for this task
-                    showDatePopover(dateElement, taskData.due_date);
-                }
-            }
-        });
-    });
-    document.addEventListener('DOMContentLoaded', function() {
-        // Add event delegation for assignment containers
-        document.addEventListener('click', function(event) {
-            // Find the closest assignment container if clicked on or inside one
-            const container = event.target.closest('[data-action="show-assignments"]');
-            if (container) {
-                const taskId = container.dataset.taskId;
-                
-                // Show assignments in the popover instead of modal
-                showAssignmentPopover(container, taskId);
-            }
-        });
-    });
-
     document.addEventListener('DOMContentLoaded', function() {
         const taskData = buildTaskTreeData(rawTaskData);
         renderTaskTree(taskData);
