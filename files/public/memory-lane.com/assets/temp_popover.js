@@ -86,138 +86,129 @@ function updateTaskDate(dateElement, newDate) {
         console.log('Date cleared');
     }
 }
-
-// Function to show assignment details in a popover instead of a modal
+/**
+ * Shows assignment popover with dynamic content
+ * 
+ * @param {HTMLElement} clickedElement - The element that was clicked to trigger the popover
+ * @param {string|number} taskId - The ID of the task whose assignments to show
+ * @returns {Object} - The popover controller
+ */
 function showAssignmentPopover(clickedElement, taskId) {
-	
-    // Create the assignment content container
-    const contentContainer = document.createElement('div');
-    contentContainer.className = 'assignment-popover-content';
+    // Get the task data
+    const taskData = task_list[taskId];
+    if (!taskData) {
+        console.error(`Task with ID ${taskId} not found`);
+        return;
+    }
     
-	let el = document.getElementById('assignment_popover');
-	contentContainer.append(el.cloneNode(true));
+    // Clone the template
+    const template = document.getElementById('assignment_popover');
+    if (!template) {
+        console.error('Assignment popover template not found');
+        return;
+    }
     
-    // Show the popover with the content we created
-    return showPopover(clickedElement, contentContainer, {
-        position: 'bottom',
-        className: 'assignment-popover',
-        onOpen: (popoverEl) => {
-            // Add any event listeners needed for the popover content
-        }
+    const contentContainer = template.cloneNode(true);
+    contentContainer.style.display = ''; // Make visible
+    
+    // Update task title
+    const titleElement = contentContainer.querySelector('.task-title-placeholder');
+    if (titleElement) {
+        titleElement.textContent = `Assignments for: ${escapeHTML(taskData.title)}`;
+    }
+    
+    // Update task ID in the form
+    const taskIdInputs = contentContainer.querySelectorAll('.task-id-input');
+    taskIdInputs.forEach(input => {
+        input.value = taskId;
     });
-}
-function _showAssignmentPopover(clickedElement, taskId) {
-	
-    // Create the assignment content container
-    const contentContainer = document.createElement('div');
-    contentContainer.className = 'assignment-popover-content';
     
-    try {
-        // Parse the JSON string to get assignments
-        const assignments = task_list[taskId].assignments ?? [];
+    // Set the form action
+    const forms = contentContainer.querySelectorAll('form');
+    forms.forEach(form => {
+        form.action = currentUrl;
+    });
+    
+    // Handle assignments
+    const assignments = taskData.assignments || [];
+    const emptyState = contentContainer.querySelector('.assignment-empty');
+    const itemsContainer = contentContainer.querySelector('.assignment-items-container');
+    const itemTemplate = contentContainer.querySelector('.assignment-item-template');
+    
+    if (assignments.length === 0) {
+        // Show empty state
+        if (emptyState) emptyState.style.display = '';
+        if (itemsContainer) itemsContainer.style.display = 'none';
+    } else {
+        // Hide empty state, show items container
+        if (emptyState) emptyState.style.display = 'none';
+        if (itemsContainer) itemsContainer.style.display = '';
         
-        // Add a header with task name
-        const header = document.createElement('div');
-        header.className = 'assignment-popover-header';
-        header.innerHTML = `<h3>Assignments for: ${escapeHTML(task_list[taskId].title)}</h3>`;
-        contentContainer.appendChild(header);
-        
-        // Create the assignment list container
-        const listContainer = document.createElement('div');
-        listContainer.className = 'assignment-popover-list';
-        
-        if (assignments.length === 0) {
-            // Show empty state message
-            const emptyState = document.createElement('div');
-            emptyState.className = 'assignment-empty';
-            emptyState.innerHTML = `
-                <div class="empty-icon">👥</div>
-                <div class="empty-text">No users assigned to this task</div>
-            `;
-            listContainer.appendChild(emptyState);
-        } else {
-            // Create an element for each assignment
+        // Populate assignments
+        if (itemTemplate && itemsContainer) {
             assignments.forEach((assignment, index) => {
-                const item = document.createElement('div');
-                item.className = 'assignment-item';
+                // Clone the template
+                const item = itemTemplate.cloneNode(true);
+                item.classList.remove('assignment-item-template');
+                item.style.display = '';
                 
-                const users = (typeof tasked_users == 'undefined') ? {} : tasked_users;
+                // Get user data
+                const users = (typeof tasked_users === 'undefined') ? {} : tasked_users;
                 const user = users[assignment.assigned_to] ?? {};
-                const username = user.username ?? 'User ' + (index+1);
+                const username = user.username ?? 'User ' + (index + 1);
                 const role = assignment.role_id ? getRoleName(assignment.role_id) : 'Contributor';
                 
-                // Create the main assignment content
-                const mainContent = document.createElement('div');
-                mainContent.className = 'assignment-main-content';
+                // Set assignment ID for deletion
+                const idInput = item.querySelector('.assignment-id-input');
+                if (idInput) {
+                    idInput.value = assignment.id;
+                }
                 
-                // Use the createAvatarElement function from tasks.js
-                const avatarElement = createAvatarElement(assignment, index);
-                avatarElement.style.marginRight = '10px';
-                avatarElement.classList.add('assignment-avatar');
+                // Set avatar
+                const avatarElement = item.querySelector('.assignment-avatar');
+                if (avatarElement) {
+                    // Get initial letter
+                    const initial = username.charAt(0).toUpperCase();
+                    avatarElement.textContent = initial;
+                    
+                    // Set background color
+                    avatarElement.style.backgroundColor = getAvatarColor(index);
+                }
                 
-                mainContent.appendChild(avatarElement);
+                // Set name and role
+                const nameElement = item.querySelector('.assignment-name');
+                if (nameElement) {
+                    nameElement.textContent = username;
+                }
                 
-                const detailsDiv = document.createElement('div');
-                detailsDiv.className = 'assignment-details';
-                detailsDiv.innerHTML = `
-                    <div class="assignment-name">${escapeHTML(username)}</div>
-                    <div class="assignment-role">${escapeHTML(role)}</div>
-                `;
+                const roleElement = item.querySelector('.assignment-role');
+                if (roleElement) {
+                    roleElement.textContent = role;
+                }
                 
-                mainContent.appendChild(detailsDiv);
-                
-                // Create the delete button as a form
-                const deleteForm = document.createElement('form');
-                deleteForm.className = 'assignment-delete-form';
-                deleteForm.action = currentUrl;
-                deleteForm.method = 'post';
-                deleteForm.innerHTML = `
-                    <input type="hidden" name="entity_name" value="TaskAssignment">
-                    <input type="hidden" name="entity_action" value="delete">
-                    <input type="hidden" name="id" value="${assignment.id}">
-                    <button type="submit" class="assignment-delete-btn" title="Remove Assignment">×</button>
-                `;
-                
-                // Add both elements to the item
-                item.appendChild(mainContent);
-                item.appendChild(deleteForm);
-                
-                listContainer.appendChild(item);
+                // Add to container
+                itemsContainer.appendChild(item);
             });
+            
+            // Remove the template from the DOM
+            if (itemTemplate.parentNode) {
+                itemTemplate.parentNode.removeChild(itemTemplate);
+            }
         }
+    }
+    
+    // Populate user select dropdown
+    const userSelect = contentContainer.querySelector('.user-select');
+    if (userSelect) {
+        let options = '<option value="">Select a user</option>';
+        const usersArray = Array.isArray(tasked_users) ? tasked_users : Object.values(tasked_users);
         
-        contentContainer.appendChild(listContainer);
-        
-        // Add a separator
-        const separator = document.createElement('div');
-        separator.className = 'assignment-separator';
-        contentContainer.appendChild(separator);
-        
-        // Add the assignment form
-        const assignmentForm = document.createElement('form');
-        assignmentForm.id = 'assignment-form';
-        assignmentForm.className = 'assignment-form';
-        assignmentForm.action = currentUrl;
-        assignmentForm.method = 'post';
-        
-        assignmentForm.innerHTML = `
-            <input type="hidden" name="entity_name" value="TaskAssignment">
-            <input type="hidden" name="entity_action" value="create">
-            <input type="hidden" name="task_id" value="${taskId}">
-            <input type="hidden" name="user_id" value="1">
-            <div class="form-row">
-                <select id="user-select" name="assigned_to" class="user-select" required>
-                    ${generateUserOptions(tasked_users)}
-                </select>
-                <button type="submit" class="btn-add-assignment">Add</button>
-            </div>
-        `;
-        
-        contentContainer.appendChild(assignmentForm);
-        
-    } catch (error) {
-        console.error("Error parsing assignments:", error);
-        contentContainer.innerHTML = '<div class="assignment-error">Error displaying assignments</div>';
+        usersArray.forEach(user => {
+            if (user && user.id && user.username) {
+                options += `<option value="${user.id}">${escapeHTML(user.username)}</option>`;
+            }
+        });
+        userSelect.innerHTML = options;
     }
     
     // Show the popover with the content we created
@@ -225,25 +216,9 @@ function _showAssignmentPopover(clickedElement, taskId) {
         position: 'bottom',
         className: 'assignment-popover',
         onOpen: (popoverEl) => {
-            // Add any event listeners needed for the popover content
+            // Any additional initialization after popover is shown
         }
     });
-}
-
-// Function to generate user options HTML
-function generateUserOptions(users) {
-    if (!users || typeof users !== 'object') return '<option value="">No users available</option>';
-    
-    let options = '<option value="">Select a user</option>';
-    const usersArray = Array.isArray(users) ? users : Object.values(users);
-    
-    usersArray.forEach(user => {
-        if (user && user.id && user.username) {
-            options += `<option value="${user.id}">${escapeHTML(user.username)}</option>`;
-        }
-    });
-    
-    return options;
 }
 
 // Helper function to escape HTML
