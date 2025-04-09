@@ -295,8 +295,26 @@ function createDueDateElement(task) {
     
     // Add click event to show date popover
     taskDueDate.addEventListener('click', function(e) {
-        e.stopPropagation(); // Prevent event bubbling to task toggle
-        showDatePopover(this, task.due_date);
+        
+        // Prevent event bubbling to task toggle
+        e.stopPropagation(); 
+
+        // Create a new version of the templated element
+        let cloned = popoverTemplates.due_date.cloneNode(true);
+        cloned.style.display = '';
+
+        // const dateInput = cloned.querySelector('.date-picker-input');
+        // dateInput.value = task.due_date || '';
+        // initDueDate() ? // Something to config how it looks and behaves
+
+        return showPopover(e.target, cloned, {
+            position: 'bottom',
+            // className: 'due-date-popover',
+            onOpen: (popoverEl) => {
+                // Any additional initialization after popover is shown
+            }
+        });
+        // showDatePopover(this, task.due_date);
     });
     
     return taskDueDate;
