@@ -54,7 +54,8 @@ if ( $_SERVER['REQUEST_METHOD'] == 'POST' ) {
     
     <!-- CONTEXTUAL POPOVER -->
     <link rel="stylesheet" href="assets/popover/popover.css">
-    <script src="assets/popover/popover.js" defer></script>
+    <script src="assets/popover/popover.js"></script>
+    <script src="assets/api_client.js"></script>
 
 </head>
 <body>
