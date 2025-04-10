@@ -41,14 +41,14 @@ function get_cookie() {
 	return $cook;
 }
 function device_id() {
-    $userAgent 		= $_SERVER['HTTP_USER_AGENT'] ?? 'NO_USER_AGENT';
-    $acceptLanguage = $_SERVER['HTTP_ACCEPT_LANGUAGE'] ?? 'NO_LANG';
-    $ipAddress 		= $_SERVER['REMOTE_ADDR'];
+    // $userAgent 		= $_SERVER['HTTP_USER_AGENT'] ?? 'NO_USER_AGENT';
+    // $acceptLanguage = $_SERVER['HTTP_ACCEPT_LANGUAGE'] ?? 'NO_LANG';
+    // $ipAddress 		= $_SERVER['REMOTE_ADDR'];
     
-    // Create a device fingerprint
-    $device_id = hash('sha256', $userAgent . $acceptLanguage . $ipAddress);
-    // $device_id = $userAgent . $acceptLanguage . $ipAddress;
-    
+    // // Create a device fingerprint
+    // $device_id = hash('sha256', $userAgent . $acceptLanguage . $ipAddress);
+    // // $device_id = $userAgent . $acceptLanguage . $ipAddress;
+    $device_id = "NODEVICE";
     return $device_id;
 }
 
