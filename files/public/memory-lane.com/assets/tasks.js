@@ -319,12 +319,12 @@ function createDueDateElement(task) {
     
                 applyBtn.addEventListener('click', () => {
                     const newDate = new Date(dateInput.value);
-                    updateTaskDueDate(anchorEl, newDate);
+                    updateTaskDueDate(anchorEl, task.id, newDate);
                     popover.close();
                 });
     
                 clearBtn.addEventListener('click', () => {
-                    updateTaskDueDate(anchorEl, null);
+                    updateTaskDueDate(anchorEl, task.id, null);
                     popover.close();
                 });
     
@@ -340,30 +340,41 @@ function createDueDateElement(task) {
     
     return taskDueDate;
 }
-function updateTaskDueDate(dateElement, newDate) {
+function updateTaskDueDate(dateElement, taskId, newDate) {
 
     const dateText = dateElement.querySelector('span.due-date-text');
-    if (!dateText){
-        console.log("updateTaskDueDate: no child")
-        return;
-    }
-    
     if (newDate) {
         // Format the date for display
         const formattedDate = `${newDate.toLocaleString('default', { month: 'short' })} ${newDate.getDate()}`;
         dateText.textContent = formattedDate;
-        
-        // HERE UPDATE DB OR SOMETHING
-
-        console.log('Date updated to:', newDate.toISOString());
     } else {
         // Clear the date
         dateText.textContent = 'No date';
     }
-    console.log("out")
+    
+    apiProxyRequest(
+        { 
+            controller: 'task',
+            action: 'update', 
+            params: {
+                id: taskId,
+                data: {
+                    due_date: newDate
+                }
+            }
+        },
+        function(result) {
+            // This will run when the data comes back
+            console.log('Success:', result);
+        },
+        function(result) {
+            // This will run when the data comes back
+            console.error('Error:', result);
+        }
+    );
+
+
 }
-
-
 
 // Create status badge element with improved error handling
 function createStatusBadge(task) {
