@@ -54,8 +54,8 @@ if ( $_SERVER['REQUEST_METHOD'] == 'POST' ) {
     
     <!-- CONTEXTUAL POPOVER -->
     <link rel="stylesheet" href="assets/popover/popover.css">
-    <script src="assets/popover/popover.js" defer></script>
-    <script src="assets/temp_popover.js" defer></script>
+    <script src="assets/popover/popover.js"></script>
+    <script src="assets/api_client.js"></script>
 
 </head>
 <body>
@@ -96,7 +96,29 @@ if ( $_SERVER['REQUEST_METHOD'] == 'POST' ) {
             ?>
         </main>
     </div>
+    <!-- <script defer>
+        // Example usage - fire and forget
+        apiProxyRequest(
+            { 
+                controller: 'user',
+                action: 'get', 
+                params: {
+                    id: '1' 
+                }
+            },
+            function(result) {
+                // This will run when the data comes back
+                console.log('Success:', result);
+            },
+            function(result) {
+                // This will run when the data comes back
+                console.error('Error:', result);
+            }
+        );
 
+        // Continue with your main code path immediately
+        console.log('Main code continues execution without waiting...');
+    </script> -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const sidebar = document.getElementById('sidebar');
