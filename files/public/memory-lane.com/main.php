@@ -96,29 +96,31 @@ if ( $_SERVER['REQUEST_METHOD'] == 'POST' ) {
             ?>
         </main>
     </div>
-    <!-- <script defer>
-        // Example usage - fire and forget
-        apiProxyRequest(
-            { 
-                controller: 'user',
-                action: 'get', 
-                params: {
-                    id: '1' 
-                }
-            },
-            function(result) {
-                // This will run when the data comes back
-                console.log('Success:', result);
-            },
-            function(result) {
-                // This will run when the data comes back
-                console.error('Error:', result);
-            }
-        );
+    <div id="popover-templates" style="display: none;">
+    <?php
+        $popover_templates = [];
+        $directory = __DIR__ . '/includes/popover';
+        $excludedFiles = ['exclude1', 'exclude2']; // no .php
 
-        // Continue with your main code path immediately
-        console.log('Main code continues execution without waiting...');
-    </script> -->
+        foreach (glob("$directory/*.php") as $file) {
+            $filename = pathinfo($file, PATHINFO_FILENAME);
+            if (!in_array($filename, $excludedFiles)) {
+                $popover_templates[] = $filename;
+                echo "<div class=\"popover-template\" data-name=\"{$filename}\">";
+                require $file;
+                echo "</div>";
+            }
+        }
+    ?>
+    </div>
+    <script>
+        const popoverTemplates = {};
+        document.querySelectorAll('#popover-templates .popover-template').forEach(el => {
+            const name = el.dataset.name;//
+            popoverTemplates[name] = el;//.innerHTML.trim(); // or `el.cloneNode(true)` if you want full DOM
+        });
+    </script>
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const sidebar = document.getElementById('sidebar');
