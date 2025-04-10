@@ -2,116 +2,116 @@
 const taskTreeConfig = {
     expandByDefault: false, // Set to true to expand all tasks by default
     maxExpandLevel: 1,      // Maximum level to auto-expand (0 = just root level)
-  };
-  
-  // Modified renderTaskTree function with configurable expansion
-  function renderTaskTree(tasks, parentElement = null, level = 0) {
-      const taskList = parentElement || document.getElementById('task-list');
-     
-      tasks.forEach(task => {
-          // Create task item
-          const taskItem = createTaskItem(task, level);
-          taskList.appendChild(taskItem);
-         
-          // Create container for children (even if no children exist)
-          const childrenContainer = document.createElement('div');
-          childrenContainer.className = 'task-children';
-          childrenContainer.id = `children-${task.id}`;
-          
-          // Determine if this level should be expanded based on configuration
-          const shouldExpand = taskTreeConfig.expandByDefault || level < taskTreeConfig.maxExpandLevel;
-          
-          childrenContainer.dataset.visible = shouldExpand ? 'true' : 'false';
-          childrenContainer.style.display = shouldExpand ? 'block' : 'none';
-          
-          // Always add a new task creation form
-          childrenContainer.appendChild(createNewTaskForm(task.id, level + 1));
-          
-          // If task has children, render them inside the container
-          if (task.has_children) {
-              // Recursively render children within this container
-              renderTaskTree(task.children, childrenContainer, level + 1);
-          }
-         
-          
-          // Append the children container to the task list
-          taskList.appendChild(childrenContainer);
-          
-          // Update toggle icon to match expansion state
-          const toggleIcon = taskItem.querySelector('.toggle-icon');
-          if (toggleIcon) {
-              toggleIcon.textContent = shouldExpand ? '▼' : '▶';
-          }
-      });
-  }
-  
-  // Modified createTaskInfo function to reflect the expansion state
-  function createTaskInfo(task, level) {
-      const taskInfo = document.createElement('div');
-      taskInfo.className = 'task-info';
-      
-      // Add indentation based on level
-      if (level > 0) {
-          const indentation = document.createElement('span');
-          indentation.innerHTML = '&nbsp;'.repeat(level * 4);
-          taskInfo.appendChild(indentation);
-      }
-      
-      // Add toggle icon for all tasks, regardless of whether they have children
-      const toggleIcon = document.createElement('span');
-      toggleIcon.className = 'toggle-icon';
-      toggleIcon.dataset.taskId = task.id;
-      
-      // Set icon based on default expansion state
-      const shouldExpand = taskTreeConfig.expandByDefault || level < taskTreeConfig.maxExpandLevel;
-      toggleIcon.textContent = shouldExpand ? '▼' : '▶';
-      
-      toggleIcon.addEventListener('click', toggleChildren);
-      taskInfo.appendChild(toggleIcon);
-      
-      // Status icon
-      const statusIcon = document.createElement('div');
-      statusIcon.className = `task-status-icon ${task.status_class}`;
-      taskInfo.appendChild(statusIcon);
-      
-      // Task name
-      const taskName = document.createElement('div');
-      taskName.className = 'task-name';
-      taskName.textContent = task.title;
-      taskInfo.appendChild(taskName);
-      
-      return taskInfo;
-  }
-  
-  // Helper function to expand all tasks (can be called from a button or programmatically)
-  function expandAllTasks() {
-      const allContainers = document.querySelectorAll('.task-children');
-      const allToggleIcons = document.querySelectorAll('.toggle-icon');
-      
-      allContainers.forEach(container => {
-          container.style.display = 'block';
-          container.dataset.visible = 'true';
-      });
-      
-      allToggleIcons.forEach(icon => {
-          icon.textContent = '▼';
-      });
-  }
-  
-  // Helper function to collapse all tasks
-  function collapseAllTasks() {
-      const allContainers = document.querySelectorAll('.task-children');
-      const allToggleIcons = document.querySelectorAll('.toggle-icon');
-      
-      allContainers.forEach(container => {
-          container.style.display = 'none';
-          container.dataset.visible = 'false';
-      });
-      
-      allToggleIcons.forEach(icon => {
-          icon.textContent = '▶';
-      });
-  }
+};
+
+// Modified renderTaskTree function with configurable expansion
+function renderTaskTree(tasks, parentElement = null, level = 0) {
+    const taskList = parentElement || document.getElementById('task-list');
+    
+    tasks.forEach(task => {
+        // Create task item
+        const taskItem = createTaskItem(task, level);
+        taskList.appendChild(taskItem);
+        
+        // Create container for children (even if no children exist)
+        const childrenContainer = document.createElement('div');
+        childrenContainer.className = 'task-children';
+        childrenContainer.id = `children-${task.id}`;
+        
+        // Determine if this level should be expanded based on configuration
+        const shouldExpand = taskTreeConfig.expandByDefault || level < taskTreeConfig.maxExpandLevel;
+        
+        childrenContainer.dataset.visible = shouldExpand ? 'true' : 'false';
+        childrenContainer.style.display = shouldExpand ? 'block' : 'none';
+        
+        // Always add a new task creation form
+        childrenContainer.appendChild(createNewTaskForm(task.id, level + 1));
+        
+        // If task has children, render them inside the container
+        if (task.has_children) {
+            // Recursively render children within this container
+            renderTaskTree(task.children, childrenContainer, level + 1);
+        }
+        
+        
+        // Append the children container to the task list
+        taskList.appendChild(childrenContainer);
+        
+        // Update toggle icon to match expansion state
+        const toggleIcon = taskItem.querySelector('.toggle-icon');
+        if (toggleIcon) {
+            toggleIcon.textContent = shouldExpand ? '▼' : '▶';
+        }
+    });
+}
+
+// Modified createTaskInfo function to reflect the expansion state
+function createTaskInfo(task, level) {
+    const taskInfo = document.createElement('div');
+    taskInfo.className = 'task-info';
+    
+    // Add indentation based on level
+    if (level > 0) {
+        const indentation = document.createElement('span');
+        indentation.innerHTML = '&nbsp;'.repeat(level * 4);
+        taskInfo.appendChild(indentation);
+    }
+    
+    // Add toggle icon for all tasks, regardless of whether they have children
+    const toggleIcon = document.createElement('span');
+    toggleIcon.className = 'toggle-icon';
+    toggleIcon.dataset.taskId = task.id;
+    
+    // Set icon based on default expansion state
+    const shouldExpand = taskTreeConfig.expandByDefault || level < taskTreeConfig.maxExpandLevel;
+    toggleIcon.textContent = shouldExpand ? '▼' : '▶';
+    
+    toggleIcon.addEventListener('click', toggleChildren);
+    taskInfo.appendChild(toggleIcon);
+    
+    // Status icon
+    const statusIcon = document.createElement('div');
+    statusIcon.className = `task-status-icon ${task.status_class}`;
+    taskInfo.appendChild(statusIcon);
+    
+    // Task name
+    const taskName = document.createElement('div');
+    taskName.className = 'task-name';
+    taskName.textContent = task.title;
+    taskInfo.appendChild(taskName);
+    
+    return taskInfo;
+}
+
+// Helper function to expand all tasks (can be called from a button or programmatically)
+function expandAllTasks() {
+    const allContainers = document.querySelectorAll('.task-children');
+    const allToggleIcons = document.querySelectorAll('.toggle-icon');
+    
+    allContainers.forEach(container => {
+        container.style.display = 'block';
+        container.dataset.visible = 'true';
+    });
+    
+    allToggleIcons.forEach(icon => {
+        icon.textContent = '▼';
+    });
+}
+
+// Helper function to collapse all tasks
+function collapseAllTasks() {
+    const allContainers = document.querySelectorAll('.task-children');
+    const allToggleIcons = document.querySelectorAll('.toggle-icon');
+    
+    allContainers.forEach(container => {
+        container.style.display = 'none';
+        container.dataset.visible = 'false';
+    });
+    
+    allToggleIcons.forEach(icon => {
+        icon.textContent = '▶';
+    });
+}
 // Enhanced createNewTaskForm function
 function createNewTaskForm(parentId, level) {
     const formContainer = document.createElement('div');
@@ -274,51 +274,96 @@ function createPriorityElement(task) {
     return taskPriority;
 }
 
-// Modified createDueDateElement function to use the popover
 function createDueDateElement(task) {
     const taskDueDate = document.createElement('div');
     taskDueDate.className = 'task-due-date';
     taskDueDate.dataset.taskId = task.id;
-    
+
     const dateIcon = document.createElement('span');
     dateIcon.textContent = '📅';
     taskDueDate.appendChild(dateIcon);
-    
+    const dueDate = new Date(task.due_date);
+    if (isNaN(dueDate.getTime())) {
+      dueDate = new Date();
+    }
     const dateText = document.createElement('span');
+    dateText.classList.add('due-date-text');
     if (task.due_date) {
-        const dueDate = new Date(task.due_date);
         dateText.textContent = `${dueDate.toLocaleString('default', { month: 'short' })} ${dueDate.getDate()}`;
     } else {
         dateText.textContent = 'No date';
     }
     taskDueDate.appendChild(dateText);
-    
-    // Add click event to show date popover
     taskDueDate.addEventListener('click', function(e) {
+        e.stopPropagation();
         
-        // Prevent event bubbling to task toggle
-        e.stopPropagation(); 
-
-        // Create a new version of the templated element
+        // Check it out; superman's uncle anchor-el
+        const anchorEl = e.currentTarget; // This is the correct reference
+    
         let cloned = popoverTemplates.due_date.cloneNode(true);
         cloned.style.display = '';
-
-        // const dateInput = cloned.querySelector('.date-picker-input');
-        // dateInput.value = task.due_date || '';
-        // initDueDate() ? // Something to config how it looks and behaves
-
-        return showPopover(e.target, cloned, {
+    
+        const dateInput = cloned.querySelector('.date-picker-input');
+        dateInput.value = (task.due_date && !isNaN(dueDate.getTime())) 
+                            ? dueDate.toISOString().split('T')[0] 
+                            : '';
+      
+    
+        const popover = showPopover(anchorEl, cloned, {
             position: 'bottom',
-            // className: 'due-date-popover',
             onOpen: (popoverEl) => {
-                // Any additional initialization after popover is shown
+                const applyBtn = popoverEl.querySelector('.btn-apply-date');
+                const clearBtn = popoverEl.querySelector('.btn-clear-date');
+                const cancelBtn = popoverEl.querySelector('.btn-cancel-date');
+                const dateInput = popoverEl.querySelector('.date-picker-input');
+    
+                applyBtn.addEventListener('click', () => {
+                    const newDate = new Date(dateInput.value);
+                    updateTaskDueDate(anchorEl, newDate);
+                    popover.close();
+                });
+    
+                clearBtn.addEventListener('click', () => {
+                    updateTaskDueDate(anchorEl, null);
+                    popover.close();
+                });
+    
+                cancelBtn.addEventListener('click', () => {
+                    popover.close();
+                });
             }
         });
-        // showDatePopover(this, task.due_date);
+    
+        return popover;
     });
+    
     
     return taskDueDate;
 }
+function updateTaskDueDate(dateElement, newDate) {
+
+    const dateText = dateElement.querySelector('span.due-date-text');
+    if (!dateText){
+        console.log("updateTaskDueDate: no child")
+        return;
+    }
+    
+    if (newDate) {
+        // Format the date for display
+        const formattedDate = `${newDate.toLocaleString('default', { month: 'short' })} ${newDate.getDate()}`;
+        dateText.textContent = formattedDate;
+        
+        // HERE UPDATE DB OR SOMETHING
+
+        console.log('Date updated to:', newDate.toISOString());
+    } else {
+        // Clear the date
+        dateText.textContent = 'No date';
+    }
+    console.log("out")
+}
+
+
 
 // Create status badge element with improved error handling
 function createStatusBadge(task) {
