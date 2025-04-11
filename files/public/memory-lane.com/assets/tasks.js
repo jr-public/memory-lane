@@ -101,10 +101,7 @@ function createTaskMeta(task) {
     taskMeta.className = 'task-meta';
     
     // Add assignments
-    const taskAssignments = document.createElement('div');
-    taskAssignments.className = 'task-assignments';
-    taskAssignments.appendChild(createAvatarsElement(task));
-    taskMeta.appendChild(taskAssignments);
+    taskMeta.appendChild(createAvatarsElement(task));
     
     // Add due date
     taskMeta.appendChild(createDueDateElement(task));
@@ -518,36 +515,15 @@ function createAvatarsElement(task) {
     
     // Handle empty state
     if (assignments.length === 0) {
-        container.appendChild(createEmptyAssignmentElement());
+        const plusIcon = document.createElement('div');
+        plusIcon.className = 'task-avatar-add';
+        plusIcon.title = 'Add assignment';
+        plusIcon.textContent = '+';
+        container.appendChild(plusIcon);
         return container;
     }
     
     // Handle populated state
-    populateAvatarContainer(container, assignments);
-    
-    return container;
-}
-
-/**
- * Creates an empty assignment element (plus icon)
- * 
- * @returns {HTMLElement} - Empty state element
- */
-function createEmptyAssignmentElement() {
-    const plusIcon = document.createElement('div');
-    plusIcon.className = 'task-avatar-add';
-    plusIcon.title = 'Add assignment';
-    plusIcon.textContent = '+';
-    return plusIcon;
-}
-
-/**
- * Populates the avatar container with assignment avatars
- * 
- * @param {HTMLElement} container - Container element to populate
- * @param {Array} assignments - Array of assignment objects
- */
-function populateAvatarContainer(container, assignments) {
     const maxAvatarsToShow = 3;
     
     // Show avatars up to the maximum
@@ -558,21 +534,12 @@ function populateAvatarContainer(container, assignments) {
     
     // Add overflow indicator if needed
     if (assignments.length > maxAvatarsToShow) {
-        container.appendChild(createOverflowIndicator(assignments.length - maxAvatarsToShow));
+        const moreIndicator = document.createElement('div');
+        moreIndicator.className = 'task-avatar-more';
+        moreIndicator.textContent = `+${assignments.length - maxAvatarsToShow}`;
+        container.appendChild(moreIndicator);
     }
-}
-
-/**
- * Creates an overflow indicator showing how many more avatars exist
- * 
- * @param {number} overflowCount - Number of additional avatars
- * @returns {HTMLElement} - Overflow indicator element
- */
-function createOverflowIndicator(overflowCount) {
-    const moreIndicator = document.createElement('div');
-    moreIndicator.className = 'task-avatar-more';
-    moreIndicator.textContent = `+${overflowCount}`;
-    return moreIndicator;
+    return container;
 }
 
 // The existing createAvatarElement function remains unchanged
