@@ -54,8 +54,7 @@
     }
 </style>
 
-<div id="assignment_popover" style="display:none;">
-    <div class="assignment-popover-content">
+<div class="assignment-popover-content">
         <!-- Popover Header -->
         <div class="assignment-popover-header">
             <h3 class="task-title-placeholder">Assignments for: Task Title</h3>
@@ -111,7 +110,6 @@
             </div>
         </form>
     </div>
-</div>
 <script>
 /**
  * Shows assignment popover with improved data flow patterns
