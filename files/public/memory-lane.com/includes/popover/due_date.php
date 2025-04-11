@@ -1,6 +1,3 @@
-<?php
-
-?>
 <div class="date-picker-header">
 	<h3>Select Due Date</h3>
 </div>
