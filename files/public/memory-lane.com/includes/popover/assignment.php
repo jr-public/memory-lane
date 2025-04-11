@@ -113,8 +113,8 @@
     </div>
 </div>
 <script>
-    /**
- * Shows assignment popover with dynamic content
+/**
+ * Shows assignment popover with more consistent template handling
  * 
  * @param {HTMLElement} clickedElement - The element that was clicked to trigger the popover
  * @param {string|number} taskId - The ID of the task whose assignments to show
@@ -128,39 +128,33 @@ function showAssignmentPopover(clickedElement, taskId) {
         return;
     }
     
-    // Clone the template
-    const template = document.getElementById('assignment_popover');
-    if (!template) {
-        console.error('Assignment popover template not found');
-        return;
-    }
-    
-    const contentContainer = template.cloneNode(true);
-    contentContainer.style.display = ''; // Make visible
+    // More consistent template handling pattern that matches other element functions
+    let cloned = popoverTemplates.assignment.cloneNode(true);
+    cloned.style.display = '';
     
     // Update task title
-    const titleElement = contentContainer.querySelector('.task-title-placeholder');
+    const titleElement = cloned.querySelector('.task-title-placeholder');
     if (titleElement) {
         titleElement.textContent = `Assignments for: ${escapeHTML(taskData.title)}`;
     }
     
     // Update task ID in the form
-    const taskIdInputs = contentContainer.querySelectorAll('.task-id-input');
+    const taskIdInputs = cloned.querySelectorAll('.task-id-input');
     taskIdInputs.forEach(input => {
         input.value = taskId;
     });
     
     // Set the form action
-    const forms = contentContainer.querySelectorAll('form');
+    const forms = cloned.querySelectorAll('form');
     forms.forEach(form => {
         form.action = currentUrl;
     });
     
     // Handle assignments
     const assignments = taskData.assignments || [];
-    const emptyState = contentContainer.querySelector('.assignment-empty');
-    const itemsContainer = contentContainer.querySelector('.assignment-items-container');
-    const itemTemplate = contentContainer.querySelector('.assignment-item-template');
+    const emptyState = cloned.querySelector('.assignment-empty');
+    const itemsContainer = cloned.querySelector('.assignment-items-container');
+    const itemTemplate = cloned.querySelector('.assignment-item-template');
     
     if (assignments.length === 0) {
         // Show empty state
@@ -225,7 +219,7 @@ function showAssignmentPopover(clickedElement, taskId) {
     }
     
     // Populate user select dropdown
-    const userSelect = contentContainer.querySelector('.user-select');
+    const userSelect = cloned.querySelector('.user-select');
     if (userSelect) {
         let options = '<option value="">Select a user</option>';
         const usersArray = Array.isArray(tasked_users) ? tasked_users : Object.values(tasked_users);
@@ -238,8 +232,8 @@ function showAssignmentPopover(clickedElement, taskId) {
         userSelect.innerHTML = options;
     }
     
-    // Show the popover with the content we created
-    return showPopover(clickedElement, contentContainer, {
+    // Show the popover with the content we created - using consistent pattern
+    return showPopover(clickedElement, cloned, {
         position: 'bottom',
         className: 'assignment-popover',
         onOpen: (popoverEl) => {
