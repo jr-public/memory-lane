@@ -493,39 +493,62 @@ function createNewTaskForm(parentId, level) {
 
 
 
-// Create avatar elements for task assignments (standardized click handler)
+/**
+ * Creates avatar elements for task assignments with improved structure
+ * 
+ * @param {Object} task - Task data object
+ * @returns {HTMLElement} - Container with avatars
+ */
 function createAvatarsElement(task) {
+    // Create container with proper data attributes
     const container = document.createElement('div');
-    const assignments = task.assignments || [];
-    const maxAvatarsToShow = 3;
-    
-    // Add data attributes
-    container.dataset.taskId = task.id;
     container.className = 'task-avatars-container';
+    container.dataset.taskId = task.id;
     
-    // Standardized click handler pattern (matching other element functions)
+    // Setup standardized click handler
     container.addEventListener('click', function(event) {
         event.stopPropagation(); // Prevent event bubbling to task toggle
-        
-        // This pattern more closely matches the other element functions
-        const clickedElement = event.currentTarget; // More explicit reference
-        
-        // Delegate to showAssignmentPopover but in a pattern similar to other elements
+        const clickedElement = event.currentTarget;
         const popover = showAssignmentPopover(clickedElement, task.id);
         return popover;
     });
     
-    // If no assignments, show a plus icon
+    // Get assignments with fallback
+    const assignments = task.assignments || [];
+    
+    // Handle empty state
     if (assignments.length === 0) {
-        // Create a plus icon element
-        const plusIcon = document.createElement('div');
-        plusIcon.className = 'task-avatar-add';
-        plusIcon.title = 'Add assignment';
-        plusIcon.textContent = '+';
-        container.appendChild(plusIcon);
-        
+        container.appendChild(createEmptyAssignmentElement());
         return container;
     }
+    
+    // Handle populated state
+    populateAvatarContainer(container, assignments);
+    
+    return container;
+}
+
+/**
+ * Creates an empty assignment element (plus icon)
+ * 
+ * @returns {HTMLElement} - Empty state element
+ */
+function createEmptyAssignmentElement() {
+    const plusIcon = document.createElement('div');
+    plusIcon.className = 'task-avatar-add';
+    plusIcon.title = 'Add assignment';
+    plusIcon.textContent = '+';
+    return plusIcon;
+}
+
+/**
+ * Populates the avatar container with assignment avatars
+ * 
+ * @param {HTMLElement} container - Container element to populate
+ * @param {Array} assignments - Array of assignment objects
+ */
+function populateAvatarContainer(container, assignments) {
+    const maxAvatarsToShow = 3;
     
     // Show avatars up to the maximum
     const avatarsToShow = Math.min(assignments.length, maxAvatarsToShow);
@@ -533,16 +556,27 @@ function createAvatarsElement(task) {
         container.appendChild(createAvatarElement(assignments[i], i));
     }
     
-    // If there are more avatars than we can show, add the +X indicator
+    // Add overflow indicator if needed
     if (assignments.length > maxAvatarsToShow) {
-        const moreIndicator = document.createElement('div');
-        moreIndicator.className = 'task-avatar-more';
-        moreIndicator.textContent = `+${assignments.length - maxAvatarsToShow}`;
-        container.appendChild(moreIndicator);
+        container.appendChild(createOverflowIndicator(assignments.length - maxAvatarsToShow));
     }
-    
-    return container;
 }
+
+/**
+ * Creates an overflow indicator showing how many more avatars exist
+ * 
+ * @param {number} overflowCount - Number of additional avatars
+ * @returns {HTMLElement} - Overflow indicator element
+ */
+function createOverflowIndicator(overflowCount) {
+    const moreIndicator = document.createElement('div');
+    moreIndicator.className = 'task-avatar-more';
+    moreIndicator.textContent = `+${overflowCount}`;
+    return moreIndicator;
+}
+
+// The existing createAvatarElement function remains unchanged
+// function createAvatarElement(assignment, index) { ... }
 
 // Create a single avatar element
 function createAvatarElement(assignment, index) {
