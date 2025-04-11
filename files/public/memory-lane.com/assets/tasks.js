@@ -4,114 +4,408 @@ const taskTreeConfig = {
     maxExpandLevel: 1,      // Maximum level to auto-expand (0 = just root level)
 };
 
+// Toggle task children visibility (modified to handle empty containers with forms)
+function toggleChildren(event) {
+    const taskId = this.dataset.taskId;
+    const childrenContainer = document.getElementById(`children-${taskId}`);
+    
+    if (childrenContainer) {
+        if (childrenContainer.style.display === 'none') {
+            childrenContainer.style.display = 'block';
+            this.textContent = '▼';
+            childrenContainer.dataset.visible = 'true';
+        } else {
+            childrenContainer.style.display = 'none';
+            this.textContent = '▶';
+            childrenContainer.dataset.visible = 'false';
+        }
+    }
+}
+
 // Modified renderTaskTree function with configurable expansion
 function renderTaskTree(tasks, parentElement = null, level = 0) {
     const taskList = parentElement || document.getElementById('task-list');
-    
     tasks.forEach(task => {
         // Create task item
-        const taskItem = createTaskItem(task, level);
-        taskList.appendChild(taskItem);
+        const taskItem      = document.createElement('div');
+        taskItem.className  = 'task-item';
+        taskItem.dataset.taskId = task.id;
+        taskItem.dataset.status = task.status;
+        taskItem.dataset.level  = level;
+        taskItem.appendChild(createTaskInfo(task, level)); // Build left side (task info)
+        taskItem.appendChild(createTaskMeta(task)); // Build right side (task meta)
         
         // Create container for children (even if no children exist)
         const childrenContainer = document.createElement('div');
         childrenContainer.className = 'task-children';
         childrenContainer.id = `children-${task.id}`;
-        
         // Determine if this level should be expanded based on configuration
         const shouldExpand = taskTreeConfig.expandByDefault || level < taskTreeConfig.maxExpandLevel;
-        
         childrenContainer.dataset.visible = shouldExpand ? 'true' : 'false';
         childrenContainer.style.display = shouldExpand ? 'block' : 'none';
-        
-        // Always add a new task creation form
-        childrenContainer.appendChild(createNewTaskForm(task.id, level + 1));
-        
-        // If task has children, render them inside the container
+        // Update toggle icon to match expansion state
+        const toggleIcon = taskItem.querySelector('.toggle-icon');
+        toggleIcon.textContent = shouldExpand ? '▼' : '▶';
+        toggleIcon.addEventListener('click', toggleChildren);
+
+        // If task has children, recursively render them inside the container
         if (task.has_children) {
-            // Recursively render children within this container
             renderTaskTree(task.children, childrenContainer, level + 1);
         }
+        // Always add! New task creation form
+        childrenContainer.appendChild(createNewTaskForm(task.id, level + 1));
         
-        
+        // Add the task item to the full task list
+        taskList.appendChild(taskItem);
         // Append the children container to the task list
         taskList.appendChild(childrenContainer);
         
-        // Update toggle icon to match expansion state
-        const toggleIcon = taskItem.querySelector('.toggle-icon');
-        if (toggleIcon) {
-            toggleIcon.textContent = shouldExpand ? '▼' : '▶';
-        }
     });
 }
 
 // Modified createTaskInfo function to reflect the expansion state
 function createTaskInfo(task, level) {
-    const taskInfo = document.createElement('div');
-    taskInfo.className = 'task-info';
+    const htmlString = `
+    <div class="task-info">
+        <span class="toggle-icon" data-task-id="">▼</span>
+        <div class="task-name"></div>
+    </div>
+    `;
+    const template = document.createElement('template');
+    template.innerHTML = htmlString.trim();
+    const taskInfo = template.content.firstElementChild;
     
     // Add indentation based on level
     if (level > 0) {
         const indentation = document.createElement('span');
         indentation.innerHTML = '&nbsp;'.repeat(level * 4);
-        taskInfo.appendChild(indentation);
+        taskInfo.prepend(indentation);
     }
     
     // Add toggle icon for all tasks, regardless of whether they have children
-    const toggleIcon = document.createElement('span');
-    toggleIcon.className = 'toggle-icon';
+    const toggleIcon = taskInfo.querySelector('span.toggle-icon');
     toggleIcon.dataset.taskId = task.id;
-    
     // Set icon based on default expansion state
     const shouldExpand = taskTreeConfig.expandByDefault || level < taskTreeConfig.maxExpandLevel;
     toggleIcon.textContent = shouldExpand ? '▼' : '▶';
     
-    toggleIcon.addEventListener('click', toggleChildren);
-    taskInfo.appendChild(toggleIcon);
-    
-    // Status icon
-    const statusIcon = document.createElement('div');
-    statusIcon.className = `task-status-icon ${task.status_class}`;
-    taskInfo.appendChild(statusIcon);
-    
     // Task name
-    const taskName = document.createElement('div');
-    taskName.className = 'task-name';
+    const taskName = taskInfo.querySelector('div.task-name');
     taskName.textContent = task.title;
-    taskInfo.appendChild(taskName);
     
     return taskInfo;
 }
+// Create the task meta section (right side with details)
+function createTaskMeta(task) {
+    const taskMeta = document.createElement('div');
+    taskMeta.className = 'task-meta';
+    
+    // Add assignments
+    taskMeta.appendChild(createAvatarsElement(task));
+    
+    // Add due date
+    taskMeta.appendChild(createDueDateElement(task));
 
-// Helper function to expand all tasks (can be called from a button or programmatically)
-function expandAllTasks() {
-    const allContainers = document.querySelectorAll('.task-children');
-    const allToggleIcons = document.querySelectorAll('.toggle-icon');
+    // 
+    taskMeta.appendChild(createPriorityElement(task));
+    taskMeta.appendChild(createStatusElement(task));
+    taskMeta.appendChild(createDifficultyElement(task));
     
-    allContainers.forEach(container => {
-        container.style.display = 'block';
-        container.dataset.visible = 'true';
-    });
     
-    allToggleIcons.forEach(icon => {
-        icon.textContent = '▼';
-    });
+    return taskMeta;
 }
 
-// Helper function to collapse all tasks
-function collapseAllTasks() {
-    const allContainers = document.querySelectorAll('.task-children');
-    const allToggleIcons = document.querySelectorAll('.toggle-icon');
+/*
+** Element creation
+** This section is involved with the creation of each interactable element in the task item
+*/
+function createDueDateElement(task) {
+    function updateTaskDueDate(dateElement, taskId, newDate) {
+
+        const dateText = dateElement.querySelector('span.due-date-text');
+        if (newDate) {
+            // Format the date for display
+            const formattedDate = `${newDate.toLocaleString('default', { month: 'short' })} ${newDate.getDate()}`;
+            dateText.textContent = formattedDate;
+        } else {
+            // Clear the date
+            dateText.textContent = 'No date';
+        }
+        
+        apiProxyRequest(
+            { 
+                controller: 'task',
+                action: 'update', 
+                params: {
+                    id: taskId,
+                    data: {
+                        due_date: newDate
+                    }
+                }
+            },
+            function(result) {
+                // This will run when the data comes back
+                console.log('Success:', result);
+            },
+            function(result) {
+                // This will run when the data comes back
+                console.error('Error:', result);
+            }
+        );
     
-    allContainers.forEach(container => {
-        container.style.display = 'none';
-        container.dataset.visible = 'false';
+    
+    }
+
+    const htmlString = `
+        <div class="task-due-date" data-task-id="">
+            <span>📅</span>
+            <span class="due-date-text">No date</span>
+        </div>
+    `;
+    const template = document.createElement('template');
+    template.innerHTML = htmlString.trim();
+    const taskDueDate = template.content.firstElementChild;
+  
+    const dueDate = new Date(task.due_date);
+    if (isNaN(dueDate.getTime())) {
+      dueDate = new Date();
+    }
+    const dateText = taskDueDate.querySelector('span.due-date-text');
+    if (task.due_date) {
+        dateText.textContent = `${dueDate.toLocaleString('default', { month: 'short' })} ${dueDate.getDate()}`;
+    } else {
+        dateText.textContent = 'No date';
+    }
+
+    taskDueDate.addEventListener('click', function(e) {
+        e.stopPropagation();
+        
+        // Check it out; superman's uncle anchor-el
+        const anchorEl = e.currentTarget; // This is the correct reference
+    
+        let cloned = popoverTemplates.due_date.cloneNode(true);
+        cloned.style.display = '';
+    
+        const dateInput = cloned.querySelector('.date-picker-input');
+        dateInput.value = (task.due_date && !isNaN(dueDate.getTime())) 
+                            ? dueDate.toISOString().split('T')[0] 
+                            : '';
+      
+    
+        const popover = showPopover(anchorEl, cloned, {
+            position: 'bottom',
+            onOpen: (popoverEl) => {
+                const applyBtn = popoverEl.querySelector('.btn-apply-date');
+                const clearBtn = popoverEl.querySelector('.btn-clear-date');
+                const cancelBtn = popoverEl.querySelector('.btn-cancel-date');
+                const dateInput = popoverEl.querySelector('.date-picker-input');
+                applyBtn.addEventListener('click', () => {
+                    const newDate = new Date(dateInput.value);
+                    updateTaskDueDate(anchorEl, task.id, newDate);
+                    popover.close();
+                });
+    
+                clearBtn.addEventListener('click', () => {
+                    updateTaskDueDate(anchorEl, task.id, null);
+                    popover.close();
+                });
+    
+                cancelBtn.addEventListener('click', () => {
+                    popover.close();
+                });
+            }
+        });
+    
+        return popover;
     });
     
-    allToggleIcons.forEach(icon => {
-        icon.textContent = '▶';
-    });
+    
+    return taskDueDate;
 }
+// Create status badge element with improved error handling and clickable behavior
+function createStatusElement(task) {
+    const statusBadge = document.createElement('div');
+    // Safely access status with default fallback
+    const status = (task && task.status) ? task.status : 'not_set';
+    const statusBadgeClass = (task && task.status_badge_class) ? task.status_badge_class : 'status-pending';
+    statusBadge.className = `task-status-badge ${statusBadgeClass}`;
+    // Format the status text with fallback
+    statusBadge.textContent = status !== 'not_set' ? 
+        status.charAt(0).toUpperCase() + status.slice(1) : 
+        'Pending'; // Default display text
+    
+    statusBadge.style.cursor = 'pointer';
+    statusBadge.dataset.taskId = task.id;
+    
+    // Add click event listener to show status popover
+    statusBadge.addEventListener('click', function(event) {
+        event.stopPropagation(); // Prevent event bubbling to task toggle
+        
+        let cloned = popoverTemplates.status.cloneNode(true);
+        cloned.style.display = '';
+        
+        // Populate status options from the statusOptions array
+        const optionsContainer = cloned.querySelector('.status-options-container');
+        // Clear any existing options
+        optionsContainer.innerHTML = '';
+        
+        // Create and append each status option
+        status_list.forEach(option => {
+            const statusOption = document.createElement('div');
+            statusOption.className = 'status-option';
+            statusOption.dataset.status = option.id || option.value || option.status;
+            statusOption.textContent = option.name || option.label || option.text;
+            
+            // Set background color if provided
+            if (option.color) {
+                statusOption.style.backgroundColor = option.color;
+            }
+            
+            // Append to container
+            optionsContainer.appendChild(statusOption);
+        });
+        
+        const popover = showPopover(this, cloned, {
+            position: 'bottom',
+            className: 'status-popover'
+        });
+        
+        return popover;
+    });
+    
+    return statusBadge;
+}
+// Create priority element with improved error handling and clickable behavior
+function createPriorityElement(task) {
+    const taskPriority = document.createElement('div');
+    taskPriority.className = 'task-priority';
+    
+    // Safely access priority with default fallback
+    const priority = (task && task.priority) ? task.priority : 'not_set';
+    const priorityClass = (task && task.priority_class) ? task.priority_class : 'priority-medium';
+    
+    const priorityIndicator = document.createElement('span');
+    priorityIndicator.className = `priority-indicator ${priorityClass}`;
+    
+    // Format the priority text with fallback
+    priorityIndicator.textContent = priority !== 'not_set' ? 
+        priority.charAt(0).toUpperCase() + priority.slice(1) : 
+        'Medium'; // Default display text
+    
+    taskPriority.appendChild(priorityIndicator);
+    
+    // Make priority indicator clickable
+    priorityIndicator.style.cursor = 'pointer';
+    
+    // Add data attribute for task ID
+    priorityIndicator.dataset.taskId = task.id;
+    
+    // Add click event listener to show priority popover
+    priorityIndicator.addEventListener('click', function(event) {
+        event.stopPropagation(); // Prevent event bubbling to task toggle
+        
+        let cloned = popoverTemplates.priority.cloneNode(true);
+        cloned.style.display = '';
+        
+        // Populate priority options from the priority_list array
+        const optionsContainer = cloned.querySelector('.priority-options-container');
+        // Clear any existing options
+        optionsContainer.innerHTML = '';
+        
+        // Create and append each priority option
+        priority_list.forEach(option => {
+            const priorityOption = document.createElement('div');
+            priorityOption.className = 'priority-option';
+            priorityOption.dataset.priority = option.id || option.value || option.priority;
+            priorityOption.textContent = option.name || option.label || option.text;
+            
+            // Set background color if provided
+            if (option.color) {
+                priorityOption.style.backgroundColor = option.color;
+            }
+            
+            // Append to container
+            optionsContainer.appendChild(priorityOption);
+        });
+        
+        const popover = showPopover(this, cloned, {
+            position: 'bottom',
+            className: 'priority-popover'
+        });
+        
+        return popover;
+    });
+    
+    return taskPriority;
+}
+// Create difficulty element with improved error handling and clickable behavior
+function createDifficultyElement(task) {
+    const taskDifficulty = document.createElement('div');
+    taskDifficulty.className = 'task-difficulty';
+    
+    // Safely access difficulty with default fallback
+    const difficulty = (task && task.difficulty) ? task.difficulty : 'not_set';
+    const difficultyClass = (task && task.difficulty_class) ? task.difficulty_class : 'difficulty-medium';
+    
+    const difficultyIndicator = document.createElement('span');
+    difficultyIndicator.className = `difficulty-indicator ${difficultyClass}`;
+    
+    // Format the difficulty text with fallback
+    difficultyIndicator.textContent = difficulty !== 'not_set' ? 
+        difficulty.charAt(0).toUpperCase() + difficulty.slice(1) : 
+        'Medium'; // Default display text
+    
+    taskDifficulty.appendChild(difficultyIndicator);
+    
+    // Make difficulty indicator clickable
+    difficultyIndicator.style.cursor = 'pointer';
+    
+    // Add data attribute for task ID
+    difficultyIndicator.dataset.taskId = task.id;
+    
+    // Add click event listener to show difficulty popover
+    difficultyIndicator.addEventListener('click', function(event) {
+        event.stopPropagation(); // Prevent event bubbling to task toggle
+        
+        let cloned = popoverTemplates.difficulty.cloneNode(true);
+        cloned.style.display = '';
+        
+        // Populate difficulty options from the difficulty_list array
+        const optionsContainer = cloned.querySelector('.difficulty-options-container');
+        // Clear any existing options
+        optionsContainer.innerHTML = '';
+        
+        // Create and append each difficulty option
+        difficulty_list.forEach(option => {
+            const difficultyOption = document.createElement('div');
+            difficultyOption.className = 'difficulty-option';
+            difficultyOption.dataset.difficulty = option.id || option.value || option.difficulty;
+            difficultyOption.textContent = option.name || option.label || option.text;
+            
+            // Set background color if provided
+            if (option.color) {
+                difficultyOption.style.backgroundColor = option.color;
+            }
+            
+            // Append to container
+            optionsContainer.appendChild(difficultyOption);
+        });
+        
+        const popover = showPopover(this, cloned, {
+            position: 'bottom',
+            className: 'difficulty-popover'
+        });
+        
+        return popover;
+    });
+    
+    return taskDifficulty;
+}
+
+
+
+
+
 // Enhanced createNewTaskForm function
 function createNewTaskForm(parentId, level) {
     const formContainer = document.createElement('div');
@@ -194,234 +488,43 @@ function createNewTaskForm(parentId, level) {
     return formContainer;
 }
 
-// Create the main task item element
-function createTaskItem(task, level) {
-    // Create task item container
-    const taskItem = document.createElement('div');
-    taskItem.className = 'task-item';
-    taskItem.dataset.taskId = task.id;
-    taskItem.dataset.status = task.status;
-    taskItem.dataset.level = level;
-    
-    // Build left side (task info)
-    taskItem.appendChild(createTaskInfo(task, level));
-    
-    // Build right side (task meta)
-    taskItem.appendChild(createTaskMeta(task));
-    
-    return taskItem;
-}
 
-// Toggle task children visibility (modified to handle empty containers with forms)
-function toggleChildren(event) {
-    const taskId = this.dataset.taskId;
-    const childrenContainer = document.getElementById(`children-${taskId}`);
-    
-    if (childrenContainer) {
-        if (childrenContainer.style.display === 'none') {
-            childrenContainer.style.display = 'block';
-            this.textContent = '▼';
-            childrenContainer.dataset.visible = 'true';
-        } else {
-            childrenContainer.style.display = 'none';
-            this.textContent = '▶';
-            childrenContainer.dataset.visible = 'false';
-        }
-    }
-}
 
-// Create the task meta section (right side with details)
-function createTaskMeta(task) {
-    const taskMeta = document.createElement('div');
-    taskMeta.className = 'task-meta';
+/**
+ * Creates avatar elements for task assignments with improved structure
+ * 
+ * @param {Object} task - Task data object
+ * @returns {HTMLElement} - Container with avatars
+ */
+function createAvatarsElement(task) {
+    // Create container with proper data attributes
+    const container = document.createElement('div');
+    container.className = 'task-avatars-container';
+    container.dataset.taskId = task.id;
     
-    // Add assignments
-    const taskAssignments = document.createElement('div');
-    taskAssignments.className = 'task-assignments';
-    taskAssignments.appendChild(createAvatarsElement(task));
-    taskMeta.appendChild(taskAssignments);
-    
-    // Add priority indicator
-    taskMeta.appendChild(createPriorityElement(task));
-    
-    // Add due date
-    taskMeta.appendChild(createDueDateElement(task));
-    
-    // Add status badge
-    taskMeta.appendChild(createStatusBadge(task));
-    
-    return taskMeta;
-}
-
-// Create priority element with improved error handling
-function createPriorityElement(task) {
-    const taskPriority = document.createElement('div');
-    taskPriority.className = 'task-priority';
-    
-    // Safely access priority with default fallback
-    const priority = (task && task.priority) ? task.priority : 'not_set';
-    const priorityClass = (task && task.priority_class) ? task.priority_class : 'priority-medium';
-    
-    const priorityIndicator = document.createElement('span');
-    priorityIndicator.className = `priority-indicator ${priorityClass}`;
-    
-    // Format the priority text with fallback
-    priorityIndicator.textContent = priority !== 'not_set' ? 
-        priority.charAt(0).toUpperCase() + priority.slice(1) : 
-        'Medium'; // Default display text
-    
-    taskPriority.appendChild(priorityIndicator);
-    return taskPriority;
-}
-
-function createDueDateElement(task) {
-    const taskDueDate = document.createElement('div');
-    taskDueDate.className = 'task-due-date';
-    taskDueDate.dataset.taskId = task.id;
-
-    const dateIcon = document.createElement('span');
-    dateIcon.textContent = '📅';
-    taskDueDate.appendChild(dateIcon);
-    const dueDate = new Date(task.due_date);
-    if (isNaN(dueDate.getTime())) {
-      dueDate = new Date();
-    }
-    const dateText = document.createElement('span');
-    dateText.classList.add('due-date-text');
-    if (task.due_date) {
-        dateText.textContent = `${dueDate.toLocaleString('default', { month: 'short' })} ${dueDate.getDate()}`;
-    } else {
-        dateText.textContent = 'No date';
-    }
-    taskDueDate.appendChild(dateText);
-    taskDueDate.addEventListener('click', function(e) {
-        e.stopPropagation();
-        
-        // Check it out; superman's uncle anchor-el
-        const anchorEl = e.currentTarget; // This is the correct reference
-    
-        let cloned = popoverTemplates.due_date.cloneNode(true);
-        cloned.style.display = '';
-    
-        const dateInput = cloned.querySelector('.date-picker-input');
-        dateInput.value = (task.due_date && !isNaN(dueDate.getTime())) 
-                            ? dueDate.toISOString().split('T')[0] 
-                            : '';
-      
-    
-        const popover = showPopover(anchorEl, cloned, {
-            position: 'bottom',
-            onOpen: (popoverEl) => {
-                const applyBtn = popoverEl.querySelector('.btn-apply-date');
-                const clearBtn = popoverEl.querySelector('.btn-clear-date');
-                const cancelBtn = popoverEl.querySelector('.btn-cancel-date');
-                const dateInput = popoverEl.querySelector('.date-picker-input');
-    
-                applyBtn.addEventListener('click', () => {
-                    const newDate = new Date(dateInput.value);
-                    updateTaskDueDate(anchorEl, task.id, newDate);
-                    popover.close();
-                });
-    
-                clearBtn.addEventListener('click', () => {
-                    updateTaskDueDate(anchorEl, task.id, null);
-                    popover.close();
-                });
-    
-                cancelBtn.addEventListener('click', () => {
-                    popover.close();
-                });
-            }
-        });
-    
+    // Setup standardized click handler
+    container.addEventListener('click', function(event) {
+        event.stopPropagation(); // Prevent event bubbling to task toggle
+        const clickedElement = event.currentTarget;
+        const popover = showAssignmentPopover(clickedElement, task.id);
         return popover;
     });
     
-    
-    return taskDueDate;
-}
-function updateTaskDueDate(dateElement, taskId, newDate) {
-
-    const dateText = dateElement.querySelector('span.due-date-text');
-    if (newDate) {
-        // Format the date for display
-        const formattedDate = `${newDate.toLocaleString('default', { month: 'short' })} ${newDate.getDate()}`;
-        dateText.textContent = formattedDate;
-    } else {
-        // Clear the date
-        dateText.textContent = 'No date';
-    }
-    
-    apiProxyRequest(
-        { 
-            controller: 'task',
-            action: 'update', 
-            params: {
-                id: taskId,
-                data: {
-                    due_date: newDate
-                }
-            }
-        },
-        function(result) {
-            // This will run when the data comes back
-            console.log('Success:', result);
-        },
-        function(result) {
-            // This will run when the data comes back
-            console.error('Error:', result);
-        }
-    );
-
-
-}
-
-// Create status badge element with improved error handling
-function createStatusBadge(task) {
-    const statusBadge = document.createElement('div');
-    
-    // Safely access status with default fallback
-    const status = (task && task.status) ? task.status : 'not_set';
-    const statusBadgeClass = (task && task.status_badge_class) ? task.status_badge_class : 'status-pending';
-    
-    statusBadge.className = `task-status-badge ${statusBadgeClass}`;
-    
-    // Format the status text with fallback
-    statusBadge.textContent = status !== 'not_set' ? 
-        status.charAt(0).toUpperCase() + status.slice(1) : 
-        'Pending'; // Default display text
-    
-    return statusBadge;
-}
-
-// Create avatar elements for task assignments (minimal changes)
-function createAvatarsElement(task) {
-    const container = document.createElement('div');
+    // Get assignments with fallback
     const assignments = task.assignments || [];
-    const maxAvatarsToShow = 3;
     
-    // Add data attributes
-    container.dataset.taskId = task.id;
-    container.dataset.action = 'show-assignments';
-    container.className = 'task-avatars-container';
-    container.addEventListener('click', function(event) {
-        event.stopPropagation(); // Prevent event bubbling to task toggle
-        const taskId = container.dataset.taskId;
-        showAssignmentPopover(container, taskId);
-    });
-    
-    // If no assignments, show a plus icon
+    // Handle empty state
     if (assignments.length === 0) {
-        // Create a plus icon element
         const plusIcon = document.createElement('div');
         plusIcon.className = 'task-avatar-add';
         plusIcon.title = 'Add assignment';
         plusIcon.textContent = '+';
         container.appendChild(plusIcon);
-        
         return container;
     }
     
+    // Handle populated state
+    const maxAvatarsToShow = 3;
     
     // Show avatars up to the maximum
     const avatarsToShow = Math.min(assignments.length, maxAvatarsToShow);
@@ -429,16 +532,18 @@ function createAvatarsElement(task) {
         container.appendChild(createAvatarElement(assignments[i], i));
     }
     
-    // If there are more avatars than we can show, add the +X indicator
+    // Add overflow indicator if needed
     if (assignments.length > maxAvatarsToShow) {
         const moreIndicator = document.createElement('div');
         moreIndicator.className = 'task-avatar-more';
         moreIndicator.textContent = `+${assignments.length - maxAvatarsToShow}`;
         container.appendChild(moreIndicator);
     }
-    
     return container;
 }
+
+// The existing createAvatarElement function remains unchanged
+// function createAvatarElement(assignment, index) { ... }
 
 // Create a single avatar element
 function createAvatarElement(assignment, index) {
@@ -538,4 +643,37 @@ function buildTaskTreeData(tasks) {
         
         return taskData;
     }).filter(task => task !== null); // Remove any null tasks
+}
+
+
+
+
+// Helper function to expand all tasks (can be called from a button or programmatically)
+function expandAllTasks() {
+    const allContainers = document.querySelectorAll('.task-children');
+    const allToggleIcons = document.querySelectorAll('.toggle-icon');
+    
+    allContainers.forEach(container => {
+        container.style.display = 'block';
+        container.dataset.visible = 'true';
+    });
+    
+    allToggleIcons.forEach(icon => {
+        icon.textContent = '▼';
+    });
+}
+
+// Helper function to collapse all tasks
+function collapseAllTasks() {
+    const allContainers = document.querySelectorAll('.task-children');
+    const allToggleIcons = document.querySelectorAll('.toggle-icon');
+    
+    allContainers.forEach(container => {
+        container.style.display = 'none';
+        container.dataset.visible = 'false';
+    });
+    
+    allToggleIcons.forEach(icon => {
+        icon.textContent = '▶';
+    });
 }
