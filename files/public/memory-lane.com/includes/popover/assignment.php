@@ -114,7 +114,7 @@
 </div>
 <script>
 /**
- * Shows assignment popover with more consistent template handling
+ * Shows assignment popover with improved data flow patterns
  * 
  * @param {HTMLElement} clickedElement - The element that was clicked to trigger the popover
  * @param {string|number} taskId - The ID of the task whose assignments to show
@@ -128,7 +128,7 @@ function showAssignmentPopover(clickedElement, taskId) {
         return;
     }
     
-    // More consistent template handling pattern that matches other element functions
+    // Clone template
     let cloned = popoverTemplates.assignment.cloneNode(true);
     cloned.style.display = '';
     
@@ -138,107 +138,243 @@ function showAssignmentPopover(clickedElement, taskId) {
         titleElement.textContent = `Assignments for: ${escapeHTML(taskData.title)}`;
     }
     
-    // Update task ID in the form
-    const taskIdInputs = cloned.querySelectorAll('.task-id-input');
+    // Setup forms and data containers
+    setupAssignmentForms(cloned, taskId);
+    
+    // Populate assignments list
+    populateAssignmentsList(cloned, taskData.assignments || []);
+    
+    // Setup user selection dropdown
+    setupUserSelectionDropdown(cloned);
+    
+    // Add form submit handler for adding new assignments
+    setupAddAssignmentHandler(cloned, taskId, clickedElement);
+    
+    // Add handlers for removing assignments
+    setupRemoveAssignmentHandlers(cloned, clickedElement, taskId);
+    
+    // Show the popover with the content we created
+    return showPopover(clickedElement, cloned, {
+        position: 'bottom',
+        className: 'assignment-popover',
+        onOpen: (popoverEl) => {
+            // Additional initialization if needed
+        }
+    });
+}
+
+/**
+ * Sets up assignment form elements with proper IDs and actions
+ * 
+ * @param {HTMLElement} container - The popover container
+ * @param {string|number} taskId - The task ID
+ */
+function setupAssignmentForms(container, taskId) {
+    // Update task ID in all forms
+    const taskIdInputs = container.querySelectorAll('.task-id-input');
     taskIdInputs.forEach(input => {
         input.value = taskId;
     });
     
     // Set the form action
-    const forms = cloned.querySelectorAll('form');
+    const forms = container.querySelectorAll('form');
     forms.forEach(form => {
         form.action = currentUrl;
     });
+}
+
+/**
+ * Populates the assignments list in the popover
+ * 
+ * @param {HTMLElement} container - The popover container
+ * @param {Array} assignments - Array of assignment objects
+ */
+function populateAssignmentsList(container, assignments) {
+    const emptyState = container.querySelector('.assignment-empty');
+    const itemsContainer = container.querySelector('.assignment-items-container');
+    const itemTemplate = container.querySelector('.assignment-item-template');
     
-    // Handle assignments
-    const assignments = taskData.assignments || [];
-    const emptyState = cloned.querySelector('.assignment-empty');
-    const itemsContainer = cloned.querySelector('.assignment-items-container');
-    const itemTemplate = cloned.querySelector('.assignment-item-template');
-    
-    if (assignments.length === 0) {
+    if (!assignments.length) {
         // Show empty state
         if (emptyState) emptyState.style.display = '';
         if (itemsContainer) itemsContainer.style.display = 'none';
-    } else {
-        // Hide empty state, show items container
-        if (emptyState) emptyState.style.display = 'none';
-        if (itemsContainer) itemsContainer.style.display = '';
-        
-        // Populate assignments
-        if (itemTemplate && itemsContainer) {
-            assignments.forEach((assignment, index) => {
-                // Clone the template
-                const item = itemTemplate.cloneNode(true);
-                item.classList.remove('assignment-item-template');
-                item.style.display = '';
-                
-                // Get user data
-                const users = (typeof tasked_users === 'undefined') ? {} : tasked_users;
-                const user = users[assignment.assigned_to] ?? {};
-                const username = user.username ?? 'User ' + (index + 1);
-                const role = assignment.role_id ? getRoleName(assignment.role_id) : 'Contributor';
-                
-                // Set assignment ID for deletion
-                const idInput = item.querySelector('.assignment-id-input');
-                if (idInput) {
-                    idInput.value = assignment.id;
-                }
-                
-                // Set avatar
-                const avatarElement = item.querySelector('.assignment-avatar');
-                if (avatarElement) {
-                    // Get initial letter
-                    const initial = username.charAt(0).toUpperCase();
-                    avatarElement.textContent = initial;
-                    
-                    // Set background color
-                    avatarElement.style.backgroundColor = getAvatarColor(index);
-                }
-                
-                // Set name and role
-                const nameElement = item.querySelector('.assignment-name');
-                if (nameElement) {
-                    nameElement.textContent = username;
-                }
-                
-                const roleElement = item.querySelector('.assignment-role');
-                if (roleElement) {
-                    roleElement.textContent = role;
-                }
-                
-                // Add to container
-                itemsContainer.appendChild(item);
-            });
-            
-            // Remove the template from the DOM
-            if (itemTemplate.parentNode) {
-                itemTemplate.parentNode.removeChild(itemTemplate);
-            }
-        }
+        return;
     }
     
-    // Populate user select dropdown
-    const userSelect = cloned.querySelector('.user-select');
-    if (userSelect) {
-        let options = '<option value="">Select a user</option>';
-        const usersArray = Array.isArray(tasked_users) ? tasked_users : Object.values(tasked_users);
-        
-        usersArray.forEach(user => {
-            if (user && user.id && user.username) {
-                options += `<option value="${user.id}">${escapeHTML(user.username)}</option>`;
-            }
+    // Hide empty state, show items container
+    if (emptyState) emptyState.style.display = 'none';
+    if (itemsContainer) itemsContainer.style.display = '';
+    
+    // Populate assignments
+    if (itemTemplate && itemsContainer) {
+        assignments.forEach((assignment, index) => {
+            const item = createAssignmentItem(itemTemplate, assignment, index);
+            itemsContainer.appendChild(item);
         });
-        userSelect.innerHTML = options;
+        
+        // Remove the template from the DOM
+        if (itemTemplate.parentNode) {
+            itemTemplate.parentNode.removeChild(itemTemplate);
+        }
+    }
+}
+
+/**
+ * Creates a single assignment item from the template
+ * 
+ * @param {HTMLElement} template - The template element to clone
+ * @param {Object} assignment - The assignment data
+ * @param {number} index - The index for color calculation
+ * @returns {HTMLElement} - The populated assignment item
+ */
+function createAssignmentItem(template, assignment, index) {
+    // Clone the template
+    const item = template.cloneNode(true);
+    item.classList.remove('assignment-item-template');
+    item.style.display = '';
+    
+    // Get user data
+    const users = (typeof tasked_users === 'undefined') ? {} : tasked_users;
+    const user = users[assignment.assigned_to] ?? {};
+    const username = user.username ?? 'User ' + (index + 1);
+    const role = assignment.role_id ? getRoleName(assignment.role_id) : 'Contributor';
+    
+    // Set assignment ID for deletion
+    const idInput = item.querySelector('.assignment-id-input');
+    if (idInput) {
+        idInput.value = assignment.id;
     }
     
-    // Show the popover with the content we created - using consistent pattern
-    return showPopover(clickedElement, cloned, {
-        position: 'bottom',
-        className: 'assignment-popover',
-        onOpen: (popoverEl) => {
-            // Any additional initialization after popover is shown
+    // Set avatar
+    const avatarElement = item.querySelector('.assignment-avatar');
+    if (avatarElement) {
+        const initial = username.charAt(0).toUpperCase();
+        avatarElement.textContent = initial;
+        avatarElement.style.backgroundColor = getAvatarColor(index);
+    }
+    
+    // Set name and role
+    const nameElement = item.querySelector('.assignment-name');
+    if (nameElement) {
+        nameElement.textContent = username;
+    }
+    
+    const roleElement = item.querySelector('.assignment-role');
+    if (roleElement) {
+        roleElement.textContent = role;
+    }
+    
+    return item;
+}
+
+/**
+ * Sets up the user selection dropdown
+ * 
+ * @param {HTMLElement} container - The popover container
+ */
+function setupUserSelectionDropdown(container) {
+    const userSelect = container.querySelector('.user-select');
+    if (!userSelect) return;
+    
+    let options = '<option value="">Select a user</option>';
+    const usersArray = Array.isArray(tasked_users) ? tasked_users : Object.values(tasked_users);
+    
+    usersArray.forEach(user => {
+        if (user && user.id && user.username) {
+            options += `<option value="${user.id}">${escapeHTML(user.username)}</option>`;
         }
+    });
+    userSelect.innerHTML = options;
+}
+
+/**
+ * Sets up form submission handler for adding a new assignment
+ * 
+ * @param {HTMLElement} container - The popover container
+ * @param {string|number} taskId - The task ID
+ * @param {HTMLElement} triggerElement - The original clicked element
+ */
+function setupAddAssignmentHandler(container, taskId, triggerElement) {
+    const assignmentForm = container.querySelector('#assignment-form');
+    if (!assignmentForm) return;
+    
+    assignmentForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const userId = this.querySelector('[name="assigned_to"]').value;
+        if (!userId) return;
+        
+        // Use the common API request pattern
+        apiProxyRequest(
+            {
+                controller: 'TaskAssignment',
+                action: 'create',
+                params: {
+                    data: {
+                        task_id: taskId,
+                        assigned_to: userId
+                    }
+                }
+            },
+            function(result) {
+                if (result.success) {
+                    // Update UI based on successful assignment
+                    // In a real implementation, we would update the task_list data
+                    // and potentially refresh the UI
+                    
+                    // Re-open the popover with fresh data
+                    // For this example, we'll just close it and let the user reopen
+                    document.querySelector('.popover.active')?.remove();
+                    
+                    // Optionally, you could trigger a reload here
+                    // window.location.reload();
+                }
+            }
+        );
+    });
+}
+
+/**
+ * Sets up handlers for removing assignments
+ * 
+ * @param {HTMLElement} container - The popover container 
+ * @param {HTMLElement} triggerElement - The original clicked element
+ * @param {string|number} taskId - The task ID
+ */
+function setupRemoveAssignmentHandlers(container, triggerElement, taskId) {
+    const deleteForms = container.querySelectorAll('.assignment-delete-form');
+    
+    deleteForms.forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const assignmentId = this.querySelector('.assignment-id-input').value;
+            
+            // Use the common API request pattern
+            apiProxyRequest(
+                {
+                    controller: 'TaskAssignment',
+                    action: 'delete',
+                    params: {
+                        id: assignmentId
+                    }
+                },
+                function(result) {
+                    if (result.success) {
+                        // Update UI based on successful deletion
+                        // In a real implementation, we would update the task_list data
+                        // and potentially refresh the UI
+                        
+                        // Re-open the popover with fresh data
+                        // For this example, we'll just close it and let the user reopen
+                        document.querySelector('.popover.active')?.remove();
+                        
+                        // Optionally, you could trigger a reload here
+                        // window.location.reload();
+                    }
+                }
+            );
+        });
     });
 }
 
