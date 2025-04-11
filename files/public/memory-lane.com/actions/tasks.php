@@ -67,7 +67,88 @@ require_once('actions/tasks-css.php');
     const rawTaskData = <?= json_encode($tasks['tree']) ?>;
     const task_list = <?= json_encode($tasks['list']) ?>;
     const currentUrl = <?= json_encode($current_url) ?>;
-    
+    const status_list = [
+        {
+            id: "in_progress",
+            name: "En proceso",
+            color: "#f39c12"  // Yellow
+        },
+        {
+            id: "completed",
+            name: "Listo",
+            color: "#2ecc71"  // Green
+        },
+        {
+            id: "trabao",
+            name: "Trabao",
+            color: "#e74c3c"  // Red
+        },
+        {
+            id: "notes",
+            name: "Notas",
+            color: "#95a5a6"  // Gray
+        },
+        {
+            id: "deprecated",
+            name: "DEPRECADO",
+            color: "#9b59b6"  // Purple
+        }
+    ];
+    const priority_list = [
+        {
+            id: "urgent",
+            name: "Urgent",
+            color: "#e74c3c"  // Red
+        },
+        {
+            id: "high",
+            name: "High",
+            color: "#f39c12"  // Orange
+        },
+        {
+            id: "medium",
+            name: "Medium",
+            color: "#3498db"  // Blue
+        },
+        {
+            id: "low",
+            name: "Low",
+            color: "#2ecc71"  // Green
+        },
+        {
+            id: "none",
+            name: "No Priority",
+            color: "#95a5a6"  // Gray
+        }
+    ];
+    // Example difficulty options array - define this before task list is rendered
+    const difficulty_list = [
+        {
+            id: "trivial",
+            name: "Trivial",
+            color: "#2ecc71"  // Light Green
+        },
+        {
+            id: "easy",
+            name: "Easy",
+            color: "#3498db"  // Light Blue
+        },
+        {
+            id: "medium",
+            name: "Medium",
+            color: "#f39c12"  // Yellow
+        },
+        {
+            id: "hard",
+            name: "Hard",
+            color: "#e67e22"  // Orange
+        },
+        {
+            id: "complex",
+            name: "Complex",
+            color: "#e74c3c"  // Red
+        }
+    ];
     document.addEventListener('DOMContentLoaded', function() {
         const taskData = buildTaskTreeData(rawTaskData);
         renderTaskTree(taskData);

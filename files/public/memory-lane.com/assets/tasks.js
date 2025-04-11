@@ -34,8 +34,6 @@ function renderTaskTree(tasks, parentElement = null, level = 0) {
         taskItem.dataset.level  = level;
         taskItem.appendChild(createTaskInfo(task, level)); // Build left side (task info)
         taskItem.appendChild(createTaskMeta(task)); // Build right side (task meta)
-        // Add the task item to the full task list
-        taskList.appendChild(taskItem);
         
         // Create container for children (even if no children exist)
         const childrenContainer = document.createElement('div');
@@ -54,10 +52,11 @@ function renderTaskTree(tasks, parentElement = null, level = 0) {
         if (task.has_children) {
             renderTaskTree(task.children, childrenContainer, level + 1);
         }
-        
         // Always add! New task creation form
         childrenContainer.appendChild(createNewTaskForm(task.id, level + 1));
         
+        // Add the task item to the full task list
+        taskList.appendChild(taskItem);
         // Append the children container to the task list
         taskList.appendChild(childrenContainer);
         
@@ -96,7 +95,6 @@ function createTaskInfo(task, level) {
     
     return taskInfo;
 }
-
 // Create the task meta section (right side with details)
 function createTaskMeta(task) {
     const taskMeta = document.createElement('div');
@@ -108,19 +106,22 @@ function createTaskMeta(task) {
     taskAssignments.appendChild(createAvatarsElement(task));
     taskMeta.appendChild(taskAssignments);
     
-    // Add priority indicator
-    taskMeta.appendChild(createPriorityElement(task));
-    
     // Add due date
     taskMeta.appendChild(createDueDateElement(task));
+
+    // 
+    taskMeta.appendChild(createPriorityElement(task));
+    taskMeta.appendChild(createStatusElement(task));
+    taskMeta.appendChild(createDifficultyElement(task));
     
-    // Add status badge
-    taskMeta.appendChild(createStatusBadge(task));
     
     return taskMeta;
 }
 
-
+/*
+** Element creation
+** This section is involved with the creation of each interactable element in the task item
+*/
 function createDueDateElement(task) {
     function updateTaskDueDate(dateElement, taskId, newDate) {
 
@@ -224,7 +225,185 @@ function createDueDateElement(task) {
     
     return taskDueDate;
 }
-
+// Create status badge element with improved error handling and clickable behavior
+function createStatusElement(task) {
+    const statusBadge = document.createElement('div');
+    // Safely access status with default fallback
+    const status = (task && task.status) ? task.status : 'not_set';
+    const statusBadgeClass = (task && task.status_badge_class) ? task.status_badge_class : 'status-pending';
+    statusBadge.className = `task-status-badge ${statusBadgeClass}`;
+    // Format the status text with fallback
+    statusBadge.textContent = status !== 'not_set' ? 
+        status.charAt(0).toUpperCase() + status.slice(1) : 
+        'Pending'; // Default display text
+    
+    statusBadge.style.cursor = 'pointer';
+    statusBadge.dataset.taskId = task.id;
+    
+    // Add click event listener to show status popover
+    statusBadge.addEventListener('click', function(event) {
+        event.stopPropagation(); // Prevent event bubbling to task toggle
+        
+        let cloned = popoverTemplates.status.cloneNode(true);
+        cloned.style.display = '';
+        
+        // Populate status options from the statusOptions array
+        const optionsContainer = cloned.querySelector('.status-options-container');
+        // Clear any existing options
+        optionsContainer.innerHTML = '';
+        
+        // Create and append each status option
+        status_list.forEach(option => {
+            const statusOption = document.createElement('div');
+            statusOption.className = 'status-option';
+            statusOption.dataset.status = option.id || option.value || option.status;
+            statusOption.textContent = option.name || option.label || option.text;
+            
+            // Set background color if provided
+            if (option.color) {
+                statusOption.style.backgroundColor = option.color;
+            }
+            
+            // Append to container
+            optionsContainer.appendChild(statusOption);
+        });
+        
+        const popover = showPopover(this, cloned, {
+            position: 'bottom',
+            className: 'status-popover'
+        });
+        
+        return popover;
+    });
+    
+    return statusBadge;
+}
+// Create priority element with improved error handling and clickable behavior
+function createPriorityElement(task) {
+    const taskPriority = document.createElement('div');
+    taskPriority.className = 'task-priority';
+    
+    // Safely access priority with default fallback
+    const priority = (task && task.priority) ? task.priority : 'not_set';
+    const priorityClass = (task && task.priority_class) ? task.priority_class : 'priority-medium';
+    
+    const priorityIndicator = document.createElement('span');
+    priorityIndicator.className = `priority-indicator ${priorityClass}`;
+    
+    // Format the priority text with fallback
+    priorityIndicator.textContent = priority !== 'not_set' ? 
+        priority.charAt(0).toUpperCase() + priority.slice(1) : 
+        'Medium'; // Default display text
+    
+    taskPriority.appendChild(priorityIndicator);
+    
+    // Make priority indicator clickable
+    priorityIndicator.style.cursor = 'pointer';
+    
+    // Add data attribute for task ID
+    priorityIndicator.dataset.taskId = task.id;
+    
+    // Add click event listener to show priority popover
+    priorityIndicator.addEventListener('click', function(event) {
+        event.stopPropagation(); // Prevent event bubbling to task toggle
+        
+        let cloned = popoverTemplates.priority.cloneNode(true);
+        cloned.style.display = '';
+        
+        // Populate priority options from the priority_list array
+        const optionsContainer = cloned.querySelector('.priority-options-container');
+        // Clear any existing options
+        optionsContainer.innerHTML = '';
+        
+        // Create and append each priority option
+        priority_list.forEach(option => {
+            const priorityOption = document.createElement('div');
+            priorityOption.className = 'priority-option';
+            priorityOption.dataset.priority = option.id || option.value || option.priority;
+            priorityOption.textContent = option.name || option.label || option.text;
+            
+            // Set background color if provided
+            if (option.color) {
+                priorityOption.style.backgroundColor = option.color;
+            }
+            
+            // Append to container
+            optionsContainer.appendChild(priorityOption);
+        });
+        
+        const popover = showPopover(this, cloned, {
+            position: 'bottom',
+            className: 'priority-popover'
+        });
+        
+        return popover;
+    });
+    
+    return taskPriority;
+}
+// Create difficulty element with improved error handling and clickable behavior
+function createDifficultyElement(task) {
+    const taskDifficulty = document.createElement('div');
+    taskDifficulty.className = 'task-difficulty';
+    
+    // Safely access difficulty with default fallback
+    const difficulty = (task && task.difficulty) ? task.difficulty : 'not_set';
+    const difficultyClass = (task && task.difficulty_class) ? task.difficulty_class : 'difficulty-medium';
+    
+    const difficultyIndicator = document.createElement('span');
+    difficultyIndicator.className = `difficulty-indicator ${difficultyClass}`;
+    
+    // Format the difficulty text with fallback
+    difficultyIndicator.textContent = difficulty !== 'not_set' ? 
+        difficulty.charAt(0).toUpperCase() + difficulty.slice(1) : 
+        'Medium'; // Default display text
+    
+    taskDifficulty.appendChild(difficultyIndicator);
+    
+    // Make difficulty indicator clickable
+    difficultyIndicator.style.cursor = 'pointer';
+    
+    // Add data attribute for task ID
+    difficultyIndicator.dataset.taskId = task.id;
+    
+    // Add click event listener to show difficulty popover
+    difficultyIndicator.addEventListener('click', function(event) {
+        event.stopPropagation(); // Prevent event bubbling to task toggle
+        
+        let cloned = popoverTemplates.difficulty.cloneNode(true);
+        cloned.style.display = '';
+        
+        // Populate difficulty options from the difficulty_list array
+        const optionsContainer = cloned.querySelector('.difficulty-options-container');
+        // Clear any existing options
+        optionsContainer.innerHTML = '';
+        
+        // Create and append each difficulty option
+        difficulty_list.forEach(option => {
+            const difficultyOption = document.createElement('div');
+            difficultyOption.className = 'difficulty-option';
+            difficultyOption.dataset.difficulty = option.id || option.value || option.difficulty;
+            difficultyOption.textContent = option.name || option.label || option.text;
+            
+            // Set background color if provided
+            if (option.color) {
+                difficultyOption.style.backgroundColor = option.color;
+            }
+            
+            // Append to container
+            optionsContainer.appendChild(difficultyOption);
+        });
+        
+        const popover = showPopover(this, cloned, {
+            position: 'bottom',
+            className: 'difficulty-popover'
+        });
+        
+        return popover;
+    });
+    
+    return taskDifficulty;
+}
 
 
 
@@ -313,48 +492,6 @@ function createNewTaskForm(parentId, level) {
 }
 
 
-
-
-// Create priority element with improved error handling
-function createPriorityElement(task) {
-    const taskPriority = document.createElement('div');
-    taskPriority.className = 'task-priority';
-    
-    // Safely access priority with default fallback
-    const priority = (task && task.priority) ? task.priority : 'not_set';
-    const priorityClass = (task && task.priority_class) ? task.priority_class : 'priority-medium';
-    
-    const priorityIndicator = document.createElement('span');
-    priorityIndicator.className = `priority-indicator ${priorityClass}`;
-    
-    // Format the priority text with fallback
-    priorityIndicator.textContent = priority !== 'not_set' ? 
-        priority.charAt(0).toUpperCase() + priority.slice(1) : 
-        'Medium'; // Default display text
-    
-    taskPriority.appendChild(priorityIndicator);
-    return taskPriority;
-}
-
-
-
-// Create status badge element with improved error handling
-function createStatusBadge(task) {
-    const statusBadge = document.createElement('div');
-    
-    // Safely access status with default fallback
-    const status = (task && task.status) ? task.status : 'not_set';
-    const statusBadgeClass = (task && task.status_badge_class) ? task.status_badge_class : 'status-pending';
-    
-    statusBadge.className = `task-status-badge ${statusBadgeClass}`;
-    
-    // Format the status text with fallback
-    statusBadge.textContent = status !== 'not_set' ? 
-        status.charAt(0).toUpperCase() + status.slice(1) : 
-        'Pending'; // Default display text
-    
-    return statusBadge;
-}
 
 // Create avatar elements for task assignments (minimal changes)
 function createAvatarsElement(task) {
