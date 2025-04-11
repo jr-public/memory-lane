@@ -493,7 +493,7 @@ function createNewTaskForm(parentId, level) {
 
 
 
-// Create avatar elements for task assignments (minimal changes)
+// Create avatar elements for task assignments (standardized click handler)
 function createAvatarsElement(task) {
     const container = document.createElement('div');
     const assignments = task.assignments || [];
@@ -501,12 +501,18 @@ function createAvatarsElement(task) {
     
     // Add data attributes
     container.dataset.taskId = task.id;
-    container.dataset.action = 'show-assignments';
     container.className = 'task-avatars-container';
+    
+    // Standardized click handler pattern (matching other element functions)
     container.addEventListener('click', function(event) {
         event.stopPropagation(); // Prevent event bubbling to task toggle
-        const taskId = container.dataset.taskId;
-        showAssignmentPopover(container, taskId);
+        
+        // This pattern more closely matches the other element functions
+        const clickedElement = event.currentTarget; // More explicit reference
+        
+        // Delegate to showAssignmentPopover but in a pattern similar to other elements
+        const popover = showAssignmentPopover(clickedElement, task.id);
+        return popover;
     });
     
     // If no assignments, show a plus icon
@@ -520,7 +526,6 @@ function createAvatarsElement(task) {
         
         return container;
     }
-    
     
     // Show avatars up to the maximum
     const avatarsToShow = Math.min(assignments.length, maxAvatarsToShow);
