@@ -30,6 +30,13 @@ CREATE TABLE task_statuses (
     color VARCHAR(50) NOT NULL DEFAULT '#95a5a6'
 );
 
+-- First create the task_priority table
+CREATE TABLE task_priority (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(50) NOT NULL UNIQUE,
+    description TEXT,
+    color VARCHAR(50) NOT NULL DEFAULT '#95a5a6'
+);
 
 -- Users table to store user information
 -- Contains all registered users of the system
@@ -53,6 +60,7 @@ CREATE TABLE tasks (
     parent_id INTEGER REFERENCES tasks(id) ON DELETE CASCADE,
     depth INTEGER NOT NULL DEFAULT 0,
     status_id INTEGER NOT NULL REFERENCES task_statuses(id),
+    priority_id INTEGER NOT NULL DEFAULT 3 REFERENCES task_priority(id),
     due_date TIMESTAMP NULL,                  -- When the task is due (optional)
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
@@ -80,6 +88,7 @@ CREATE TABLE task_comments (
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
+
 
 
 -- -----------------------------------------------------------------------------

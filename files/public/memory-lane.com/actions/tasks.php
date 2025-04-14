@@ -29,10 +29,20 @@ if (!$statuses_res['success']) {
     echo json_encode($statuses_res);
     die();
 }
+$priorities_res = api_call("TaskPriority", "list", [
+    "options" => [
+        "unique" => true
+    ]
+]);
+if (!$priorities_res['success']) {
+    echo json_encode($priorities_res);
+    die();
+}
 //
 $tasks = $tree_res['data'];
 $tasked_users = $users_res['data'];
 $status_list = $statuses_res['data'];
+$priority_list = $priorities_res['data'];
 ?>
 
 <!-- Task Management Container -->
@@ -77,33 +87,7 @@ require_once('actions/tasks-css.php');
     const task_list = <?= json_encode($tasks['list']) ?>;
     const currentUrl = <?= json_encode($current_url) ?>;
     const status_list = <?= json_encode($status_list) ?>;
-    const priority_list = [
-        {
-            id: "urgent",
-            name: "Urgent",
-            color: "#e74c3c"  // Red
-        },
-        {
-            id: "high",
-            name: "High",
-            color: "#f39c12"  // Orange
-        },
-        {
-            id: "medium",
-            name: "Medium",
-            color: "#3498db"  // Blue
-        },
-        {
-            id: "low",
-            name: "Low",
-            color: "#2ecc71"  // Green
-        },
-        {
-            id: "none",
-            name: "No Priority",
-            color: "#95a5a6"  // Gray
-        }
-    ];
+    const priority_list = <?= json_encode($priority_list) ?>;
     // Example difficulty options array - define this before task list is rendered
     const difficulty_list = [
         {

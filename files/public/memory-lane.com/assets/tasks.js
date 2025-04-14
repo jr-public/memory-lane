@@ -322,57 +322,70 @@ function createStatusElement(task) {
     return statusBadge;
 }
 function createPriorityElement(task) {
-    const taskPriority = document.createElement('div');
-    taskPriority.className = 'task-priority';
     
-    // Safely access priority with default fallback
-    const priority = (task && task.priority) ? task.priority : 'not_set';
-    const priorityClass = (task && task.priority_class) ? task.priority_class : 'priority-medium';
+    const priority = priority_list[task.priority_id];
     
-    const priorityIndicator = document.createElement('span');
-    priorityIndicator.className = `priority-indicator ${priorityClass}`;
-    
-    // Format the priority text with fallback
-    priorityIndicator.textContent = priority !== 'not_set' ? 
-        priority.charAt(0).toUpperCase() + priority.slice(1) : 
-        'Medium'; // Default display text
-    
-    taskPriority.appendChild(priorityIndicator);
-    
-    // Make priority indicator clickable
-    priorityIndicator.style.cursor = 'pointer';
-    
-    // Add data attribute for task ID
-    priorityIndicator.dataset.taskId = task.id;
+    // Create priority badge element
+    const priorityBadge = document.createElement('div');
+    priorityBadge.className = 'priority-indicator';
+    priorityBadge.style.backgroundColor = priority.color;
+    // priorityBadge.classList.add(`priority-${priority.name}`);
+    priorityBadge.textContent = priority.name;
+    priorityBadge.style.cursor = 'pointer';
+    priorityBadge.dataset.taskId = task.id;
     
     // Add click event listener to show priority popover
-    priorityIndicator.addEventListener('click', function(event) {
+    priorityBadge.addEventListener('click', function(event) {
         event.stopPropagation(); // Prevent event bubbling to task toggle
         
+        // Clone the priority popover template
         let cloned = popoverTemplates.priority.cloneNode(true);
         cloned.style.display = '';
         
-        // Populate priority options from the priority_list array
+        // Populate priority options container
         const optionsContainer = cloned.querySelector('.priority-options-container');
-        // Clear any existing options
-        optionsContainer.innerHTML = '';
+        optionsContainer.innerHTML = ''; // Clear any existing options
         
-        // Create and append each priority option
-        priority_list.forEach(option => {
-            const priorityOption = document.createElement('div');
-            priorityOption.className = 'priority-option';
-            priorityOption.dataset.priority = option.id || option.value || option.priority;
-            priorityOption.textContent = option.name || option.label || option.text;
+        // Create and append each priority option as a form
+        Object.values(priority_list).forEach(option => {
+            // Create form element
+            const form = document.createElement('form');
+            form.action = currentUrl;
+            form.method = 'post';
             
-            // Set background color if provided
+            // Add necessary hidden inputs
+            form.innerHTML = `
+                <input type="hidden" name="entity_name" value="Task">
+                <input type="hidden" name="entity_action" value="update">
+                <input type="hidden" name="id" value="${task.id}">
+                <input type="hidden" name="priority_id" value="${option.id}">
+            `;
+            
+            // Create the priority option that will act as a submit button
+            const priorityOption = document.createElement('button');
+            priorityOption.type = 'submit';
+            priorityOption.className = 'priority-option';
+            priorityOption.textContent = option.name;
+            
+            // Style the button to match design
+            priorityOption.style.width = '100%';
+            priorityOption.style.textAlign = 'center';
+            priorityOption.style.border = 'none';
+            priorityOption.style.cursor = 'pointer';
+            
+            // Set background color
             if (option.color) {
                 priorityOption.style.backgroundColor = option.color;
             }
             
-            // Append to container
-            optionsContainer.appendChild(priorityOption);
+            // Append the button to the form
+            form.appendChild(priorityOption);
+            
+            // Append the form to the container
+            optionsContainer.appendChild(form);
         });
         
+        // Show the popover
         const popover = showPopover(this, cloned, {
             position: 'bottom',
             className: 'priority-popover'
@@ -381,7 +394,7 @@ function createPriorityElement(task) {
         return popover;
     });
     
-    return taskPriority;
+    return priorityBadge;
 }
 function createDifficultyElement(task) {
     const taskDifficulty = document.createElement('div');
@@ -624,29 +637,6 @@ function getAvatarColor(index) {
 
 // Transform raw task data into the format needed for rendering
 function buildTaskTreeData(tasks) {
-    // Define mapping for classes
-    // const statusClasses = {
-    //     'completed': 'status-active',
-    //     'in_progress': 'status-in-progress',
-    //     'pending': 'status-pending',
-    //     'backlogged': 'status-inactive',
-    //     'not_set': 'status-pending'
-    // };
-    
-    const priorityClasses = {
-        'high': 'priority-high',
-        'medium': 'priority-medium',
-        'low': 'priority-low',
-        'not_set': 'priority-medium'
-    };
-    
-    const iconClasses = {
-        'completed': 'status-completed-icon',
-        'in_progress': 'status-in-progress-icon',
-        'pending': 'status-pending-icon',
-        'backlogged': 'status-on-hold-icon',
-        'not_set': 'status-pending-icon'
-    };
     
     // Guard against tasks not being an array
     if (!Array.isArray(tasks)) {
@@ -661,21 +651,12 @@ function buildTaskTreeData(tasks) {
             return null;
         }
         
-        // Safely get properties with defaults
-        // const status = task.status || 'not_set';
-        const priority = task.priority || 'not_set';
-        const dueDate = task.due_date || null;
-        
         const taskData = {
             id: task.id || 0,
             title: task.title || 'Untitled Task',
-            status_id: task.status_id, //
-            // status: status,
-            priority: priority,
-            due_date: dueDate,
-            // status_class: iconClasses[status] || 'status-pending-icon',
-            // status_badge_class: statusClasses[status] || 'status-pending',
-            priority_class: priorityClasses[priority] || 'priority-medium',
+            status_id: task.status_id,
+            priority_id: task.priority_id,
+            due_date: task.due_date,
             has_children: Array.isArray(task.children) && task.children.length > 0,
             assignments: Array.isArray(task.assignments) ? task.assignments : [],
             children: []

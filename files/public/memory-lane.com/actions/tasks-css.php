@@ -174,20 +174,6 @@
     border-radius: 4px;
     font-size: 0.75rem;
     white-space: nowrap;
-}
-
-.priority-high {
-    background-color: #e74c3c;
-    color: white;
-}
-
-.priority-medium {
-    background-color: #f39c12;
-    color: #121212;
-}
-
-.priority-low {
-    background-color: #3498db;
     color: #121212;
 }
 
