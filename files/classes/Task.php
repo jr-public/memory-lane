@@ -16,5 +16,5 @@ class Task extends AbstractEntity {
             'select' => '*'
         ]
     ];
-    protected static $editable_columns = ["title","description","due_date"];
+    protected static $editable_columns = ["title","description","due_date","status_id"];
 }

@@ -248,6 +248,8 @@ function createStatusElement(task) {
         Object.values(status_list).forEach(option => {
             const statusOption = document.createElement('div');
             statusOption.className = 'status-option';
+            statusOption.dataset.id = option.id;
+            statusOption.dataset.task_id = task.id;
             statusOption.textContent = option.name;
             
             // Set background color if provided
@@ -257,6 +259,33 @@ function createStatusElement(task) {
             
             // Append to container
             optionsContainer.appendChild(statusOption);
+        });
+        optionsContainer.addEventListener('click', function(e) {
+            const option = e.target.closest('.status-option');
+            if (option) {
+                let newId = option.dataset.id;
+                let taskId = option.dataset.task_id;
+                apiProxyRequest(
+                    { 
+                        controller: 'task',
+                        action: 'update', 
+                        params: {
+                            id: taskId,
+                            data: {
+                                status_id: newId
+                            }
+                        }
+                    },
+                    function(result) {
+                        // This will run when the data comes back
+                        console.log('Success:', result);
+                    },
+                    function(result) {
+                        // This will run when the data comes back
+                        console.error('Error:', result);
+                    }
+                );
+            }
         });
         
         const popover = showPopover(this, cloned, {
