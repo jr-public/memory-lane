@@ -702,6 +702,7 @@ function buildTaskTreeData(tasks) {
             due_date: task.due_date,
             has_children: Array.isArray(task.children) && task.children.length > 0,
             assignments: Array.isArray(task.assignments) ? task.assignments : [],
+            comments: task.comments,
             children: []
         };
         
