@@ -226,8 +226,9 @@ function createDueDateElement(task) {
 function createStatusElement(task) {
     const statusBadge = document.createElement('div');
     // Safely access status with default fallback
-    const status = (task && task.status) ? task.status : 'not_set';
-    const statusBadgeClass = (task && task.status_badge_class) ? task.status_badge_class : 'status-pending';
+    const status = status_list[task.status_id].name || 'not_set';
+    const statusBadgeClass = statusClasses[status] || 'status-pending';
+    // const statusBadgeClass = (task && task.status_badge_class) ? task.status_badge_class : 'status-pending';
     statusBadge.className = `task-status-badge ${statusBadgeClass}`;
     // Format the status text with fallback
     statusBadge.textContent = status !== 'not_set' ? 
@@ -581,13 +582,13 @@ function getAvatarColor(index) {
 // Transform raw task data into the format needed for rendering
 function buildTaskTreeData(tasks) {
     // Define mapping for classes
-    const statusClasses = {
-        'completed': 'status-active',
-        'in_progress': 'status-in-progress',
-        'pending': 'status-pending',
-        'backlogged': 'status-inactive',
-        'not_set': 'status-pending'
-    };
+    // const statusClasses = {
+    //     'completed': 'status-active',
+    //     'in_progress': 'status-in-progress',
+    //     'pending': 'status-pending',
+    //     'backlogged': 'status-inactive',
+    //     'not_set': 'status-pending'
+    // };
     
     const priorityClasses = {
         'high': 'priority-high',
@@ -618,18 +619,19 @@ function buildTaskTreeData(tasks) {
         }
         
         // Safely get properties with defaults
-        const status = task.status || 'not_set';
+        // const status = task.status || 'not_set';
         const priority = task.priority || 'not_set';
         const dueDate = task.due_date || null;
         
         const taskData = {
             id: task.id || 0,
             title: task.title || 'Untitled Task',
-            status: status,
+            status_id: task.status_id, //
+            // status: status,
             priority: priority,
             due_date: dueDate,
-            status_class: iconClasses[status] || 'status-pending-icon',
-            status_badge_class: statusClasses[status] || 'status-pending',
+            // status_class: iconClasses[status] || 'status-pending-icon',
+            // status_badge_class: statusClasses[status] || 'status-pending',
             priority_class: priorityClasses[priority] || 'priority-medium',
             has_children: Array.isArray(task.children) && task.children.length > 0,
             assignments: Array.isArray(task.assignments) ? task.assignments : [],

@@ -20,10 +20,19 @@ if (!$users_res['success']) {
     echo json_encode($users_res);
     die();
 }
-
+$statuses_res = api_call("TaskStatus", "list", [
+    "options" => [
+        "unique" => true
+    ]
+]);
+if (!$statuses_res['success']) {
+    echo json_encode($statuses_res);
+    die();
+}
 //
 $tasks = $tree_res['data'];
 $tasked_users = $users_res['data'];
+$status_list = $statuses_res['data'];
 ?>
 
 <!-- Task Management Container -->
@@ -67,33 +76,14 @@ require_once('actions/tasks-css.php');
     const rawTaskData = <?= json_encode($tasks['tree']) ?>;
     const task_list = <?= json_encode($tasks['list']) ?>;
     const currentUrl = <?= json_encode($current_url) ?>;
-    const status_list = [
-        {
-            id: "in_progress",
-            name: "En proceso",
-            color: "#f39c12"  // Yellow
-        },
-        {
-            id: "completed",
-            name: "Listo",
-            color: "#2ecc71"  // Green
-        },
-        {
-            id: "trabao",
-            name: "Trabao",
-            color: "#e74c3c"  // Red
-        },
-        {
-            id: "notes",
-            name: "Notas",
-            color: "#95a5a6"  // Gray
-        },
-        {
-            id: "deprecated",
-            name: "DEPRECADO",
-            color: "#9b59b6"  // Purple
-        }
-    ];
+    const status_list = <?= json_encode($status_list) ?>;
+    const statusClasses = {
+        'completed': 'status-active',
+        'in_progress': 'status-in-progress',
+        'pending': 'status-pending',
+        'backlogged': 'status-inactive',
+        'not_set': 'status-pending'
+    };
     const priority_list = [
         {
             id: "urgent",

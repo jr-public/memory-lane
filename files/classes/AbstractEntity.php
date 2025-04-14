@@ -52,7 +52,7 @@ abstract class AbstractEntity {
             return response(true, $result);
         } catch (\PDOException $e) {
             // LOG ERROR
-            return response(false, null, 'Entity get error: ' . $e->getMessage(), $e->getCode());
+            return response(false, null, 'Entity get error: ' . $e->getMessage());
         }
     }
 
@@ -70,7 +70,7 @@ abstract class AbstractEntity {
             $list = $stmt->fetchAll(\PDO::FETCH_UNIQUE);
         } catch (\PDOException $e) {
             // LOG ERROR
-            return response(false, null, 'Entity list error: ' . $e->getMessage(), $e->getCode());
+            return response(false, null, 'Entity list error: ' . $e->getMessage());
         }
         
         if (empty($list)) return response(true, []);
