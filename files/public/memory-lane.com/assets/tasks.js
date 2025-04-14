@@ -222,22 +222,16 @@ function createDueDateElement(task) {
     
     return taskDueDate;
 }
-// Create status badge element with improved error handling and clickable behavior
 function createStatusElement(task) {
+    const status = status_list[task.status_id];
+
     const statusBadge = document.createElement('div');
-    // Safely access status with default fallback
-    const status = (task && task.status) ? task.status : 'not_set';
-    const statusBadgeClass = (task && task.status_badge_class) ? task.status_badge_class : 'status-pending';
-    statusBadge.className = `task-status-badge ${statusBadgeClass}`;
-    // Format the status text with fallback
-    statusBadge.textContent = status !== 'not_set' ? 
-        status.charAt(0).toUpperCase() + status.slice(1) : 
-        'Pending'; // Default display text
-    
+    statusBadge.className = 'task-status-badge';
+    statusBadge.style.backgroundColor = status.color;
+    statusBadge.textContent = status.name;
     statusBadge.style.cursor = 'pointer';
     statusBadge.dataset.taskId = task.id;
     
-    // Add click event listener to show status popover
     statusBadge.addEventListener('click', function(event) {
         event.stopPropagation(); // Prevent event bubbling to task toggle
         
@@ -249,22 +243,74 @@ function createStatusElement(task) {
         // Clear any existing options
         optionsContainer.innerHTML = '';
         
-        // Create and append each status option
-        status_list.forEach(option => {
-            const statusOption = document.createElement('div');
+        // Create and append each status option as a form
+        Object.values(status_list).forEach(option => {
+            // Create form element
+            const form = document.createElement('form');
+            form.action = currentUrl;
+            form.method = 'post';
+            
+            // Add necessary hidden inputs
+            form.innerHTML = `
+                <input type="hidden" name="entity_name" value="Task">
+                <input type="hidden" name="entity_action" value="update">
+                <input type="hidden" name="id" value="${task.id}">
+                <input type="hidden" name="status_id" value="${option.id}">
+            `;
+            
+            // Create the status option that will act as a submit button
+            const statusOption = document.createElement('button');
+            statusOption.type = 'submit';
             statusOption.className = 'status-option';
-            statusOption.dataset.status = option.id || option.value || option.status;
-            statusOption.textContent = option.name || option.label || option.text;
+            statusOption.textContent = option.name;
+            
+            // Style the button to look like the previous div
+            statusOption.style.width = '100%';
+            statusOption.style.textAlign = 'center';
+            statusOption.style.border = 'none';
+            statusOption.style.cursor = 'pointer';
             
             // Set background color if provided
             if (option.color) {
                 statusOption.style.backgroundColor = option.color;
             }
             
-            // Append to container
-            optionsContainer.appendChild(statusOption);
+            // Append the button to the form
+            form.appendChild(statusOption);
+            
+            // Append the form to the container
+            optionsContainer.appendChild(form);
         });
         
+        // Here's the AJAXY version
+        // optionsContainer.addEventListener('click', function(e) {
+        //     const option = e.target.closest('.status-option');
+        //     if (option) {
+        //         let newId = option.dataset.id;
+        //         let taskId = option.dataset.task_id;
+        //         apiProxyRequest(
+        //             { 
+        //                 controller: 'task',
+        //                 action: 'update', 
+        //                 params: {
+        //                     id: taskId,
+        //                     data: {
+        //                         status_id: newId
+        //                     }
+        //                 }
+        //             },
+        //             function(result) {
+        //                 // This will run when the data comes back
+        //                 console.log('Success:', result);
+        //             },
+        //             function(result) {
+        //                 // This will run when the data comes back
+        //                 console.error('Error:', result);
+        //             }
+        //         );
+        //     }
+        // });
+
         const popover = showPopover(this, cloned, {
             position: 'bottom',
             className: 'status-popover'
@@ -275,59 +321,71 @@ function createStatusElement(task) {
     
     return statusBadge;
 }
-// Create priority element with improved error handling and clickable behavior
 function createPriorityElement(task) {
-    const taskPriority = document.createElement('div');
-    taskPriority.className = 'task-priority';
     
-    // Safely access priority with default fallback
-    const priority = (task && task.priority) ? task.priority : 'not_set';
-    const priorityClass = (task && task.priority_class) ? task.priority_class : 'priority-medium';
+    const priority = priority_list[task.priority_id];
     
-    const priorityIndicator = document.createElement('span');
-    priorityIndicator.className = `priority-indicator ${priorityClass}`;
-    
-    // Format the priority text with fallback
-    priorityIndicator.textContent = priority !== 'not_set' ? 
-        priority.charAt(0).toUpperCase() + priority.slice(1) : 
-        'Medium'; // Default display text
-    
-    taskPriority.appendChild(priorityIndicator);
-    
-    // Make priority indicator clickable
-    priorityIndicator.style.cursor = 'pointer';
-    
-    // Add data attribute for task ID
-    priorityIndicator.dataset.taskId = task.id;
+    // Create priority badge element
+    const priorityBadge = document.createElement('div');
+    priorityBadge.className = 'priority-indicator';
+    priorityBadge.style.backgroundColor = priority.color;
+    // priorityBadge.classList.add(`priority-${priority.name}`);
+    priorityBadge.textContent = priority.name;
+    priorityBadge.style.cursor = 'pointer';
+    priorityBadge.dataset.taskId = task.id;
     
     // Add click event listener to show priority popover
-    priorityIndicator.addEventListener('click', function(event) {
+    priorityBadge.addEventListener('click', function(event) {
         event.stopPropagation(); // Prevent event bubbling to task toggle
         
+        // Clone the priority popover template
         let cloned = popoverTemplates.priority.cloneNode(true);
         cloned.style.display = '';
         
-        // Populate priority options from the priority_list array
+        // Populate priority options container
         const optionsContainer = cloned.querySelector('.priority-options-container');
-        // Clear any existing options
-        optionsContainer.innerHTML = '';
+        optionsContainer.innerHTML = ''; // Clear any existing options
         
-        // Create and append each priority option
-        priority_list.forEach(option => {
-            const priorityOption = document.createElement('div');
-            priorityOption.className = 'priority-option';
-            priorityOption.dataset.priority = option.id || option.value || option.priority;
-            priorityOption.textContent = option.name || option.label || option.text;
+        // Create and append each priority option as a form
+        Object.values(priority_list).forEach(option => {
+            // Create form element
+            const form = document.createElement('form');
+            form.action = currentUrl;
+            form.method = 'post';
             
-            // Set background color if provided
+            // Add necessary hidden inputs
+            form.innerHTML = `
+                <input type="hidden" name="entity_name" value="Task">
+                <input type="hidden" name="entity_action" value="update">
+                <input type="hidden" name="id" value="${task.id}">
+                <input type="hidden" name="priority_id" value="${option.id}">
+            `;
+            
+            // Create the priority option that will act as a submit button
+            const priorityOption = document.createElement('button');
+            priorityOption.type = 'submit';
+            priorityOption.className = 'priority-option';
+            priorityOption.textContent = option.name;
+            
+            // Style the button to match design
+            priorityOption.style.width = '100%';
+            priorityOption.style.textAlign = 'center';
+            priorityOption.style.border = 'none';
+            priorityOption.style.cursor = 'pointer';
+            
+            // Set background color
             if (option.color) {
                 priorityOption.style.backgroundColor = option.color;
             }
             
-            // Append to container
-            optionsContainer.appendChild(priorityOption);
+            // Append the button to the form
+            form.appendChild(priorityOption);
+            
+            // Append the form to the container
+            optionsContainer.appendChild(form);
         });
         
+        // Show the popover
         const popover = showPopover(this, cloned, {
             position: 'bottom',
             className: 'priority-popover'
@@ -336,35 +394,27 @@ function createPriorityElement(task) {
         return popover;
     });
     
-    return taskPriority;
+    return priorityBadge;
 }
-// Create difficulty element with improved error handling and clickable behavior
 function createDifficultyElement(task) {
+
+    
+    const difficulty = difficulty_list[task.difficulty_id];
+
     const taskDifficulty = document.createElement('div');
-    taskDifficulty.className = 'task-difficulty';
+    taskDifficulty.textContent = difficulty.name;
+    taskDifficulty.className = 'difficulty-indicator';
+    taskDifficulty.style.backgroundColor = difficulty.color;
     
-    // Safely access difficulty with default fallback
-    const difficulty = (task && task.difficulty) ? task.difficulty : 'not_set';
-    const difficultyClass = (task && task.difficulty_class) ? task.difficulty_class : 'difficulty-medium';
-    
-    const difficultyIndicator = document.createElement('span');
-    difficultyIndicator.className = `difficulty-indicator ${difficultyClass}`;
-    
-    // Format the difficulty text with fallback
-    difficultyIndicator.textContent = difficulty !== 'not_set' ? 
-        difficulty.charAt(0).toUpperCase() + difficulty.slice(1) : 
-        'Medium'; // Default display text
-    
-    taskDifficulty.appendChild(difficultyIndicator);
     
     // Make difficulty indicator clickable
-    difficultyIndicator.style.cursor = 'pointer';
+    taskDifficulty.style.cursor = 'pointer';
     
     // Add data attribute for task ID
-    difficultyIndicator.dataset.taskId = task.id;
+    taskDifficulty.dataset.taskId = task.id;
     
     // Add click event listener to show difficulty popover
-    difficultyIndicator.addEventListener('click', function(event) {
+    taskDifficulty.addEventListener('click', function(event) {
         event.stopPropagation(); // Prevent event bubbling to task toggle
         
         let cloned = popoverTemplates.difficulty.cloneNode(true);
@@ -375,22 +425,51 @@ function createDifficultyElement(task) {
         // Clear any existing options
         optionsContainer.innerHTML = '';
         
-        // Create and append each difficulty option
-        difficulty_list.forEach(option => {
-            const difficultyOption = document.createElement('div');
+        // Create and append each difficulty option as a form
+        Object.values(difficulty_list).forEach(option => {
+            // Create form element
+            const form = document.createElement('form');
+            form.action = currentUrl;
+            form.method = 'post';
+            
+            // Add necessary hidden inputs
+            form.innerHTML = `
+                <input type="hidden" name="entity_name" value="Task">
+                <input type="hidden" name="entity_action" value="update">
+                <input type="hidden" name="id" value="${task.id}">
+                <input type="hidden" name="difficulty_id" value="${option.id}">
+            `;
+            
+            // Create the difficulty option button
+            const difficultyOption = document.createElement('button');
+            difficultyOption.type = 'submit';
             difficultyOption.className = 'difficulty-option';
-            difficultyOption.dataset.difficulty = option.id || option.value || option.difficulty;
-            difficultyOption.textContent = option.name || option.label || option.text;
+            difficultyOption.textContent = option.name;
             
-            // Set background color if provided
-            if (option.color) {
-                difficultyOption.style.backgroundColor = option.color;
-            }
+            // Style the button
+            difficultyOption.style.width = '100%';
+            difficultyOption.style.textAlign = 'center';
+            difficultyOption.style.border = 'none';
+            difficultyOption.style.cursor = 'pointer';
+            difficultyOption.style.backgroundColor = option.color;
             
-            // Append to container
-            optionsContainer.appendChild(difficultyOption);
+            // Append the button to the form
+            form.appendChild(difficultyOption);
+            
+            // Append the form to the container
+            optionsContainer.appendChild(form);
         });
         
+        // Hook up the Edit difficulties button if needed
+        const editButton = cloned.querySelector('.difficulty-edit-btn');
+        if (editButton) {
+            editButton.addEventListener('click', function() {
+                // Implement difficulty management if needed
+                alert('Difficulty management feature coming soon');
+            });
+        }
+        
+        // Show the popover
         const popover = showPopover(this, cloned, {
             position: 'bottom',
             className: 'difficulty-popover'
@@ -580,29 +659,6 @@ function getAvatarColor(index) {
 
 // Transform raw task data into the format needed for rendering
 function buildTaskTreeData(tasks) {
-    // Define mapping for classes
-    const statusClasses = {
-        'completed': 'status-active',
-        'in_progress': 'status-in-progress',
-        'pending': 'status-pending',
-        'backlogged': 'status-inactive',
-        'not_set': 'status-pending'
-    };
-    
-    const priorityClasses = {
-        'high': 'priority-high',
-        'medium': 'priority-medium',
-        'low': 'priority-low',
-        'not_set': 'priority-medium'
-    };
-    
-    const iconClasses = {
-        'completed': 'status-completed-icon',
-        'in_progress': 'status-in-progress-icon',
-        'pending': 'status-pending-icon',
-        'backlogged': 'status-on-hold-icon',
-        'not_set': 'status-pending-icon'
-    };
     
     // Guard against tasks not being an array
     if (!Array.isArray(tasks)) {
@@ -617,20 +673,13 @@ function buildTaskTreeData(tasks) {
             return null;
         }
         
-        // Safely get properties with defaults
-        const status = task.status || 'not_set';
-        const priority = task.priority || 'not_set';
-        const dueDate = task.due_date || null;
-        
         const taskData = {
             id: task.id || 0,
             title: task.title || 'Untitled Task',
-            status: status,
-            priority: priority,
-            due_date: dueDate,
-            status_class: iconClasses[status] || 'status-pending-icon',
-            status_badge_class: statusClasses[status] || 'status-pending',
-            priority_class: priorityClasses[priority] || 'priority-medium',
+            status_id: task.status_id,
+            priority_id: task.priority_id,
+            difficulty_id: task.difficulty_id,
+            due_date: task.due_date,
             has_children: Array.isArray(task.children) && task.children.length > 0,
             assignments: Array.isArray(task.assignments) ? task.assignments : [],
             children: []

@@ -166,25 +166,6 @@
     border-radius: 4px;
     font-size: 0.75rem;
     white-space: nowrap;
-}
-
-.status-active {
-    background-color: #2ecc71;
-    color: #121212;
-}
-
-.status-in-progress {
-    background-color: #3498db;
-    color: #121212;
-}
-
-.status-pending {
-    background-color: #f39c12;
-    color: #121212;
-}
-
-.status-inactive {
-    background-color: #7f8c8d;
     color: #121212;
 }
 
@@ -193,20 +174,6 @@
     border-radius: 4px;
     font-size: 0.75rem;
     white-space: nowrap;
-}
-
-.priority-high {
-    background-color: #e74c3c;
-    color: white;
-}
-
-.priority-medium {
-    background-color: #f39c12;
-    color: #121212;
-}
-
-.priority-low {
-    background-color: #3498db;
     color: #121212;
 }
 

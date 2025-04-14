@@ -91,7 +91,13 @@
 		background-color: #3a4556;
 		color: #e2e8f0;
 	}
-
+	.difficulty-indicator {
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    color: #121212;
+}
 	.edit-icon {
 		font-size: 14px;
 	}
