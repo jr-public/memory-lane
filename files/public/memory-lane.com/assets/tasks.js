@@ -397,31 +397,24 @@ function createPriorityElement(task) {
     return priorityBadge;
 }
 function createDifficultyElement(task) {
+
+    
+    const difficulty = difficulty_list[task.difficulty_id];
+
     const taskDifficulty = document.createElement('div');
-    taskDifficulty.className = 'task-difficulty';
+    taskDifficulty.textContent = difficulty.name;
+    taskDifficulty.className = 'difficulty-indicator';
+    taskDifficulty.style.backgroundColor = difficulty.color;
     
-    // Safely access difficulty with default fallback
-    const difficulty = (task && task.difficulty) ? task.difficulty : 'not_set';
-    const difficultyClass = (task && task.difficulty_class) ? task.difficulty_class : 'difficulty-medium';
-    
-    const difficultyIndicator = document.createElement('span');
-    difficultyIndicator.className = `difficulty-indicator ${difficultyClass}`;
-    
-    // Format the difficulty text with fallback
-    difficultyIndicator.textContent = difficulty !== 'not_set' ? 
-        difficulty.charAt(0).toUpperCase() + difficulty.slice(1) : 
-        'Medium'; // Default display text
-    
-    taskDifficulty.appendChild(difficultyIndicator);
     
     // Make difficulty indicator clickable
-    difficultyIndicator.style.cursor = 'pointer';
+    taskDifficulty.style.cursor = 'pointer';
     
     // Add data attribute for task ID
-    difficultyIndicator.dataset.taskId = task.id;
+    taskDifficulty.dataset.taskId = task.id;
     
     // Add click event listener to show difficulty popover
-    difficultyIndicator.addEventListener('click', function(event) {
+    taskDifficulty.addEventListener('click', function(event) {
         event.stopPropagation(); // Prevent event bubbling to task toggle
         
         let cloned = popoverTemplates.difficulty.cloneNode(true);
@@ -432,22 +425,51 @@ function createDifficultyElement(task) {
         // Clear any existing options
         optionsContainer.innerHTML = '';
         
-        // Create and append each difficulty option
-        difficulty_list.forEach(option => {
-            const difficultyOption = document.createElement('div');
+        // Create and append each difficulty option as a form
+        Object.values(difficulty_list).forEach(option => {
+            // Create form element
+            const form = document.createElement('form');
+            form.action = currentUrl;
+            form.method = 'post';
+            
+            // Add necessary hidden inputs
+            form.innerHTML = `
+                <input type="hidden" name="entity_name" value="Task">
+                <input type="hidden" name="entity_action" value="update">
+                <input type="hidden" name="id" value="${task.id}">
+                <input type="hidden" name="difficulty_id" value="${option.id}">
+            `;
+            
+            // Create the difficulty option button
+            const difficultyOption = document.createElement('button');
+            difficultyOption.type = 'submit';
             difficultyOption.className = 'difficulty-option';
-            difficultyOption.dataset.difficulty = option.id || option.value || option.difficulty;
-            difficultyOption.textContent = option.name || option.label || option.text;
+            difficultyOption.textContent = option.name;
             
-            // Set background color if provided
-            if (option.color) {
-                difficultyOption.style.backgroundColor = option.color;
-            }
+            // Style the button
+            difficultyOption.style.width = '100%';
+            difficultyOption.style.textAlign = 'center';
+            difficultyOption.style.border = 'none';
+            difficultyOption.style.cursor = 'pointer';
+            difficultyOption.style.backgroundColor = option.color;
             
-            // Append to container
-            optionsContainer.appendChild(difficultyOption);
+            // Append the button to the form
+            form.appendChild(difficultyOption);
+            
+            // Append the form to the container
+            optionsContainer.appendChild(form);
         });
         
+        // Hook up the Edit difficulties button if needed
+        const editButton = cloned.querySelector('.difficulty-edit-btn');
+        if (editButton) {
+            editButton.addEventListener('click', function() {
+                // Implement difficulty management if needed
+                alert('Difficulty management feature coming soon');
+            });
+        }
+        
+        // Show the popover
         const popover = showPopover(this, cloned, {
             position: 'bottom',
             className: 'difficulty-popover'
@@ -656,6 +678,7 @@ function buildTaskTreeData(tasks) {
             title: task.title || 'Untitled Task',
             status_id: task.status_id,
             priority_id: task.priority_id,
+            difficulty_id: task.difficulty_id,
             due_date: task.due_date,
             has_children: Array.isArray(task.children) && task.children.length > 0,
             assignments: Array.isArray(task.assignments) ? task.assignments : [],
