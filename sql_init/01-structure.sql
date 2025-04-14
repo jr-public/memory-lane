@@ -26,8 +26,10 @@ CREATE TABLE roles (
 CREATE TABLE task_statuses (
     id SERIAL PRIMARY KEY,
     name VARCHAR(50) NOT NULL UNIQUE,
-    description TEXT NULL
+    description TEXT,
+    color VARCHAR(50) NOT NULL DEFAULT '#95a5a6'
 );
+
 
 -- Users table to store user information
 -- Contains all registered users of the system

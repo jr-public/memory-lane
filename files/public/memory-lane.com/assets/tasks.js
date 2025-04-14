@@ -224,21 +224,15 @@ function createDueDateElement(task) {
 }
 // Create status badge element with improved error handling and clickable behavior
 function createStatusElement(task) {
+
+    const status = status_list[task.status_id];
+
     const statusBadge = document.createElement('div');
-    // Safely access status with default fallback
-    const status = status_list[task.status_id].name || 'not_set';
-    const statusBadgeClass = statusClasses[status] || 'status-pending';
-    // const statusBadgeClass = (task && task.status_badge_class) ? task.status_badge_class : 'status-pending';
-    statusBadge.className = `task-status-badge ${statusBadgeClass}`;
-    // Format the status text with fallback
-    statusBadge.textContent = status !== 'not_set' ? 
-        status.charAt(0).toUpperCase() + status.slice(1) : 
-        'Pending'; // Default display text
-    
+    statusBadge.className = 'task-status-badge';
+    statusBadge.style.backgroundColor = status.color;
+    statusBadge.textContent = status.name;
     statusBadge.style.cursor = 'pointer';
     statusBadge.dataset.taskId = task.id;
-    
-    // Add click event listener to show status popover
     statusBadge.addEventListener('click', function(event) {
         event.stopPropagation(); // Prevent event bubbling to task toggle
         
@@ -251,11 +245,10 @@ function createStatusElement(task) {
         optionsContainer.innerHTML = '';
         
         // Create and append each status option
-        status_list.forEach(option => {
+        Object.values(status_list).forEach(option => {
             const statusOption = document.createElement('div');
             statusOption.className = 'status-option';
-            statusOption.dataset.status = option.id || option.value || option.status;
-            statusOption.textContent = option.name || option.label || option.text;
+            statusOption.textContent = option.name;
             
             // Set background color if provided
             if (option.color) {

@@ -77,13 +77,6 @@ require_once('actions/tasks-css.php');
     const task_list = <?= json_encode($tasks['list']) ?>;
     const currentUrl = <?= json_encode($current_url) ?>;
     const status_list = <?= json_encode($status_list) ?>;
-    const statusClasses = {
-        'completed': 'status-active',
-        'in_progress': 'status-in-progress',
-        'pending': 'status-pending',
-        'backlogged': 'status-inactive',
-        'not_set': 'status-pending'
-    };
     const priority_list = [
         {
             id: "urgent",
