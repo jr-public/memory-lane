@@ -62,8 +62,6 @@ function renderTaskTree(tasks, parentElement = null, level = 0) {
         
     });
 }
-
-// Modified createTaskInfo function to reflect the expansion state
 function createTaskInfo(task, level) {
     const htmlString = `
     <div class="task-info">
@@ -93,6 +91,12 @@ function createTaskInfo(task, level) {
     const taskName = taskInfo.querySelector('div.task-name');
     taskName.textContent = task.title;
     
+    taskName.style.cursor = 'pointer';
+    taskName.addEventListener('click', (e) => {
+        e.stopPropagation(); // Prevent triggering parent elements
+        openTaskPanel(task);
+    });
+    
     return taskInfo;
 }
 // Create the task meta section (right side with details)
@@ -113,6 +117,22 @@ function createTaskMeta(task) {
     
     
     return taskMeta;
+}
+function openTaskPanel(task) {
+    // Find the complete task data from our task list
+    const fullTaskData = task_list[task.id];
+    
+    if (!fullTaskData) {
+        console.error(`Task with ID ${task.id} not found in task list`);
+        return;
+    }
+    
+    // Open the task panel with the full task data
+    if (window.taskPanel) {
+        window.taskPanel.open(fullTaskData);
+    } else {
+        console.error('Task panel not initialized');
+    }
 }
 
 /*
