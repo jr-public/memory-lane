@@ -222,9 +222,7 @@ function createDueDateElement(task) {
     
     return taskDueDate;
 }
-// Create status badge element with improved error handling and clickable behavior
 function createStatusElement(task) {
-
     const status = status_list[task.status_id];
 
     const statusBadge = document.createElement('div');
@@ -233,6 +231,7 @@ function createStatusElement(task) {
     statusBadge.textContent = status.name;
     statusBadge.style.cursor = 'pointer';
     statusBadge.dataset.taskId = task.id;
+    
     statusBadge.addEventListener('click', function(event) {
         event.stopPropagation(); // Prevent event bubbling to task toggle
         
@@ -244,50 +243,74 @@ function createStatusElement(task) {
         // Clear any existing options
         optionsContainer.innerHTML = '';
         
-        // Create and append each status option
+        // Create and append each status option as a form
         Object.values(status_list).forEach(option => {
-            const statusOption = document.createElement('div');
+            // Create form element
+            const form = document.createElement('form');
+            form.action = currentUrl;
+            form.method = 'post';
+            
+            // Add necessary hidden inputs
+            form.innerHTML = `
+                <input type="hidden" name="entity_name" value="Task">
+                <input type="hidden" name="entity_action" value="update">
+                <input type="hidden" name="id" value="${task.id}">
+                <input type="hidden" name="status_id" value="${option.id}">
+            `;
+            
+            // Create the status option that will act as a submit button
+            const statusOption = document.createElement('button');
+            statusOption.type = 'submit';
             statusOption.className = 'status-option';
-            statusOption.dataset.id = option.id;
-            statusOption.dataset.task_id = task.id;
             statusOption.textContent = option.name;
+            
+            // Style the button to look like the previous div
+            statusOption.style.width = '100%';
+            statusOption.style.textAlign = 'center';
+            statusOption.style.border = 'none';
+            statusOption.style.cursor = 'pointer';
             
             // Set background color if provided
             if (option.color) {
                 statusOption.style.backgroundColor = option.color;
             }
             
-            // Append to container
-            optionsContainer.appendChild(statusOption);
-        });
-        optionsContainer.addEventListener('click', function(e) {
-            const option = e.target.closest('.status-option');
-            if (option) {
-                let newId = option.dataset.id;
-                let taskId = option.dataset.task_id;
-                apiProxyRequest(
-                    { 
-                        controller: 'task',
-                        action: 'update', 
-                        params: {
-                            id: taskId,
-                            data: {
-                                status_id: newId
-                            }
-                        }
-                    },
-                    function(result) {
-                        // This will run when the data comes back
-                        console.log('Success:', result);
-                    },
-                    function(result) {
-                        // This will run when the data comes back
-                        console.error('Error:', result);
-                    }
-                );
-            }
+            // Append the button to the form
+            form.appendChild(statusOption);
+            
+            // Append the form to the container
+            optionsContainer.appendChild(form);
         });
         
+        // Here's the AJAXY version
+        // optionsContainer.addEventListener('click', function(e) {
+        //     const option = e.target.closest('.status-option');
+        //     if (option) {
+        //         let newId = option.dataset.id;
+        //         let taskId = option.dataset.task_id;
+        //         apiProxyRequest(
+        //             { 
+        //                 controller: 'task',
+        //                 action: 'update', 
+        //                 params: {
+        //                     id: taskId,
+        //                     data: {
+        //                         status_id: newId
+        //                     }
+        //                 }
+        //             },
+        //             function(result) {
+        //                 // This will run when the data comes back
+        //                 console.log('Success:', result);
+        //             },
+        //             function(result) {
+        //                 // This will run when the data comes back
+        //                 console.error('Error:', result);
+        //             }
+        //         );
+        //     }
+        // });
+
         const popover = showPopover(this, cloned, {
             position: 'bottom',
             className: 'status-popover'
@@ -298,7 +321,6 @@ function createStatusElement(task) {
     
     return statusBadge;
 }
-// Create priority element with improved error handling and clickable behavior
 function createPriorityElement(task) {
     const taskPriority = document.createElement('div');
     taskPriority.className = 'task-priority';
@@ -361,7 +383,6 @@ function createPriorityElement(task) {
     
     return taskPriority;
 }
-// Create difficulty element with improved error handling and clickable behavior
 function createDifficultyElement(task) {
     const taskDifficulty = document.createElement('div');
     taskDifficulty.className = 'task-difficulty';
