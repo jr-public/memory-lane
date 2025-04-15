@@ -138,6 +138,9 @@ class TaskPanel {
      * 
      * @param {Object} task - The task object containing details to display
      */
+    // Add to the TaskPanel class
+
+    // Modify the open method to make the title editable
     open(task) {
         if (!task || !task.id) {
             console.error('Invalid task data provided to panel');
@@ -147,8 +150,8 @@ class TaskPanel {
         // Store the current task ID
         this.currentTaskId = task.id;
         
-        // Update panel title with task title
-        this.title.textContent = task.title || 'Task Details';
+        // Update panel title with task title and add edit button
+        this.updateTitleDisplay(task);
         
         // Update basic task info
         this.updateBasicInfo(task);
@@ -162,11 +165,119 @@ class TaskPanel {
         // Add the active class to show the panel
         this.panel.classList.add('active');
         
-        // Set focus to the panel for accessibility
-        this.closeBtn.focus();
-        
         // Prevent body scrolling while panel is open
         document.body.style.overflow = 'hidden';
+    }
+
+    // Create a new method to handle updating the title display
+    updateTitleDisplay(task) {
+        // Clear previous title content
+        this.title.innerHTML = '';
+        
+        // Create title text element
+        const titleText = document.createElement('span');
+        titleText.className = 'task-title-text';
+        titleText.textContent = task.title || 'Untitled Task';
+        
+        // Create edit button
+        const editButton = document.createElement('button');
+        editButton.className = 'btn-edit-title';
+        editButton.innerHTML = '<span class="edit-icon">✎</span>';
+        editButton.title = 'Edit title';
+        editButton.addEventListener('click', () => this.showTitleEditor(task));
+        
+        // Add elements to title container
+        this.title.appendChild(titleText);
+        this.title.appendChild(editButton);
+    }
+
+    // Create a new method to show the title editor
+    showTitleEditor(task) {
+        // Clear the title container
+        this.title.innerHTML = '';
+        
+        // Create input field
+        const titleInput = document.createElement('input');
+        titleInput.type = 'text';
+        titleInput.className = 'title-edit-input';
+        titleInput.value = task.title || '';
+        titleInput.placeholder = 'Enter task title...';
+        
+        // Create save button
+        const saveButton = document.createElement('button');
+        saveButton.className = 'btn-save-title';
+        saveButton.innerHTML = '✓';
+        saveButton.title = 'Save title';
+        saveButton.addEventListener('click', () => this.saveTitle(task.id, titleInput.value));
+        
+        // Create cancel button
+        const cancelButton = document.createElement('button');
+        cancelButton.className = 'btn-cancel-title';
+        cancelButton.innerHTML = '✕';
+        cancelButton.title = 'Cancel';
+        cancelButton.addEventListener('click', () => this.updateTitleDisplay(task_list[task.id]));
+        
+        // Add elements to title container
+        this.title.appendChild(titleInput);
+        this.title.appendChild(saveButton);
+        this.title.appendChild(cancelButton);
+        
+        // Focus the input field
+        titleInput.focus();
+        
+        // Add key event listeners
+        titleInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                this.saveTitle(task.id, titleInput.value);
+            } else if (e.key === 'Escape') {
+                this.updateTitleDisplay(task_list[task.id]);
+            }
+        });
+    }
+
+    // Create a new method to save the title
+    saveTitle(taskId, title) {
+        if (!title.trim()) {
+            alert('Task title cannot be empty');
+            return;
+        }
+        
+        // Update local data first
+        if (task_list[taskId]) {
+            task_list[taskId].title = title;
+        }
+        
+        // Make API request to update the title
+        apiProxyRequest(
+            {
+                controller: 'Task',
+                action: 'update',
+                params: {
+                    id: taskId,
+                    data: {
+                        title: title
+                    }
+                }
+            },
+            (result) => {
+                if (result.success) {
+                    // Update the title display
+                    this.updateTitleDisplay(task_list[taskId]);
+                    
+                    // Update the task in the list display
+                    const taskNameElement = document.querySelector(`.task-item[data-task-id="${taskId}"] .task-name`);
+                    if (taskNameElement) {
+                        taskNameElement.textContent = title;
+                    }
+                } else {
+                    alert('Failed to save title: ' + (result.message || 'Unknown error'));
+                }
+            },
+            (error) => {
+                console.error('Error saving title:', error);
+                alert('Failed to save title. Please try again.');
+            }
+        );
     }
     
     /**
@@ -1120,5 +1231,85 @@ document.addEventListener('DOMContentLoaded', function() {
     font-size: 2rem;
     margin-bottom: 10px;
     opacity: 0.7;
+}
+
+/* Title editing styles */
+.task-panel-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.task-title-text {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.btn-edit-title {
+    background: none;
+    border: none;
+    color: #909090;
+    font-size: 0.9rem;
+    cursor: pointer;
+    padding: 5px;
+    display: flex;
+    align-items: center;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+    border-radius: 4px;
+}
+
+.btn-edit-title:hover {
+    opacity: 1;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.title-edit-input {
+    flex: 1;
+    background-color: #242424;
+    border: 1px solid #444;
+    border-radius: 4px;
+    color: #e0e0e0;
+    padding: 5px 10px;
+    font-size: 1.2rem;
+    font-weight: 500;
+}
+
+.title-edit-input:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+.btn-save-title,
+.btn-cancel-title {
+    background: none;
+    border: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-save-title {
+    color: #2ecc71;
+}
+
+.btn-save-title:hover {
+    background-color: rgba(46, 204, 113, 0.2);
+}
+
+.btn-cancel-title {
+    color: #e74c3c;
+}
+
+.btn-cancel-title:hover {
+    background-color: rgba(231, 76, 60, 0.2);
 }
 </style>
