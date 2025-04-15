@@ -11,12 +11,11 @@
         <!-- Panel Content -->
         <div class="task-panel-content">
             <!-- Task Basic Info Section -->
-            <div class="panel-section">
+            <!-- <div class="panel-section">
                 <div class="panel-section-header">
                     <h3>Basic Information</h3>
                 </div>
                 <div class="panel-section-content">
-                    <!-- Placeholder content -->
                     <div class="info-item">
                         <span class="info-label">Status:</span>
                         <span class="info-value status-badge">Not implemented yet</span>
@@ -34,7 +33,7 @@
                         <span class="info-value">Not implemented yet</span>
                     </div>
                 </div>
-            </div>
+            </div> -->
             
             <!-- Task Description Section -->
             <div class="panel-section">
@@ -46,21 +45,39 @@
                 </div>
             </div>
             
-            <!-- Comments Section Placeholder -->
+            <!-- Comments Section -->
             <div class="panel-section">
                 <div class="panel-section-header">
                     <h3>Comments</h3>
                 </div>
                 <div class="panel-section-content">
-                    <div class="coming-soon">
-                        <div class="coming-soon-icon">💬</div>
-                        <p>Comments section coming soon</p>
+                    <!-- Comment List -->
+                    <div class="comments-container" id="comments-container">
+                        <!-- Comments will be inserted here via JavaScript -->
+                    </div>
+                    
+                    <!-- Add Comment Form -->
+                    <div class="comment-form-container">
+                        <form id="comment-form" method="post" action="<?php echo $current_url; ?>">
+                            <input type="hidden" name="entity_name" value="TaskComment">
+                            <input type="hidden" name="entity_action" value="create">
+                            <input type="hidden" name="task_id" id="comment-task-id" value="">
+                            <input type="hidden" name="user_id" value="1">
+                            
+                            <div class="comment-input-container">
+                                <textarea name="text" class="comment-input" placeholder="Add a comment..." required></textarea>
+                            </div>
+                            
+                            <div class="comment-form-actions">
+                                <button type="submit" class="btn-comment-submit">Add Comment</button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
             
             <!-- Attachments Section Placeholder -->
-            <div class="panel-section">
+            <!-- <div class="panel-section">
                 <div class="panel-section-header">
                     <h3>Attachments</h3>
                 </div>
@@ -70,7 +87,7 @@
                         <p>Attachments section coming soon</p>
                     </div>
                 </div>
-            </div>
+            </div> -->
         </div>
     </div>
 </div>
@@ -131,6 +148,9 @@ class TaskPanel {
         // Update basic task info if available
         this.updateBasicInfo(task);
         
+        // Update comments section
+        this.updateComments(task);
+        
         // Add the active class to show the panel
         this.panel.classList.add('active');
         
@@ -176,6 +196,102 @@ class TaskPanel {
         //     statusBadge.textContent = task.status;
         //     statusBadge.style.backgroundColor = getStatusColor(task.status);
         // }
+    }
+    updateComments(task) {
+        const commentsContainer = this.panel.querySelector('#comments-container');
+        const commentTaskIdInput = this.panel.querySelector('#comment-task-id');
+        
+        if (!commentsContainer || !commentTaskIdInput) {
+            return;
+        }
+        
+        // Set the task ID for the comment form
+        commentTaskIdInput.value = task.id;
+        
+        // Clear existing comments
+        commentsContainer.innerHTML = '';
+        
+        // Check if task has comments
+        if (!task.comments || task.comments.length === 0) {
+            const emptyState = document.createElement('div');
+            emptyState.className = 'comments-empty-state';
+            emptyState.innerHTML = `
+                <div class="comments-empty-icon">💬</div>
+                <p>No comments yet</p>
+            `;
+            commentsContainer.appendChild(emptyState);
+            return;
+        }
+        
+        // Sort comments by date (newest first)
+        const sortedComments = [...task.comments].sort((a, b) => {
+            return new Date(b.created_at) - new Date(a.created_at);
+        });
+        
+        // Render each comment
+        sortedComments.forEach(comment => {
+            const commentElement = this.createCommentElement(comment);
+            commentsContainer.appendChild(commentElement);
+        });
+    }
+
+    /**
+     * Create a comment element
+     * 
+     * @param {Object} comment - The comment data
+     * @returns {HTMLElement} - The comment element
+     */
+    createCommentElement(comment) {
+        // Create the comment container
+        const commentElement = document.createElement('div');
+        commentElement.className = 'comment-item';
+        commentElement.dataset.commentId = comment.id;
+        
+        // Get user data
+        const users = (typeof tasked_users === 'undefined') ? {} : tasked_users;
+        const user = users[comment.user_id] || { username: 'User' };
+        const username = user.username || 'Unknown User';
+        const initial = username.charAt(0).toUpperCase();
+        
+        // Format date
+        const commentDate = new Date(comment.created_at);
+        const dateOptions = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+        const formattedDate = commentDate.toLocaleDateString('en-US', dateOptions);
+        
+        // Build comment HTML
+        commentElement.innerHTML = `
+            <div class="comment-header">
+                <div class="comment-user">
+                    <div class="comment-avatar" style="background-color: ${this.getAvatarColor(comment.user_id)}">
+                        ${initial}
+                    </div>
+                    <div class="comment-author">${username}</div>
+                </div>
+                <div class="comment-date">${formattedDate}</div>
+            </div>
+            <div class="comment-content">${comment.text}</div>
+        `;
+        
+        return commentElement;
+    }
+
+    /**
+     * Get a color for user avatar based on user ID
+     * 
+     * @param {number} userId - The user ID
+     * @returns {string} - CSS color value
+     */
+    getAvatarColor(userId) {
+        const colors = [
+            '#3498db', // Blue
+            '#9b59b6', // Purple
+            '#e74c3c', // Red
+            '#2ecc71', // Green
+            '#f39c12', // Orange
+            '#1abc9c', // Teal
+            '#d35400'  // Dark Orange
+        ];
+        return colors[userId % colors.length];
     }
 }
 
@@ -365,5 +481,137 @@ document.addEventListener('DOMContentLoaded', function() {
     .task-panel-container {
         max-width: 100%;
     }
+}
+/* Comments section styles */
+.comments-container {
+    margin-bottom: 1.5rem;
+    max-height: 350px;
+    overflow-y: auto;
+}
+
+/* Empty state for comments */
+.comments-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem 0;
+    color: #909090;
+    text-align: center;
+}
+
+.comments-empty-icon {
+    font-size: 1.8rem;
+    margin-bottom: 0.5rem;
+    opacity: 0.7;
+}
+
+/* Individual comment styles */
+.comment-item {
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #444;
+}
+
+.comment-item:last-child {
+    border-bottom: none;
+}
+
+.comment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.comment-user {
+    display: flex;
+    align-items: center;
+}
+
+.comment-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background-color: #3498db;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: bold;
+    margin-right: 0.5rem;
+}
+
+.comment-author {
+    font-weight: 500;
+    color: #e0e0e0;
+}
+
+.comment-date {
+    font-size: 0.8rem;
+    color: #909090;
+}
+
+.comment-content {
+    color: #e0e0e0;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+/* Comment form styles */
+.comment-form-container {
+    margin-top: 1rem;
+    border-top: 1px solid #444;
+    padding-top: 1rem;
+}
+
+.comment-input-container {
+    margin-bottom: 0.75rem;
+}
+
+.comment-input {
+    width: 100%;
+    min-height: 80px;
+    padding: 0.75rem;
+    border-radius: 4px;
+    border: 1px solid #444;
+    background-color: #242424;
+    color: #e0e0e0;
+    resize: vertical;
+    font-family: inherit;
+    transition: border-color 0.2s ease;
+}
+
+.comment-input:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+.comment-form-actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.btn-comment-submit {
+    background-color: #3498db;
+    color: white;
+    border: none;
+    padding: 0.6rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.btn-comment-submit:hover {
+    background-color: #2980b9;
+    transform: translateY(-1px);
+}
+
+.btn-comment-submit:active {
+    transform: translateY(1px);
 }
 </style>
