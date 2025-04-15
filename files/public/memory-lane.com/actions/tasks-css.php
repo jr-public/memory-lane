@@ -689,4 +689,21 @@
 .new-task-form:hover .ce-form-input::placeholder {
     color: #909090;
 }
+/* Comment count styles */
+.task-comment-count {
+    display: flex;
+    align-items: center;
+    margin-right: 10px;
+    color: #909090;
+    font-size: 0.85rem;
+}
+
+.comment-icon {
+    margin-right: 3px;
+    font-size: 0.9rem;
+}
+
+.comment-count {
+    font-weight: 500;
+}
 </style>
