@@ -91,20 +91,25 @@
         </div>
     </div>
 </div>
+
 <script>
-	/**
- * Task Panel Module
+    /**
+ * Task Panel Enhancements
  * 
- * Handles the display and interaction with the task details panel
+ * This script adds the following features to the task panel:
+ * 1. Editable description with save button
+ * 2. Edit button for existing descriptions
+ * 3. Edit and delete buttons for comments
  */
 
-// TaskPanel class to manage the task details panel
+// Enhanced TaskPanel class to handle description editing
 class TaskPanel {
     constructor() {
         this.panel = document.getElementById('task-panel');
         this.title = document.querySelector('.task-panel-title');
         this.closeBtn = document.querySelector('.task-panel-close');
         this.overlay = document.querySelector('.task-panel-overlay');
+        this.descriptionContainer = this.panel.querySelector('.panel-section:nth-child(1) .panel-section-content');
         this.currentTaskId = null;
         
         this.init();
@@ -145,8 +150,11 @@ class TaskPanel {
         // Update panel title with task title
         this.title.textContent = task.title || 'Task Details';
         
-        // Update basic task info if available
+        // Update basic task info
         this.updateBasicInfo(task);
+        
+        // Update description section
+        this.updateDescription(task);
         
         // Update comments section
         this.updateComments(task);
@@ -187,16 +195,130 @@ class TaskPanel {
      * @param {Object} task - The task object containing details to display
      */
     updateBasicInfo(task) {
-        // This method will be expanded later to display actual task info
-        // For now, it's just a placeholder
-        
-        // Example of how we'll update status when implemented
-        // const statusBadge = this.panel.querySelector('.status-badge');
-        // if (statusBadge && task.status) {
-        //     statusBadge.textContent = task.status;
-        //     statusBadge.style.backgroundColor = getStatusColor(task.status);
-        // }
+        // Placeholder for basic info updates
     }
+
+    /**
+     * Update the description section with task data
+     * 
+     * @param {Object} task - The task object containing details to display
+     */
+    updateDescription(task) {
+        if (!this.descriptionContainer) {
+            console.error('Description container not found');
+            return;
+        }
+        
+        this.descriptionContainer.innerHTML = '';
+        
+        if (task.description) {
+            // Create description display with edit button
+            const descriptionDisplay = document.createElement('div');
+            descriptionDisplay.className = 'task-description-display';
+            
+            const descriptionText = document.createElement('p');
+            descriptionText.className = 'task-description-text';
+            descriptionText.textContent = task.description;
+            
+            const editButton = document.createElement('button');
+            editButton.className = 'btn-edit-description';
+            editButton.innerHTML = '<span class="edit-icon">✎</span> Edit';
+            editButton.addEventListener('click', () => this.showDescriptionEditor(task));
+            
+            descriptionDisplay.appendChild(descriptionText);
+            descriptionDisplay.appendChild(editButton);
+            this.descriptionContainer.appendChild(descriptionDisplay);
+        } else {
+            // Create description editor for empty description
+            this.showDescriptionEditor(task);
+        }
+    }
+    
+    /**
+     * Show the description editor
+     * 
+     * @param {Object} task - The task object
+     */
+    showDescriptionEditor(task) {
+        this.descriptionContainer.innerHTML = '';
+        
+        const editorContainer = document.createElement('div');
+        editorContainer.className = 'task-description-editor';
+        
+        const textarea = document.createElement('textarea');
+        textarea.className = 'description-textarea';
+        textarea.value = task.description || '';
+        textarea.placeholder = 'Add a description for this task...';
+        
+        const buttonContainer = document.createElement('div');
+        buttonContainer.className = 'description-buttons';
+        
+        const saveButton = document.createElement('button');
+        saveButton.className = 'btn-save-description';
+        saveButton.textContent = 'Save';
+        saveButton.addEventListener('click', () => this.saveDescription(task.id, textarea.value));
+        
+        const cancelButton = document.createElement('button');
+        cancelButton.className = 'btn-cancel-description';
+        cancelButton.textContent = 'Cancel';
+        cancelButton.addEventListener('click', () => this.updateDescription(task));
+        
+        buttonContainer.appendChild(saveButton);
+        buttonContainer.appendChild(cancelButton);
+        
+        editorContainer.appendChild(textarea);
+        editorContainer.appendChild(buttonContainer);
+        
+        this.descriptionContainer.appendChild(editorContainer);
+        
+        // Focus the textarea
+        textarea.focus();
+    }
+    
+    /**
+     * Save the task description
+     * 
+     * @param {number} taskId - The task ID
+     * @param {string} description - The new description
+     */
+    saveDescription(taskId, description) {
+        // Update the task data in our local store first
+        if (task_list[taskId]) {
+            task_list[taskId].description = description;
+        }
+        
+        // Make API request to update the description
+        apiProxyRequest(
+            {
+                controller: 'Task',
+                action: 'update',
+                params: {
+                    id: taskId,
+                    data: {
+                        description: description
+                    }
+                }
+            },
+            (result) => {
+                if (result.success) {
+                    // Update the description display
+                    this.updateDescription(task_list[taskId]);
+                } else {
+                    alert('Failed to save description: ' + (result.message || 'Unknown error'));
+                }
+            },
+            (error) => {
+                console.error('Error saving description:', error);
+                alert('Failed to save description. Please try again.');
+            }
+        );
+    }
+    
+    /**
+     * Update the comments section with task data
+     * 
+     * @param {Object} task - The task object containing details to display
+     */
     updateComments(task) {
         const commentsContainer = this.panel.querySelector('#comments-container');
         const commentTaskIdInput = this.panel.querySelector('#comment-task-id');
@@ -236,7 +358,7 @@ class TaskPanel {
     }
 
     /**
-     * Create a comment element
+     * Create a comment element with edit and delete buttons
      * 
      * @param {Object} comment - The comment data
      * @returns {HTMLElement} - The comment element
@@ -258,23 +380,182 @@ class TaskPanel {
         const dateOptions = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
         const formattedDate = commentDate.toLocaleDateString('en-US', dateOptions);
         
-        // Build comment HTML
-        commentElement.innerHTML = `
-            <div class="comment-header">
-                <div class="comment-user">
-                    <div class="comment-avatar" style="background-color: ${this.getAvatarColor(comment.user_id)}">
-                        ${initial}
-                    </div>
-                    <div class="comment-author">${username}</div>
-                </div>
-                <div class="comment-date">${formattedDate}</div>
-            </div>
-            <div class="comment-content">${comment.text}</div>
+        // Build comment HTML structure
+        const headerDiv = document.createElement('div');
+        headerDiv.className = 'comment-header';
+        
+        const userDiv = document.createElement('div');
+        userDiv.className = 'comment-user';
+        
+        const avatarDiv = document.createElement('div');
+        avatarDiv.className = 'comment-avatar';
+        avatarDiv.style.backgroundColor = this.getAvatarColor(comment.user_id);
+        avatarDiv.textContent = initial;
+        
+        const authorDiv = document.createElement('div');
+        authorDiv.className = 'comment-author';
+        authorDiv.textContent = username;
+        
+        userDiv.appendChild(avatarDiv);
+        userDiv.appendChild(authorDiv);
+        
+        const dateDiv = document.createElement('div');
+        dateDiv.className = 'comment-date';
+        dateDiv.textContent = formattedDate;
+        
+        headerDiv.appendChild(userDiv);
+        headerDiv.appendChild(dateDiv);
+        
+        // Create content area (will be replaced by editor when editing)
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'comment-content';
+        contentDiv.textContent = comment.text;
+        
+        // Create comment actions
+        const actionsDiv = document.createElement('div');
+        actionsDiv.className = 'comment-actions';
+        
+        // Edit button
+        const editButton = document.createElement('button');
+        editButton.className = 'comment-btn comment-edit-btn';
+        editButton.innerHTML = '<span class="edit-icon">✎</span> Edit';
+        editButton.addEventListener('click', () => this.showCommentEditor(commentElement, comment));
+        
+        // Delete button (as a form for non-JS fallback)
+        const deleteForm = document.createElement('form');
+        deleteForm.action = currentUrl;
+        deleteForm.method = 'post';
+        deleteForm.className = 'comment-delete-form';
+        deleteForm.innerHTML = `
+            <input type="hidden" name="entity_name" value="TaskComment">
+            <input type="hidden" name="entity_action" value="delete">
+            <input type="hidden" name="id" value="${comment.id}">
+            <button type="submit" class="comment-btn comment-delete-btn" 
+                    onclick="return confirm('Are you sure you want to delete this comment?')">
+                <span class="delete-icon">🗑️</span> Delete
+            </button>
         `;
+        
+        actionsDiv.appendChild(editButton);
+        actionsDiv.appendChild(deleteForm);
+        
+        // Assemble the comment element
+        commentElement.appendChild(headerDiv);
+        commentElement.appendChild(contentDiv);
+        commentElement.appendChild(actionsDiv);
         
         return commentElement;
     }
-
+    
+    /**
+     * Show the comment editor for editing an existing comment
+     * 
+     * @param {HTMLElement} commentElement - The comment element
+     * @param {Object} comment - The comment data
+     */
+    showCommentEditor(commentElement, comment) {
+        // Create editor elements
+        const editorContainer = document.createElement('div');
+        editorContainer.className = 'comment-editor';
+        
+        const textarea = document.createElement('textarea');
+        textarea.className = 'comment-edit-textarea';
+        textarea.value = comment.text;
+        
+        const buttonContainer = document.createElement('div');
+        buttonContainer.className = 'comment-edit-buttons';
+        
+        const saveButton = document.createElement('button');
+        saveButton.className = 'comment-btn comment-save-btn';
+        saveButton.textContent = 'Save';
+        saveButton.addEventListener('click', () => this.saveComment(comment.id, textarea.value, commentElement));
+        
+        const cancelButton = document.createElement('button');
+        cancelButton.className = 'comment-btn comment-cancel-btn';
+        cancelButton.textContent = 'Cancel';
+        cancelButton.addEventListener('click', () => {
+            // Remove editor and restore content
+            const contentDiv = commentElement.querySelector('.comment-content');
+            contentDiv.style.display = 'block';
+            editorContainer.remove();
+        });
+        
+        buttonContainer.appendChild(saveButton);
+        buttonContainer.appendChild(cancelButton);
+        
+        editorContainer.appendChild(textarea);
+        editorContainer.appendChild(buttonContainer);
+        
+        // Hide the content div
+        const contentDiv = commentElement.querySelector('.comment-content');
+        contentDiv.style.display = 'none';
+        
+        // Insert the editor after the content div
+        contentDiv.parentNode.insertBefore(editorContainer, contentDiv.nextSibling);
+        
+        // Focus the textarea
+        textarea.focus();
+    }
+    
+    /**
+     * Save an edited comment
+     * 
+     * @param {number} commentId - The comment ID
+     * @param {string} text - The new comment text
+     * @param {HTMLElement} commentElement - The comment element
+     */
+    saveComment(commentId, text, commentElement) {
+        if (!text.trim()) {
+            alert('Comment cannot be empty');
+            return;
+        }
+        
+        // Make API request to update the comment
+        apiProxyRequest(
+            {
+                controller: 'TaskComment',
+                action: 'update',
+                params: {
+                    id: commentId,
+                    data: {
+                        text: text
+                    }
+                }
+            },
+            (result) => {
+                if (result.success) {
+                    // Update the comment in the UI
+                    const contentDiv = commentElement.querySelector('.comment-content');
+                    contentDiv.textContent = text;
+                    contentDiv.style.display = 'block';
+                    
+                    // Remove the editor
+                    const editorContainer = commentElement.querySelector('.comment-editor');
+                    if (editorContainer) {
+                        editorContainer.remove();
+                    }
+                    
+                    // Update the comment in our local store
+                    if (this.currentTaskId && task_list[this.currentTaskId]) {
+                        const task = task_list[this.currentTaskId];
+                        if (task.comments) {
+                            const commentIndex = task.comments.findIndex(c => c.id === commentId);
+                            if (commentIndex !== -1) {
+                                task.comments[commentIndex].text = text;
+                            }
+                        }
+                    }
+                } else {
+                    alert('Failed to save comment: ' + (result.message || 'Unknown error'));
+                }
+            },
+            (error) => {
+                console.error('Error saving comment:', error);
+                alert('Failed to save comment. Please try again.');
+            }
+        );
+    }
+    
     /**
      * Get a color for user avatar based on user ID
      * 
@@ -295,15 +576,16 @@ class TaskPanel {
     }
 }
 
-// Initialize the task panel when the DOM is loaded
-let taskPanel;
+// Initialize when the DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize the new TaskPanel
     taskPanel = new TaskPanel();
     
-    // Expose the taskPanel to the global scope for use by other scripts
+    // Expose the taskPanel to the global scope
     window.taskPanel = taskPanel;
 });
 </script>
+
 <style>
 	/* Task Panel Styles */
 .task-panel {
@@ -613,5 +895,230 @@ document.addEventListener('DOMContentLoaded', function() {
 
 .btn-comment-submit:active {
     transform: translateY(1px);
+}
+/* Task Panel Enhancement Styles */
+
+/* Description display and editing */
+.task-description-text {
+    margin-bottom: 15px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+}
+
+.task-description-display {
+    position: relative;
+    padding-right: 40px; /* Make room for edit button */
+}
+
+.btn-edit-description {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: none;
+    border: none;
+    color: #909090;
+    font-size: 0.9rem;
+    cursor: pointer;
+    padding: 5px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+    border-radius: 4px;
+}
+
+.btn-edit-description:hover {
+    opacity: 1;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.edit-icon {
+    font-size: 14px;
+}
+
+.delete-icon {
+    font-size: 14px;
+}
+
+.task-description-editor {
+    width: 100%;
+}
+
+.description-textarea {
+    width: 100%;
+    min-height: 120px;
+    padding: 10px;
+    border-radius: 4px;
+    border: 1px solid #444;
+    background-color: #242424;
+    color: #e0e0e0;
+    resize: vertical;
+    margin-bottom: 10px;
+    font-family: inherit;
+    line-height: 1.5;
+}
+
+.description-textarea:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+.description-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.btn-save-description,
+.btn-cancel-description {
+    padding: 6px 12px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.btn-save-description {
+    background-color: #3498db;
+    color: white;
+}
+
+.btn-save-description:hover {
+    background-color: #2980b9;
+    transform: translateY(-1px);
+}
+
+.btn-cancel-description {
+    background-color: #555;
+    color: white;
+}
+
+.btn-cancel-description:hover {
+    background-color: #666;
+    transform: translateY(-1px);
+}
+
+/* Comment actions and editing */
+.comment-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 8px;
+    gap: 10px;
+    opacity: 0.5;
+    transition: opacity 0.2s ease;
+}
+
+.comment-item:hover .comment-actions {
+    opacity: 1;
+}
+
+.comment-btn {
+    background: none;
+    border: none;
+    font-size: 0.8rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: #909090;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.comment-btn:hover {
+    background-color: #333;
+    color: #e0e0e0;
+}
+
+.comment-delete-btn:hover {
+    color: #e74c3c;
+}
+
+.comment-edit-btn:hover {
+    color: #3498db;
+}
+
+/* Comment editor */
+.comment-editor {
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.comment-edit-textarea {
+    width: 100%;
+    min-height: 80px;
+    padding: 10px;
+    border-radius: 4px;
+    border: 1px solid #444;
+    background-color: #242424;
+    color: #e0e0e0;
+    resize: vertical;
+    margin-bottom: 10px;
+    font-family: inherit;
+    line-height: 1.5;
+}
+
+.comment-edit-textarea:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+.comment-edit-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.comment-save-btn {
+    background-color: #3498db;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 4px;
+}
+
+.comment-save-btn:hover {
+    background-color: #2980b9;
+    transform: translateY(-1px);
+}
+
+.comment-cancel-btn {
+    background-color: #555;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 4px;
+}
+
+.comment-cancel-btn:hover {
+    background-color: #666;
+    transform: translateY(-1px);
+}
+
+/* Add placeholder styles */
+.placeholder-text {
+    color: #909090;
+    font-style: italic;
+}
+
+/* Empty state enhancements */
+.comments-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px 0;
+    color: #909090;
+    text-align: center;
+}
+
+.comments-empty-icon {
+    font-size: 2rem;
+    margin-bottom: 10px;
+    opacity: 0.7;
 }
 </style>
