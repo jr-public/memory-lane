@@ -99,10 +99,43 @@ function createTaskInfo(task, level) {
     
     return taskInfo;
 }
-// Create the task meta section (right side with details)
+// Function to create comment count element
+function createCommentCountElement(task) {
+    // Check if task has comments
+    if (!task.comments || task.comments.length === 0) {
+        return null; // Return null if no comments
+    }
+    
+    // Create container element
+    const container = document.createElement('div');
+    container.className = 'task-comment-count';
+    
+    // Create comment icon and count
+    const commentIcon = document.createElement('span');
+    commentIcon.className = 'comment-icon';
+    commentIcon.textContent = '💬';
+    
+    const commentCount = document.createElement('span');
+    commentCount.className = 'comment-count';
+    commentCount.textContent = task.comments.length;
+    
+    // Assemble the elements
+    container.appendChild(commentIcon);
+    container.appendChild(commentCount);
+    
+    return container;
+}
+
+// Modify createTaskMeta to include comment count
 function createTaskMeta(task) {
     const taskMeta = document.createElement('div');
     taskMeta.className = 'task-meta';
+    
+    // Add comment count (if there are comments)
+    const commentCountElement = createCommentCountElement(task);
+    if (commentCountElement) {
+        taskMeta.appendChild(commentCountElement);
+    }
     
     // Add assignments
     taskMeta.appendChild(createAvatarsElement(task));
@@ -110,11 +143,10 @@ function createTaskMeta(task) {
     // Add due date
     taskMeta.appendChild(createDueDateElement(task));
 
-    // 
+    // Add priority, status, and difficulty
     taskMeta.appendChild(createPriorityElement(task));
     taskMeta.appendChild(createStatusElement(task));
     taskMeta.appendChild(createDifficultyElement(task));
-    
     
     return taskMeta;
 }
@@ -702,6 +734,7 @@ function buildTaskTreeData(tasks) {
             due_date: task.due_date,
             has_children: Array.isArray(task.children) && task.children.length > 0,
             assignments: Array.isArray(task.assignments) ? task.assignments : [],
+            comments: task.comments,
             children: []
         };
         

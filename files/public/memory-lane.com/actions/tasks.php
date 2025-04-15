@@ -3,7 +3,7 @@ $tree_res = api_call("Task", "tree", [
     "options" => [
         'order' => ['id ASC'],
         'filters' => $task_filters ?? [],
-        "with" => ["assignments"],
+        "with" => ["assignments", "comments"],
         "unique" => true
     ]
 ]);
