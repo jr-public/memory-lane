@@ -4,23 +4,6 @@ const taskTreeConfig = {
     maxExpandLevel: 1,      // Maximum level to auto-expand (0 = just root level)
 };
 
-// Toggle task children visibility (modified to handle empty containers with forms)
-function toggleChildren(event) {
-    const taskId = this.dataset.taskId;
-    const childrenContainer = document.getElementById(`children-${taskId}`);
-    
-    if (childrenContainer) {
-        if (childrenContainer.style.display === 'none') {
-            childrenContainer.style.display = 'block';
-            this.textContent = '▼';
-            childrenContainer.dataset.visible = 'true';
-        } else {
-            childrenContainer.style.display = 'none';
-            this.textContent = '▶';
-            childrenContainer.dataset.visible = 'false';
-        }
-    }
-}
 
 // Modified renderTaskTree function with configurable expansion
 function renderTaskTree(tasks, parentElement = null, level = 0) {
@@ -29,9 +12,7 @@ function renderTaskTree(tasks, parentElement = null, level = 0) {
         // Create task item
         const taskItem      = document.createElement('div');
         taskItem.className  = 'task-item';
-        taskItem.dataset.taskId = task.id;
-        taskItem.dataset.status = task.status;
-        taskItem.dataset.level  = level;
+
         taskItem.appendChild(createTaskInfo(task, level)); // Build left side (task info)
         taskItem.appendChild(createTaskMeta(task)); // Build right side (task meta)
         
@@ -43,35 +24,44 @@ function renderTaskTree(tasks, parentElement = null, level = 0) {
         const shouldExpand = taskTreeConfig.expandByDefault || level < taskTreeConfig.maxExpandLevel;
         childrenContainer.dataset.visible = shouldExpand ? 'true' : 'false';
         childrenContainer.style.display = shouldExpand ? 'block' : 'none';
+        
         // Update toggle icon to match expansion state
         const toggleIcon = taskItem.querySelector('.toggle-icon');
         toggleIcon.textContent = shouldExpand ? '▼' : '▶';
-        toggleIcon.addEventListener('click', toggleChildren);
+        toggleIcon.addEventListener('click', function(event) {
+            const taskId = this.dataset.taskId;
+            const childrenContainer = document.getElementById(`children-${taskId}`);
+            
+            if (childrenContainer) {
+                if (childrenContainer.style.display === 'none') {
+                    childrenContainer.style.display = 'block';
+                    this.textContent = '▼';
+                    childrenContainer.dataset.visible = 'true';
+                } else {
+                    childrenContainer.style.display = 'none';
+                    this.textContent = '▶';
+                    childrenContainer.dataset.visible = 'false';
+                }
+            }
+        });
 
         // If task has children, recursively render them inside the container
-        if (task.has_children) {
+        if (task.children.length > 0) {
             renderTaskTree(task.children, childrenContainer, level + 1);
         }
-        // Always add! New task creation form
+        
         childrenContainer.appendChild(createNewTaskForm(task.id, level + 1));
+        
         
         // Add the task item to the full task list
         taskList.appendChild(taskItem);
         // Append the children container to the task list
         taskList.appendChild(childrenContainer);
-        
     });
 }
 function createTaskInfo(task, level) {
-    const htmlString = `
-    <div class="task-info">
-        <span class="toggle-icon" data-task-id="">▼</span>
-        <div class="task-name"></div>
-    </div>
-    `;
-    const template = document.createElement('template');
-    template.innerHTML = htmlString.trim();
-    const taskInfo = template.content.firstElementChild;
+    const taskInfo = document.createElement('div');
+    taskInfo.className = 'task-info';
     
     // Add indentation based on level
     if (level > 0) {
@@ -79,98 +69,125 @@ function createTaskInfo(task, level) {
         indentation.innerHTML = '&nbsp;'.repeat(level * 4);
         taskInfo.prepend(indentation);
     }
-    
     // Add toggle icon for all tasks, regardless of whether they have children
-    const toggleIcon = taskInfo.querySelector('span.toggle-icon');
+    const toggleIcon = document.createElement('span');
+    toggleIcon.className = 'toggle-icon';
     toggleIcon.dataset.taskId = task.id;
-    // Set icon based on default expansion state
-    const shouldExpand = taskTreeConfig.expandByDefault || level < taskTreeConfig.maxExpandLevel;
-    toggleIcon.textContent = shouldExpand ? '▼' : '▶';
-    
+    taskInfo.append(toggleIcon);
+
     // Task name
-    const taskName = taskInfo.querySelector('div.task-name');
-    taskName.textContent = task.title;
-    
-    taskName.style.cursor = 'pointer';
-    taskName.addEventListener('click', (e) => {
-        e.stopPropagation(); // Prevent triggering parent elements
-        openTaskPanel(task);
-    });
+    // This should be happening in task-meta but due to styling issues i must keep it here
+    taskInfo.append(createNameLabelElement(task));
     
     return taskInfo;
 }
-// Function to create comment count element
+function createTaskMeta(task) {
+    const taskMeta = document.createElement('div');
+    taskMeta.className = 'task-meta';
+
+    // Append only if the element is truthy (not null/undefined/false)
+    const elements = [
+        // createNameLabelElement(task),
+        createCommentCountElement(task),
+        createAvatarsElement(task),
+        createDueDateElement(task),
+        createPriorityElement(task),
+        createStatusElement(task),
+        createDifficultyElement(task)
+    ];
+    elements.forEach(el => {
+        if (el) taskMeta.appendChild(el);
+    });
+
+    return taskMeta;
+}
+
+function createNameLabelElement(task) {
+    const taskName = document.createElement('div');
+    taskName.className = 'task-name';
+    taskName.textContent = task.title;
+    taskName.style.cursor = 'pointer';
+    taskName.addEventListener('click', (e) => {
+        e.stopPropagation(); // Prevent triggering parent elements
+        window.taskPanel.open(task);
+    });
+    return taskName;
+}
 function createCommentCountElement(task) {
     // Check if task has comments
     if (!task.comments || task.comments.length === 0) {
         return null; // Return null if no comments
     }
+    const htmlString = `
+        <div class="task-comment-count">
+            <span class="comment-icon">💬</span>
+            <span class="comment-count">${task.comments.length}</span>
+        </div>`;
+    const template = document.createElement('template');
+    template.innerHTML = htmlString.trim();
+    return template.content.firstElementChild;
+}
+function createAvatarsElement(task) {
+    function createAvatarElement(assignment, index) {
+        const users = (typeof tasked_users == 'undefined') ? {} : tasked_users;
+        const user = users[assignment.assigned_to] ?? {};
+        const username = user.username ?? 'User';
+        const initial = username.charAt(0).toUpperCase();
     
-    // Create container element
+        const av = document.createElement('div');
+        av.className = 'task-avatar';
+        av.title = username;
+        av.textContent = initial;
+        
+        // Different color for each avatar
+        av.style.backgroundColor = getAvatarColor(index);
+        
+        return av;
+    }
+    // Create container with proper data attributes
     const container = document.createElement('div');
-    container.className = 'task-comment-count';
+    container.className = 'task-avatars-container';
+    container.dataset.taskId = task.id;
     
-    // Create comment icon and count
-    const commentIcon = document.createElement('span');
-    commentIcon.className = 'comment-icon';
-    commentIcon.textContent = '💬';
+    // Setup standardized click handler
+    container.addEventListener('click', function(event) {
+        event.stopPropagation(); // Prevent event bubbling to task toggle
+        const clickedElement = event.currentTarget;
+        const popover = showAssignmentPopover(clickedElement, task.id);
+        return popover;
+    });
     
-    const commentCount = document.createElement('span');
-    commentCount.className = 'comment-count';
-    commentCount.textContent = task.comments.length;
+    // Get assignments with fallback
+    const assignments = task.assignments || [];
     
-    // Assemble the elements
-    container.appendChild(commentIcon);
-    container.appendChild(commentCount);
+    // Handle empty state
+    if (assignments.length === 0) {
+        const plusIcon = document.createElement('div');
+        plusIcon.className = 'task-avatar-add';
+        plusIcon.title = 'Add assignment';
+        plusIcon.textContent = '+';
+        container.appendChild(plusIcon);
+        return container;
+    }
     
+    // Handle populated state
+    const maxAvatarsToShow = 3;
+    
+    // Show avatars up to the maximum
+    const avatarsToShow = Math.min(assignments.length, maxAvatarsToShow);
+    for (let i = 0; i < avatarsToShow; i++) {
+        container.appendChild(createAvatarElement(assignments[i], i));
+    }
+    
+    // Add overflow indicator if needed
+    if (assignments.length > maxAvatarsToShow) {
+        const moreIndicator = document.createElement('div');
+        moreIndicator.className = 'task-avatar-more';
+        moreIndicator.textContent = `+${assignments.length - maxAvatarsToShow}`;
+        container.appendChild(moreIndicator);
+    }
     return container;
 }
-
-// Modify createTaskMeta to include comment count
-function createTaskMeta(task) {
-    const taskMeta = document.createElement('div');
-    taskMeta.className = 'task-meta';
-    
-    // Add comment count (if there are comments)
-    const commentCountElement = createCommentCountElement(task);
-    if (commentCountElement) {
-        taskMeta.appendChild(commentCountElement);
-    }
-    
-    // Add assignments
-    taskMeta.appendChild(createAvatarsElement(task));
-    
-    // Add due date
-    taskMeta.appendChild(createDueDateElement(task));
-
-    // Add priority, status, and difficulty
-    taskMeta.appendChild(createPriorityElement(task));
-    taskMeta.appendChild(createStatusElement(task));
-    taskMeta.appendChild(createDifficultyElement(task));
-    
-    return taskMeta;
-}
-function openTaskPanel(task) {
-    // Find the complete task data from our task list
-    const fullTaskData = task_list[task.id];
-    
-    if (!fullTaskData) {
-        console.error(`Task with ID ${task.id} not found in task list`);
-        return;
-    }
-    
-    // Open the task panel with the full task data
-    if (window.taskPanel) {
-        window.taskPanel.open(fullTaskData);
-    } else {
-        console.error('Task panel not initialized');
-    }
-}
-
-/*
-** Element creation
-** This section is involved with the creation of each interactable element in the task item
-*/
 function createDueDateElement(task) {
     function updateTaskDueDate(dateElement, taskId, newDate) {
 
@@ -532,12 +549,6 @@ function createDifficultyElement(task) {
     
     return taskDifficulty;
 }
-
-
-
-
-
-// Enhanced createNewTaskForm function
 function createNewTaskForm(parentId, level) {
     const formContainer = document.createElement('div');
     formContainer.className = 'task-item new-task-form';
@@ -620,80 +631,6 @@ function createNewTaskForm(parentId, level) {
 }
 
 
-
-/**
- * Creates avatar elements for task assignments with improved structure
- * 
- * @param {Object} task - Task data object
- * @returns {HTMLElement} - Container with avatars
- */
-function createAvatarsElement(task) {
-    // Create container with proper data attributes
-    const container = document.createElement('div');
-    container.className = 'task-avatars-container';
-    container.dataset.taskId = task.id;
-    
-    // Setup standardized click handler
-    container.addEventListener('click', function(event) {
-        event.stopPropagation(); // Prevent event bubbling to task toggle
-        const clickedElement = event.currentTarget;
-        const popover = showAssignmentPopover(clickedElement, task.id);
-        return popover;
-    });
-    
-    // Get assignments with fallback
-    const assignments = task.assignments || [];
-    
-    // Handle empty state
-    if (assignments.length === 0) {
-        const plusIcon = document.createElement('div');
-        plusIcon.className = 'task-avatar-add';
-        plusIcon.title = 'Add assignment';
-        plusIcon.textContent = '+';
-        container.appendChild(plusIcon);
-        return container;
-    }
-    
-    // Handle populated state
-    const maxAvatarsToShow = 3;
-    
-    // Show avatars up to the maximum
-    const avatarsToShow = Math.min(assignments.length, maxAvatarsToShow);
-    for (let i = 0; i < avatarsToShow; i++) {
-        container.appendChild(createAvatarElement(assignments[i], i));
-    }
-    
-    // Add overflow indicator if needed
-    if (assignments.length > maxAvatarsToShow) {
-        const moreIndicator = document.createElement('div');
-        moreIndicator.className = 'task-avatar-more';
-        moreIndicator.textContent = `+${assignments.length - maxAvatarsToShow}`;
-        container.appendChild(moreIndicator);
-    }
-    return container;
-}
-
-// The existing createAvatarElement function remains unchanged
-// function createAvatarElement(assignment, index) { ... }
-
-// Create a single avatar element
-function createAvatarElement(assignment, index) {
-    const users = (typeof tasked_users == 'undefined') ? {} : tasked_users;
-    const user = users[assignment.assigned_to] ?? {};
-    const username = user.username ?? 'User';
-    const initial = username.charAt(0).toUpperCase();
-
-    const av = document.createElement('div');
-    av.className = 'task-avatar';
-    av.title = username;
-    av.textContent = initial;
-    
-    // Different color for each avatar
-    av.style.backgroundColor = getAvatarColor(index);
-    
-    return av;
-}
-
 // Get avatar color based on index (unchanged)
 function getAvatarColor(index) {
     const colors = [
@@ -706,76 +643,4 @@ function getAvatarColor(index) {
         '#d35400'  // Dark Orange
     ];
     return colors[index % colors.length];
-}
-
-
-// Transform raw task data into the format needed for rendering
-function buildTaskTreeData(tasks) {
-    
-    // Guard against tasks not being an array
-    if (!Array.isArray(tasks)) {
-        console.error('Expected tasks to be an array, got:', typeof tasks);
-        return [];
-    }
-    
-    return tasks.map(task => {
-        // Guard against null/undefined task
-        if (!task) {
-            console.error('Encountered null or undefined task');
-            return null;
-        }
-        
-        const taskData = {
-            id: task.id || 0,
-            title: task.title || 'Untitled Task',
-            status_id: task.status_id,
-            priority_id: task.priority_id,
-            difficulty_id: task.difficulty_id,
-            due_date: task.due_date,
-            has_children: Array.isArray(task.children) && task.children.length > 0,
-            assignments: Array.isArray(task.assignments) ? task.assignments : [],
-            comments: task.comments,
-            children: []
-        };
-        
-        // Process children if they exist
-        if (Array.isArray(task.children) && task.children.length > 0) {
-            taskData.children = buildTaskTreeData(task.children);
-        }
-        
-        return taskData;
-    }).filter(task => task !== null); // Remove any null tasks
-}
-
-
-
-
-// Helper function to expand all tasks (can be called from a button or programmatically)
-function expandAllTasks() {
-    const allContainers = document.querySelectorAll('.task-children');
-    const allToggleIcons = document.querySelectorAll('.toggle-icon');
-    
-    allContainers.forEach(container => {
-        container.style.display = 'block';
-        container.dataset.visible = 'true';
-    });
-    
-    allToggleIcons.forEach(icon => {
-        icon.textContent = '▼';
-    });
-}
-
-// Helper function to collapse all tasks
-function collapseAllTasks() {
-    const allContainers = document.querySelectorAll('.task-children');
-    const allToggleIcons = document.querySelectorAll('.toggle-icon');
-    
-    allContainers.forEach(container => {
-        container.style.display = 'none';
-        container.dataset.visible = 'false';
-    });
-    
-    allToggleIcons.forEach(icon => {
-        icon.textContent = '▶';
-    });
 }
