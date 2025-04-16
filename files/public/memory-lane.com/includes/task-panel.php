@@ -500,7 +500,7 @@ class TaskPanel {
         
         const avatarDiv = document.createElement('div');
         avatarDiv.className = 'comment-avatar';
-        avatarDiv.style.backgroundColor = this.getAvatarColor(comment.user_id);
+        avatarDiv.style.backgroundColor = getAvatarColor(comment.user_id);
         avatarDiv.textContent = initial;
         
         const authorDiv = document.createElement('div');
@@ -665,25 +665,6 @@ class TaskPanel {
                 alert('Failed to save comment. Please try again.');
             }
         );
-    }
-    
-    /**
-     * Get a color for user avatar based on user ID
-     * 
-     * @param {number} userId - The user ID
-     * @returns {string} - CSS color value
-     */
-    getAvatarColor(userId) {
-        const colors = [
-            '#3498db', // Blue
-            '#9b59b6', // Purple
-            '#e74c3c', // Red
-            '#2ecc71', // Green
-            '#f39c12', // Orange
-            '#1abc9c', // Teal
-            '#d35400'  // Dark Orange
-        ];
-        return colors[userId % colors.length];
     }
 }
 

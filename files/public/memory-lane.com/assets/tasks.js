@@ -4,23 +4,6 @@ const taskTreeConfig = {
     maxExpandLevel: 1,      // Maximum level to auto-expand (0 = just root level)
 };
 
-// Toggle task children visibility (modified to handle empty containers with forms)
-function toggleChildren(event) {
-    const taskId = this.dataset.taskId;
-    const childrenContainer = document.getElementById(`children-${taskId}`);
-    
-    if (childrenContainer) {
-        if (childrenContainer.style.display === 'none') {
-            childrenContainer.style.display = 'block';
-            this.textContent = '▼';
-            childrenContainer.dataset.visible = 'true';
-        } else {
-            childrenContainer.style.display = 'none';
-            this.textContent = '▶';
-            childrenContainer.dataset.visible = 'false';
-        }
-    }
-}
 
 // Modified renderTaskTree function with configurable expansion
 function renderTaskTree(tasks, parentElement = null, level = 0) {
@@ -45,10 +28,25 @@ function renderTaskTree(tasks, parentElement = null, level = 0) {
         // Update toggle icon to match expansion state
         const toggleIcon = taskItem.querySelector('.toggle-icon');
         toggleIcon.textContent = shouldExpand ? '▼' : '▶';
-        toggleIcon.addEventListener('click', toggleChildren);
+        toggleIcon.addEventListener('click', function(event) {
+            const taskId = this.dataset.taskId;
+            const childrenContainer = document.getElementById(`children-${taskId}`);
+            
+            if (childrenContainer) {
+                if (childrenContainer.style.display === 'none') {
+                    childrenContainer.style.display = 'block';
+                    this.textContent = '▼';
+                    childrenContainer.dataset.visible = 'true';
+                } else {
+                    childrenContainer.style.display = 'none';
+                    this.textContent = '▶';
+                    childrenContainer.dataset.visible = 'false';
+                }
+            }
+        });
 
         // If task has children, recursively render them inside the container
-        if (task.has_children) {
+        if (task.children.length > 0) {
             renderTaskTree(task.children, childrenContainer, level + 1);
         }
         
@@ -83,7 +81,6 @@ function createTaskInfo(task, level) {
     
     return taskInfo;
 }
-
 function createTaskMeta(task) {
     const taskMeta = document.createElement('div');
     taskMeta.className = 'task-meta';
@@ -105,24 +102,6 @@ function createTaskMeta(task) {
     return taskMeta;
 }
 
-function openTaskPanel(task) {
-    // Find the complete task data from our task list
-    const fullTaskData = task_list[task.id];
-    
-    if (!fullTaskData) {
-        console.error(`Task with ID ${task.id} not found in task list`);
-        return;
-    }
-    
-    // Open the task panel with the full task data
-    if (window.taskPanel) {
-        window.taskPanel.open(fullTaskData);
-    } else {
-        console.error('Task panel not initialized');
-    }
-}
-
-
 function createNameLabelElement(task) {
     const taskName = document.createElement('div');
     taskName.className = 'task-name';
@@ -130,11 +109,10 @@ function createNameLabelElement(task) {
     taskName.style.cursor = 'pointer';
     taskName.addEventListener('click', (e) => {
         e.stopPropagation(); // Prevent triggering parent elements
-        openTaskPanel(task);
+        window.taskPanel.open(task);
     });
     return taskName;
 }
-
 function createCommentCountElement(task) {
     // Check if task has comments
     if (!task.comments || task.comments.length === 0) {
@@ -150,6 +128,22 @@ function createCommentCountElement(task) {
     return template.content.firstElementChild;
 }
 function createAvatarsElement(task) {
+    function createAvatarElement(assignment, index) {
+        const users = (typeof tasked_users == 'undefined') ? {} : tasked_users;
+        const user = users[assignment.assigned_to] ?? {};
+        const username = user.username ?? 'User';
+        const initial = username.charAt(0).toUpperCase();
+    
+        const av = document.createElement('div');
+        av.className = 'task-avatar';
+        av.title = username;
+        av.textContent = initial;
+        
+        // Different color for each avatar
+        av.style.backgroundColor = getAvatarColor(index);
+        
+        return av;
+    }
     // Create container with proper data attributes
     const container = document.createElement('div');
     container.className = 'task-avatars-container';
@@ -555,12 +549,6 @@ function createDifficultyElement(task) {
     
     return taskDifficulty;
 }
-
-
-
-
-
-// Enhanced createNewTaskForm function
 function createNewTaskForm(parentId, level) {
     const formContainer = document.createElement('div');
     formContainer.className = 'task-item new-task-form';
@@ -643,36 +631,6 @@ function createNewTaskForm(parentId, level) {
 }
 
 
-
-/**
- * Creates avatar elements for task assignments with improved structure
- * 
- * @param {Object} task - Task data object
- * @returns {HTMLElement} - Container with avatars
- */
-
-
-// The existing createAvatarElement function remains unchanged
-// function createAvatarElement(assignment, index) { ... }
-
-// Create a single avatar element
-function createAvatarElement(assignment, index) {
-    const users = (typeof tasked_users == 'undefined') ? {} : tasked_users;
-    const user = users[assignment.assigned_to] ?? {};
-    const username = user.username ?? 'User';
-    const initial = username.charAt(0).toUpperCase();
-
-    const av = document.createElement('div');
-    av.className = 'task-avatar';
-    av.title = username;
-    av.textContent = initial;
-    
-    // Different color for each avatar
-    av.style.backgroundColor = getAvatarColor(index);
-    
-    return av;
-}
-
 // Get avatar color based on index (unchanged)
 function getAvatarColor(index) {
     const colors = [
@@ -685,76 +643,4 @@ function getAvatarColor(index) {
         '#d35400'  // Dark Orange
     ];
     return colors[index % colors.length];
-}
-
-
-// Transform raw task data into the format needed for rendering
-function buildTaskTreeData(tasks) {
-    
-    // Guard against tasks not being an array
-    if (!Array.isArray(tasks)) {
-        console.error('Expected tasks to be an array, got:', typeof tasks);
-        return [];
-    }
-    
-    return tasks.map(task => {
-        // Guard against null/undefined task
-        if (!task) {
-            console.error('Encountered null or undefined task');
-            return null;
-        }
-        
-        const taskData = {
-            id: task.id || 0,
-            title: task.title || 'Untitled Task',
-            status_id: task.status_id,
-            priority_id: task.priority_id,
-            difficulty_id: task.difficulty_id,
-            due_date: task.due_date,
-            has_children: Array.isArray(task.children) && task.children.length > 0,
-            assignments: Array.isArray(task.assignments) ? task.assignments : [],
-            comments: task.comments,
-            children: []
-        };
-        
-        // Process children if they exist
-        if (Array.isArray(task.children) && task.children.length > 0) {
-            taskData.children = buildTaskTreeData(task.children);
-        }
-        
-        return taskData;
-    }).filter(task => task !== null); // Remove any null tasks
-}
-
-
-
-
-// Helper function to expand all tasks (can be called from a button or programmatically)
-function expandAllTasks() {
-    const allContainers = document.querySelectorAll('.task-children');
-    const allToggleIcons = document.querySelectorAll('.toggle-icon');
-    
-    allContainers.forEach(container => {
-        container.style.display = 'block';
-        container.dataset.visible = 'true';
-    });
-    
-    allToggleIcons.forEach(icon => {
-        icon.textContent = '▼';
-    });
-}
-
-// Helper function to collapse all tasks
-function collapseAllTasks() {
-    const allContainers = document.querySelectorAll('.task-children');
-    const allToggleIcons = document.querySelectorAll('.toggle-icon');
-    
-    allContainers.forEach(container => {
-        container.style.display = 'none';
-        container.dataset.visible = 'false';
-    });
-    
-    allToggleIcons.forEach(icon => {
-        icon.textContent = '▶';
-    });
 }
