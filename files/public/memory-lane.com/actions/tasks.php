@@ -75,7 +75,6 @@ $difficulty_list = $difficulty_res['data'];
 
 <?php 
 require_once('includes/task-panel.php');
-require_once('actions/tasks-css.php'); 
 ?>
 
 <!-- Task JavaScript -->

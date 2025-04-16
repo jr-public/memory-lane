@@ -50,7 +50,10 @@ if ( $_SERVER['REQUEST_METHOD'] == 'POST' ) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>API Admin Panel</title>
     <link rel="stylesheet" href="assets/style.css">
-    <script src="assets/tasks.js" defer></script>
+    <script src="assets/task_list/tasks.js" defer></script>
+    <script src="assets/task_list/task-panel.js" defer></script>
+    <link rel="stylesheet" href="assets/task_list/tasks.css">
+    <link rel="stylesheet" href="assets/task_list/task-panel.css">
     
     <!-- CONTEXTUAL POPOVER -->
     <link rel="stylesheet" href="assets/popover/popover.css">

@@ -1,0 +1,614 @@
+/* Task Panel Styles */
+.task-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    max-width: 100%;
+    z-index: 1000;
+    display: flex;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.task-panel.active {
+    visibility: visible;
+    pointer-events: auto;
+}
+
+/* Overlay background */
+.task-panel-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.task-panel.active .task-panel-overlay {
+    opacity: 1;
+}
+
+/* Panel container */
+.task-panel-container {
+    background-color: #2a2a2a;
+    height: 100%;
+    width: 100%;
+    max-width: 500px;
+    margin-left: auto;
+    box-shadow: -5px 0 15px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+}
+
+.task-panel.active .task-panel-container {
+    transform: translateX(0);
+}
+
+/* Panel header */
+.task-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid #444;
+    background-color: #222;
+}
+
+.task-panel-title {
+    margin: 0;
+    font-size: 1.5rem;
+    color: #e0e0e0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.task-panel-close {
+    background: none;
+    border: none;
+    color: #e0e0e0;
+    font-size: 1.5rem;
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background-color 0.2s ease;
+}
+
+.task-panel-close:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Panel content */
+.task-panel-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem;
+}
+
+/* Panel sections */
+.panel-section {
+    background-color: #333;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+}
+
+.panel-section-header {
+    padding: 1rem;
+    border-bottom: 1px solid #444;
+}
+
+.panel-section-header h3 {
+    margin: 0;
+    color: #3498db;
+    font-size: 1.1rem;
+}
+
+.panel-section-content {
+    padding: 1rem;
+}
+
+/* Info items */
+.info-item {
+    display: flex;
+    margin-bottom: 0.75rem;
+}
+
+.info-label {
+    color: #909090;
+    width: 100px;
+    flex-shrink: 0;
+}
+
+.info-value {
+    color: #e0e0e0;
+    flex: 1;
+}
+
+/* Status badge */
+.status-badge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    background-color: #3498db;
+    color: #121212;
+}
+
+/* Coming soon placeholder */
+.coming-soon {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 0;
+    color: #909090;
+    text-align: center;
+}
+
+.coming-soon-icon {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    opacity: 0.7;
+}
+
+.placeholder-text {
+    color: #909090;
+    font-style: italic;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+    .task-panel-container {
+        max-width: 100%;
+    }
+}
+/* Comments section styles */
+.comments-container {
+    margin-bottom: 1.5rem;
+    max-height: 350px;
+    overflow-y: auto;
+}
+
+/* Empty state for comments */
+.comments-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem 0;
+    color: #909090;
+    text-align: center;
+}
+
+.comments-empty-icon {
+    font-size: 1.8rem;
+    margin-bottom: 0.5rem;
+    opacity: 0.7;
+}
+
+/* Individual comment styles */
+.comment-item {
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #444;
+}
+
+.comment-item:last-child {
+    border-bottom: none;
+}
+
+.comment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.comment-user {
+    display: flex;
+    align-items: center;
+}
+
+.comment-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background-color: #3498db;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: bold;
+    margin-right: 0.5rem;
+}
+
+.comment-author {
+    font-weight: 500;
+    color: #e0e0e0;
+}
+
+.comment-date {
+    font-size: 0.8rem;
+    color: #909090;
+}
+
+.comment-content {
+    color: #e0e0e0;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+/* Comment form styles */
+.comment-form-container {
+    margin-top: 1rem;
+    border-top: 1px solid #444;
+    padding-top: 1rem;
+}
+
+.comment-input-container {
+    margin-bottom: 0.75rem;
+}
+
+.comment-input {
+    width: 100%;
+    min-height: 80px;
+    padding: 0.75rem;
+    border-radius: 4px;
+    border: 1px solid #444;
+    background-color: #242424;
+    color: #e0e0e0;
+    resize: vertical;
+    font-family: inherit;
+    transition: border-color 0.2s ease;
+}
+
+.comment-input:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+.comment-form-actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.btn-comment-submit {
+    background-color: #3498db;
+    color: white;
+    border: none;
+    padding: 0.6rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.btn-comment-submit:hover {
+    background-color: #2980b9;
+    transform: translateY(-1px);
+}
+
+.btn-comment-submit:active {
+    transform: translateY(1px);
+}
+/* Task Panel Enhancement Styles */
+
+/* Description display and editing */
+.task-description-text {
+    margin-bottom: 15px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+}
+
+.task-description-display {
+    position: relative;
+    padding-right: 40px; /* Make room for edit button */
+}
+
+.btn-edit-description {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: none;
+    border: none;
+    color: #909090;
+    font-size: 0.9rem;
+    cursor: pointer;
+    padding: 5px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+    border-radius: 4px;
+}
+
+.btn-edit-description:hover {
+    opacity: 1;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.edit-icon {
+    font-size: 14px;
+}
+
+.delete-icon {
+    font-size: 14px;
+}
+
+.task-description-editor {
+    width: 100%;
+}
+
+.description-textarea {
+    width: 100%;
+    min-height: 120px;
+    padding: 10px;
+    border-radius: 4px;
+    border: 1px solid #444;
+    background-color: #242424;
+    color: #e0e0e0;
+    resize: vertical;
+    margin-bottom: 10px;
+    font-family: inherit;
+    line-height: 1.5;
+}
+
+.description-textarea:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+.description-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.btn-save-description,
+.btn-cancel-description {
+    padding: 6px 12px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.btn-save-description {
+    background-color: #3498db;
+    color: white;
+}
+
+.btn-save-description:hover {
+    background-color: #2980b9;
+    transform: translateY(-1px);
+}
+
+.btn-cancel-description {
+    background-color: #555;
+    color: white;
+}
+
+.btn-cancel-description:hover {
+    background-color: #666;
+    transform: translateY(-1px);
+}
+
+/* Comment actions and editing */
+.comment-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 8px;
+    gap: 10px;
+    opacity: 0.5;
+    transition: opacity 0.2s ease;
+}
+
+.comment-item:hover .comment-actions {
+    opacity: 1;
+}
+
+.comment-btn {
+    background: none;
+    border: none;
+    font-size: 0.8rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: #909090;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.comment-btn:hover {
+    background-color: #333;
+    color: #e0e0e0;
+}
+
+.comment-delete-btn:hover {
+    color: #e74c3c;
+}
+
+.comment-edit-btn:hover {
+    color: #3498db;
+}
+
+/* Comment editor */
+.comment-editor {
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.comment-edit-textarea {
+    width: 100%;
+    min-height: 80px;
+    padding: 10px;
+    border-radius: 4px;
+    border: 1px solid #444;
+    background-color: #242424;
+    color: #e0e0e0;
+    resize: vertical;
+    margin-bottom: 10px;
+    font-family: inherit;
+    line-height: 1.5;
+}
+
+.comment-edit-textarea:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+.comment-edit-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.comment-save-btn {
+    background-color: #3498db;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 4px;
+}
+
+.comment-save-btn:hover {
+    background-color: #2980b9;
+    transform: translateY(-1px);
+}
+
+.comment-cancel-btn {
+    background-color: #555;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 4px;
+}
+
+.comment-cancel-btn:hover {
+    background-color: #666;
+    transform: translateY(-1px);
+}
+
+/* Add placeholder styles */
+.placeholder-text {
+    color: #909090;
+    font-style: italic;
+}
+
+/* Empty state enhancements */
+.comments-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px 0;
+    color: #909090;
+    text-align: center;
+}
+
+.comments-empty-icon {
+    font-size: 2rem;
+    margin-bottom: 10px;
+    opacity: 0.7;
+}
+
+/* Title editing styles */
+.task-panel-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.task-title-text {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.btn-edit-title {
+    background: none;
+    border: none;
+    color: #909090;
+    font-size: 0.9rem;
+    cursor: pointer;
+    padding: 5px;
+    display: flex;
+    align-items: center;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+    border-radius: 4px;
+}
+
+.btn-edit-title:hover {
+    opacity: 1;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.title-edit-input {
+    flex: 1;
+    background-color: #242424;
+    border: 1px solid #444;
+    border-radius: 4px;
+    color: #e0e0e0;
+    padding: 5px 10px;
+    font-size: 1.2rem;
+    font-weight: 500;
+}
+
+.title-edit-input:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+.btn-save-title,
+.btn-cancel-title {
+    background: none;
+    border: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-save-title {
+    color: #2ecc71;
+}
+
+.btn-save-title:hover {
+    background-color: rgba(46, 204, 113, 0.2);
+}
+
+.btn-cancel-title {
+    color: #e74c3c;
+}
+
+.btn-cancel-title:hover {
+    background-color: rgba(231, 76, 60, 0.2);
+}
