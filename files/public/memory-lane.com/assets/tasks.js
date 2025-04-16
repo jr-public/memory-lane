@@ -29,9 +29,7 @@ function renderTaskTree(tasks, parentElement = null, level = 0) {
         // Create task item
         const taskItem      = document.createElement('div');
         taskItem.className  = 'task-item';
-        taskItem.dataset.taskId = task.id;
-        taskItem.dataset.status = task.status;
-        taskItem.dataset.level  = level;
+
         taskItem.appendChild(createTaskInfo(task, level)); // Build left side (task info)
         taskItem.appendChild(createTaskMeta(task)); // Build right side (task meta)
         
@@ -43,6 +41,7 @@ function renderTaskTree(tasks, parentElement = null, level = 0) {
         const shouldExpand = taskTreeConfig.expandByDefault || level < taskTreeConfig.maxExpandLevel;
         childrenContainer.dataset.visible = shouldExpand ? 'true' : 'false';
         childrenContainer.style.display = shouldExpand ? 'block' : 'none';
+        
         // Update toggle icon to match expansion state
         const toggleIcon = taskItem.querySelector('.toggle-icon');
         toggleIcon.textContent = shouldExpand ? '▼' : '▶';
@@ -52,26 +51,19 @@ function renderTaskTree(tasks, parentElement = null, level = 0) {
         if (task.has_children) {
             renderTaskTree(task.children, childrenContainer, level + 1);
         }
-        // Always add! New task creation form
+        
         childrenContainer.appendChild(createNewTaskForm(task.id, level + 1));
+        
         
         // Add the task item to the full task list
         taskList.appendChild(taskItem);
         // Append the children container to the task list
         taskList.appendChild(childrenContainer);
-        
     });
 }
 function createTaskInfo(task, level) {
-    const htmlString = `
-    <div class="task-info">
-        <span class="toggle-icon" data-task-id="">▼</span>
-        <div class="task-name"></div>
-    </div>
-    `;
-    const template = document.createElement('template');
-    template.innerHTML = htmlString.trim();
-    const taskInfo = template.content.firstElementChild;
+    const taskInfo = document.createElement('div');
+    taskInfo.className = 'task-info';
     
     // Add indentation based on level
     if (level > 0) {
@@ -79,77 +71,40 @@ function createTaskInfo(task, level) {
         indentation.innerHTML = '&nbsp;'.repeat(level * 4);
         taskInfo.prepend(indentation);
     }
-    
     // Add toggle icon for all tasks, regardless of whether they have children
-    const toggleIcon = taskInfo.querySelector('span.toggle-icon');
+    const toggleIcon = document.createElement('span');
+    toggleIcon.className = 'toggle-icon';
     toggleIcon.dataset.taskId = task.id;
-    // Set icon based on default expansion state
-    const shouldExpand = taskTreeConfig.expandByDefault || level < taskTreeConfig.maxExpandLevel;
-    toggleIcon.textContent = shouldExpand ? '▼' : '▶';
-    
+    taskInfo.append(toggleIcon);
+
     // Task name
-    const taskName = taskInfo.querySelector('div.task-name');
-    taskName.textContent = task.title;
-    
-    taskName.style.cursor = 'pointer';
-    taskName.addEventListener('click', (e) => {
-        e.stopPropagation(); // Prevent triggering parent elements
-        openTaskPanel(task);
-    });
+    // This should be happening in task-meta but due to styling issues i must keep it here
+    taskInfo.append(createNameLabelElement(task));
     
     return taskInfo;
 }
-// Function to create comment count element
-function createCommentCountElement(task) {
-    // Check if task has comments
-    if (!task.comments || task.comments.length === 0) {
-        return null; // Return null if no comments
-    }
-    
-    // Create container element
-    const container = document.createElement('div');
-    container.className = 'task-comment-count';
-    
-    // Create comment icon and count
-    const commentIcon = document.createElement('span');
-    commentIcon.className = 'comment-icon';
-    commentIcon.textContent = '💬';
-    
-    const commentCount = document.createElement('span');
-    commentCount.className = 'comment-count';
-    commentCount.textContent = task.comments.length;
-    
-    // Assemble the elements
-    container.appendChild(commentIcon);
-    container.appendChild(commentCount);
-    
-    return container;
-}
 
-// Modify createTaskMeta to include comment count
 function createTaskMeta(task) {
     const taskMeta = document.createElement('div');
     taskMeta.className = 'task-meta';
-    
-    // Add comment count (if there are comments)
-    const commentCountElement = createCommentCountElement(task);
-    if (commentCountElement) {
-        taskMeta.appendChild(commentCountElement);
-    }
-    
-    // Add assignments
-    taskMeta.appendChild(createAvatarsElement(task));
-    
-    // Add due date
-    taskMeta.appendChild(createDueDateElement(task));
 
-    // Add priority, status, and difficulty
-    taskMeta.appendChild(createPriorityElement(task));
-    taskMeta.appendChild(createStatusElement(task));
-    taskMeta.appendChild(createDifficultyElement(task));
-    
+    // Append only if the element is truthy (not null/undefined/false)
+    const elements = [
+        // createNameLabelElement(task),
+        createCommentCountElement(task),
+        createAvatarsElement(task),
+        createDueDateElement(task),
+        createPriorityElement(task),
+        createStatusElement(task),
+        createDifficultyElement(task)
+    ];
+    elements.forEach(el => {
+        if (el) taskMeta.appendChild(el);
+    });
+
     return taskMeta;
 }
+
 function openTaskPanel(task) {
     // Find the complete task data from our task list
     const fullTaskData = task_list[task.id];
@@ -167,10 +122,78 @@ function openTaskPanel(task) {
     }
 }
 
-/*
-** Element creation
-** This section is involved with the creation of each interactable element in the task item
-*/
+
+function createNameLabelElement(task) {
+    const taskName = document.createElement('div');
+    taskName.className = 'task-name';
+    taskName.textContent = task.title;
+    taskName.style.cursor = 'pointer';
+    taskName.addEventListener('click', (e) => {
+        e.stopPropagation(); // Prevent triggering parent elements
+        openTaskPanel(task);
+    });
+    return taskName;
+}
+
+function createCommentCountElement(task) {
+    // Check if task has comments
+    if (!task.comments || task.comments.length === 0) {
+        return null; // Return null if no comments
+    }
+    const htmlString = `
+        <div class="task-comment-count">
+            <span class="comment-icon">💬</span>
+            <span class="comment-count">${task.comments.length}</span>
+        </div>`;
+    const template = document.createElement('template');
+    template.innerHTML = htmlString.trim();
+    return template.content.firstElementChild;
+}
+function createAvatarsElement(task) {
+    // Create container with proper data attributes
+    const container = document.createElement('div');
+    container.className = 'task-avatars-container';
+    container.dataset.taskId = task.id;
+    
+    // Setup standardized click handler
+    container.addEventListener('click', function(event) {
+        event.stopPropagation(); // Prevent event bubbling to task toggle
+        const clickedElement = event.currentTarget;
+        const popover = showAssignmentPopover(clickedElement, task.id);
+        return popover;
+    });
+    
+    // Get assignments with fallback
+    const assignments = task.assignments || [];
+    
+    // Handle empty state
+    if (assignments.length === 0) {
+        const plusIcon = document.createElement('div');
+        plusIcon.className = 'task-avatar-add';
+        plusIcon.title = 'Add assignment';
+        plusIcon.textContent = '+';
+        container.appendChild(plusIcon);
+        return container;
+    }
+    
+    // Handle populated state
+    const maxAvatarsToShow = 3;
+    
+    // Show avatars up to the maximum
+    const avatarsToShow = Math.min(assignments.length, maxAvatarsToShow);
+    for (let i = 0; i < avatarsToShow; i++) {
+        container.appendChild(createAvatarElement(assignments[i], i));
+    }
+    
+    // Add overflow indicator if needed
+    if (assignments.length > maxAvatarsToShow) {
+        const moreIndicator = document.createElement('div');
+        moreIndicator.className = 'task-avatar-more';
+        moreIndicator.textContent = `+${assignments.length - maxAvatarsToShow}`;
+        container.appendChild(moreIndicator);
+    }
+    return container;
+}
 function createDueDateElement(task) {
     function updateTaskDueDate(dateElement, taskId, newDate) {
 
@@ -627,51 +650,7 @@ function createNewTaskForm(parentId, level) {
  * @param {Object} task - Task data object
  * @returns {HTMLElement} - Container with avatars
  */
-function createAvatarsElement(task) {
-    // Create container with proper data attributes
-    const container = document.createElement('div');
-    container.className = 'task-avatars-container';
-    container.dataset.taskId = task.id;
-    
-    // Setup standardized click handler
-    container.addEventListener('click', function(event) {
-        event.stopPropagation(); // Prevent event bubbling to task toggle
-        const clickedElement = event.currentTarget;
-        const popover = showAssignmentPopover(clickedElement, task.id);
-        return popover;
-    });
-    
-    // Get assignments with fallback
-    const assignments = task.assignments || [];
-    
-    // Handle empty state
-    if (assignments.length === 0) {
-        const plusIcon = document.createElement('div');
-        plusIcon.className = 'task-avatar-add';
-        plusIcon.title = 'Add assignment';
-        plusIcon.textContent = '+';
-        container.appendChild(plusIcon);
-        return container;
-    }
-    
-    // Handle populated state
-    const maxAvatarsToShow = 3;
-    
-    // Show avatars up to the maximum
-    const avatarsToShow = Math.min(assignments.length, maxAvatarsToShow);
-    for (let i = 0; i < avatarsToShow; i++) {
-        container.appendChild(createAvatarElement(assignments[i], i));
-    }
-    
-    // Add overflow indicator if needed
-    if (assignments.length > maxAvatarsToShow) {
-        const moreIndicator = document.createElement('div');
-        moreIndicator.className = 'task-avatar-more';
-        moreIndicator.textContent = `+${assignments.length - maxAvatarsToShow}`;
-        container.appendChild(moreIndicator);
-    }
-    return container;
-}
+
 
 // The existing createAvatarElement function remains unchanged
 // function createAvatarElement(assignment, index) { ... }
