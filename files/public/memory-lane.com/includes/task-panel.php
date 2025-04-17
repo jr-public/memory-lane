@@ -62,7 +62,7 @@
                             <input type="hidden" name="entity_name" value="TaskComment">
                             <input type="hidden" name="entity_action" value="create">
                             <input type="hidden" name="task_id" id="comment-task-id" value="">
-                            <input type="hidden" name="user_id" value="1">
+                            <input type="hidden" name="user_id" value="<?= $user['id'] ?>">
                             
                             <div class="comment-input-container">
                                 <textarea name="text" class="comment-input" placeholder="Add a comment..." required></textarea>

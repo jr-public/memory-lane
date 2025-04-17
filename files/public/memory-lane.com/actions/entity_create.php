@@ -40,7 +40,7 @@ $entity_configs = [
             'title' => ['label' => 'Task Title', 'type' => 'text', 'required' => true, 'value' => 'task title'],
             'description' => ['label' => 'Description', 'type' => 'textarea', 'required' => false],
             'status_id' => ['label' => 'Status', 'type' => 'hidden', 'required' => true, 'value' => 1],
-            'user_id' => ['label' => 'user id', 'type' => 'hidden', 'required' => true, 'value' => 1],
+            'user_id' => ['label' => 'user id', 'type' => 'hidden', 'required' => true, 'value' => $user['id']],
             'due_date' => ['label' => 'Due Date', 'type' => 'date', 'required' => false, 'value' => '2030-05-05']
         ]
     ]

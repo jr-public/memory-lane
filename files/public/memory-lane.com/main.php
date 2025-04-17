@@ -7,6 +7,11 @@ $params = $_GET;
 unset($params['error']);
 $current_url = strtok($current_url, '?') . (!empty($params) ? '?' . http_build_query($params) : '');
 
+$user = json_decode(get_auth_user(),true);
+if (json_last_error() != 0 || empty($user)) {
+    die("NO USER");
+}
+
 if ( $_SERVER['REQUEST_METHOD'] == 'POST' ) {
     $controller = $_POST['entity_name'];
     $action     = $_POST['entity_action'];
@@ -68,8 +73,8 @@ if ( $_SERVER['REQUEST_METHOD'] == 'POST' ) {
             <div class="header-title">API Admin Panel</div>
         </div>
         <div class="user-info">
-            <span class="user-name">Admin User</span>
-            <div class="user-avatar">A</div>
+            <span class="user-name"><?= $user['username'] ?></span>
+            <div class="user-avatar"><?= strtoupper($user['username'][0]) ?></div>
         </div>
     </header>
     <div class="main-container">

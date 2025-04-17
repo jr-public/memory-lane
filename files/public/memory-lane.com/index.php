@@ -35,7 +35,8 @@ if ( $_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["form_name"]) ) {
         header("Location: index.php?e=".$auth["message"]);
         die();
     }
-    set_cookie($auth["data"]["jwt"]);
+    set_auth_user(json_encode($auth['data']['user']));
+    set_auth_token($auth["data"]["jwt"]);
     header("Location: main.php");
     die();
 }

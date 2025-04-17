@@ -29,7 +29,10 @@ class User extends AbstractEntity {
         if ($user["client_id"] != $client_id) return response(false, null, "BAD_CLIENT"); // 
         
         return response( true, [
-            "user" => $user,
+            "user" => [
+                'id'        => $user['id'],
+                'username'  => $user['username']
+            ],
             "jwt" => generate_token($user, $device)
         ]);
     }

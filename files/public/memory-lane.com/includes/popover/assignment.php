@@ -44,7 +44,7 @@
         <input type="hidden" name="entity_name" value="TaskAssignment">
         <input type="hidden" name="entity_action" value="create">
         <input type="hidden" name="task_id" value="" class="task-id-input"> <!-- Will be set by JS -->
-        <input type="hidden" name="user_id" value="1">
+        <input type="hidden" name="user_id" value="<?= $user['id'] ?>">
         <div class="form-row">
             <select id="user-select" name="assigned_to" class="user-select" required>
                 <option value="">Select a user</option>

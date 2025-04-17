@@ -26,9 +26,9 @@ function verify_token(string $token, string $device): array {
 		return response(false,[$e],$e->getMessage());
 	}
 }
-function set_cookie( $jwt, $expiration = null) {
-	setcookie('auth_token', $jwt, [
-		'expires' => $expiration ?? time() + 3600,
+function set_auth_user( string $data ): void {
+    setcookie('auth_user', $data, [
+		'expires' => time() + 3600,
 		'path' => '/',
 		'domain' => $_SERVER['SERVER_NAME'],
 		// 'secure' => true,     // Only send over HTTPS
@@ -36,10 +36,25 @@ function set_cookie( $jwt, $expiration = null) {
 		'samesite' => 'Lax'   // Protects against CSRF
 	]);
 }
-function get_cookie() {
+function get_auth_user() {
+    $cook = $_COOKIE["auth_user"] ?? null;
+	return $cook;
+}
+function set_auth_token( string $data ): void {
+	setcookie('auth_token', $data, [
+		'expires' => time() + 3600,
+		'path' => '/',
+		'domain' => $_SERVER['SERVER_NAME'],
+		// 'secure' => true,     // Only send over HTTPS
+		'httponly' => true,   // Not accessible via JavaScript
+		'samesite' => 'Lax'   // Protects against CSRF
+	]);
+}
+function get_auth_token() {
     $cook = isset($_COOKIE["auth_token"]) ? $_COOKIE["auth_token"] : null;
 	return $cook;
 }
+
 function device_id() {
     // $userAgent 		= $_SERVER['HTTP_USER_AGENT'] ?? 'NO_USER_AGENT';
     // $acceptLanguage = $_SERVER['HTTP_ACCEPT_LANGUAGE'] ?? 'NO_LANG';
@@ -74,7 +89,7 @@ function api_call( $controller, $action, $request = [] ) {
             }
         } else {
             // Get from cookie for internal calls
-            $token = get_cookie();
+            $token = get_auth_token();
         }
         
         // Validate token
@@ -128,7 +143,7 @@ function api_call( $controller, $action, $request = [] ) {
 function external_api_call( $controller, $action, $request = [] ) {
 
     // Get JWT from the session or cookies
-    $jwt = get_cookie();
+    $jwt = get_auth_token();
     if (!$jwt) {
         return response(false, null,'Authentication required');
     }
