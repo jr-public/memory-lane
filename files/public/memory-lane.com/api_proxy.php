@@ -35,16 +35,6 @@ if (!preg_match('/^[a-zA-Z0-9_]+$/', $controller) || !preg_match('/^[a-zA-Z0-9_]
     die();
 }
 
-// Get JWT from the session or cookies
-$jwt = get_cookie();
-
-// Check if JWT exists
-if (!$jwt) {
-    http_response_code(401); // Unauthorized
-    echo json_encode(response(false, null,'Authentication required'));
-    die();
-}
-
 // Make API call with JWT
 try {
     // Assuming api_call is already defined in your system

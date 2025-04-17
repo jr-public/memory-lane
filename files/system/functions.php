@@ -126,6 +126,13 @@ function api_call( $controller, $action, $request = [] ) {
     return $reflection->invokeArgs($instance, $c_params);
 }
 function external_api_call( $controller, $action, $request = [] ) {
+
+    // Get JWT from the session or cookies
+    $jwt = get_cookie();
+    if (!$jwt) {
+        return response(false, null,'Authentication required');
+    }
+
     // Initialize cURL session
     $ch = curl_init('http://localhost/'.strtolower($controller).'/'.strtolower($action));
     
@@ -144,7 +151,7 @@ function external_api_call( $controller, $action, $request = [] ) {
         CURLOPT_HTTPHEADER => [
             'Content-Type: application/json',
             'Accept: application/json',
-            'Authorization: Bearer ' . get_cookie()
+            'Authorization: Bearer ' . $jwt
         ]
     ]);
     
