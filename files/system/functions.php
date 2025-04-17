@@ -142,12 +142,6 @@ function api_call( $controller, $action, $request = [] ) {
 }
 function external_api_call( $controller, $action, $request = [] ) {
 
-    // Get JWT from the session or cookies
-    $jwt = get_auth_token();
-    if (!$jwt) {
-        return response(false, null,'Authentication required');
-    }
-
     // Initialize cURL session
     $ch = curl_init('http://localhost/'.strtolower($controller).'/'.strtolower($action));
     
@@ -166,7 +160,7 @@ function external_api_call( $controller, $action, $request = [] ) {
         CURLOPT_HTTPHEADER => [
             'Content-Type: application/json',
             'Accept: application/json',
-            'Authorization: Bearer ' . $jwt
+            'Authorization: Bearer ' . get_auth_token()
         ]
     ]);
     

@@ -104,6 +104,7 @@ if ( $_SERVER['REQUEST_METHOD'] == 'POST' ) {
             ?>
         </main>
     </div>
+    <?php require_once('includes/task-panel.php'); ?>
     <div id="popover-templates" style="display: none;">
     <?php
         $popover_templates = [];
