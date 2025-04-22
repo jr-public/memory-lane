@@ -11,7 +11,6 @@ $tree_res = api_call("Task", "list", [
         "unique" => true
     ]
 ]);
-
 if (!$tree_res['success']) {
     echo json_encode($tree_res);
     die();
@@ -139,13 +138,13 @@ require_once('includes/task-panel.php');
             statusIcon.className = `project-status-icon status-${getStatusClass(project.status_id)}-icon`;
             projectInfo.appendChild(statusIcon);
             
-            // Project name
+            // Project name - modified to redirect instead of opening panel
             const projectName = document.createElement('div');
             projectName.className = 'project-name';
             projectName.textContent = project.title;
             projectName.addEventListener('click', () => {
-                // Open task panel with this project
-                window.taskPanel.open(project);
+                // Redirect to tasks view with this project ID
+                window.location.href = `main.php?action=tasks&id=${project.id}`;
             });
             projectInfo.appendChild(projectName);
             
@@ -153,11 +152,34 @@ require_once('includes/task-panel.php');
             const projectMeta = document.createElement('div');
             projectMeta.className = 'project-meta';
             
+            // Add comment count if project has comments
+            if (project.comments && project.comments.length > 0) {
+                const commentCount = document.createElement('div');
+                commentCount.className = 'project-comment-count';
+                commentCount.innerHTML = `<span class="comment-icon">💬</span> <span class="comment-count">${project.comments.length}</span>`;
+                commentCount.addEventListener('click', (e) => {
+                    e.stopPropagation(); // Prevent event bubbling
+                    window.taskPanel.open(project);
+                });
+                projectMeta.appendChild(commentCount);
+            }
+            
             // Reuse createAvatarsElement function from tasks.js
             const avatarsElement = createAvatarsElement(project);
             if (avatarsElement) {
                 projectMeta.appendChild(avatarsElement);
             }
+            
+            // Add edit button
+            const editButton = document.createElement('button');
+            editButton.className = 'project-edit-btn';
+            editButton.innerHTML = '<span class="edit-icon">✏️</span>';
+            editButton.title = 'Edit Project';
+            editButton.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent event bubbling
+                window.taskPanel.open(project);
+            });
+            projectMeta.appendChild(editButton);
             
             // Assemble project item
             projectItem.appendChild(projectInfo);
@@ -285,5 +307,37 @@ require_once('includes/task-panel.php');
 
     .status-on-hold-icon {
         background-color: #7f8c8d;
+    }
+    
+    /* New styles for added elements */
+    .project-comment-count {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        cursor: pointer;
+        transition: color 0.2s ease;
+    }
+    
+    .project-comment-count:hover {
+        color: #e0e0e0;
+    }
+    
+    .project-edit-btn {
+        background: none;
+        border: none;
+        color: #909090;
+        font-size: 1rem;
+        cursor: pointer;
+        padding: 0.25rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 4px;
+        transition: all 0.2s ease;
+    }
+    
+    .project-edit-btn:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+        color: #e0e0e0;
     }
 </style>
