@@ -83,22 +83,35 @@ abstract class AbstractEntity {
     }
 
     public function tree(array $options = []): array {
-        // THIS IS NEEDED FOR THE CURRENT IMPLEMENTATION.
-        // If we dont sort it in this way, the tree building fails
-        if (!isset($options['order']) || !is_array($options['order'])) {
-            $options['order'] = [];
-        }
-        array_unshift($options['order'], 'parent_id ASC NULLS FIRST');
-        $options['unique'] = true;
+        $sql = "WITH RECURSIVE task_tree AS (
+            -- Base case: Select the root task
+            SELECT *, 0 AS level
+            FROM tasks
+            WHERE id = :id
+            
+            UNION ALL
+            
+            -- Recursive case: Select all children of tasks already in the CTE
+            SELECT t.*, tt.level + 1 AS level
+            FROM tasks t
+            JOIN task_tree tt ON t.parent_id = tt.id
+        )
+        -- Select all tasks except the root task itself
+        SELECT id, * FROM task_tree
+        WHERE level > 0
+        ORDER BY level, id;";
 
-        $list_res = $this->list($options);
-        if (!$list_res['success']) return $list_res;
-        $rows = array_values($list_res['data']);
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([
+            ':id' => $options['root_node']
+        ]);
+        $list = $stmt->fetchAll(\PDO::FETCH_UNIQUE);
+
+        $rows = array_values($list);
         // Return original rows if empty or parent_id doesn't exist in the first row
         if (empty($rows) || !array_key_exists('parent_id', $rows[0])) {
             return response(true, $rows);
         }
-
         
         $result = [];
         $itemMap = [];
@@ -123,11 +136,10 @@ abstract class AbstractEntity {
         }
         $response = [
             "tree" => $result,
-            "list" => $list_res['data']
+            "list" => $list
         ];
         return response(true, $response);
     }
-
     public function update(string $id, array $data): array {
         if (empty(static::$editable_columns)) {
             return response(false, null, 'No editable columns defined', 400);
@@ -240,21 +252,21 @@ abstract class AbstractEntity {
     }
 
     protected function build_query(array $options = []): array {
+
         try {
-            $perPage = $options['perPage'] ?? 1000;
-            $page = $options['page'] ?? 1;
-            $filters = $options['filters'] ?? [];
-            $order = $options['order'] ?? [];
-            
-            $offset = ($page - 1) * $perPage;
-            
-            $select = 'SELECT id, *';
-            $from = ' FROM ' . static::$table;
-            $joins = '';
-            $where = (!empty($filters)) ? ' WHERE ' . implode(' AND ', $filters) : '';
-            $groupBy = '';
-            $orderBy = ' ORDER BY ' . (!empty($order) ? implode(', ', $order) : 'id DESC');
-            $limit = ' LIMIT :limit OFFSET :offset';
+            $perPage    = $options['perPage'] ?? 1000;
+            $page       = $options['page'] ?? 1;
+            $order      = $options['order'] ?? [];
+            $offset     = ($page - 1) * $perPage;
+            $filters    = $options['filters'] ?? [];
+
+            $select     = 'SELECT id, *';
+            $from       = ' FROM ' . static::$table;
+            $joins      = '';
+            $where      = (!empty($filters)) ? ' WHERE ' . implode(' AND ', $filters) : '';
+            $groupBy    = '';
+            $orderBy    = ' ORDER BY ' . (!empty($order) ? implode(', ', $order) : 'id DESC');
+            $limit      = ' LIMIT :limit OFFSET :offset';
             
             $params = [
                 'limit' => $perPage,
