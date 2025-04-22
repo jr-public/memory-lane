@@ -47,6 +47,17 @@ if ( $_SERVER['REQUEST_METHOD'] == 'POST' ) {
     die();
 }
 
+
+// Get the current action from URL parameter
+$action = isset($_GET['action']) ? $_GET['action'] : 'projects';
+// Sanitize the action parameter to prevent directory traversal
+$action = preg_replace('/[^a-zA-Z0-9_]/', '', $action);
+// If the action is 'tasks' but there is no 'id' in $_GET, redirect to 'projects'
+if ($action == 'tasks' && !isset($_GET['id'])) {
+    header("Location: main.php?action=projects");
+    die();
+}
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -83,15 +94,9 @@ if ( $_SERVER['REQUEST_METHOD'] == 'POST' ) {
         
         <main class="content">
             <?php
-            // Get the current action from URL parameter
-            $action = isset($_GET['action']) ? $_GET['action'] : 'tasks';
-            
-            // Sanitize the action parameter to prevent directory traversal
-            $action = preg_replace('/[^a-zA-Z0-9_]/', '', $action);
             
             // Define the path to the action file
             $action_file = 'actions/' . $action . '.php';
-            
             // Check if the action file exists
             if (file_exists($action_file)) {
                 include $action_file;
@@ -104,6 +109,7 @@ if ( $_SERVER['REQUEST_METHOD'] == 'POST' ) {
             ?>
         </main>
     </div>
+    <?php require_once('includes/task-panel.php'); ?>
     <div id="popover-templates" style="display: none;">
     <?php
         $popover_templates = [];
