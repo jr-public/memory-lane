@@ -26,6 +26,7 @@ function verify_token(string $token, string $device): array {
 		return response(false,[$e],$e->getMessage());
 	}
 }
+
 function set_auth_user( string $data ): void {
     setcookie('auth_user', $data, [
 		'expires' => time() + 3600,
@@ -36,9 +37,13 @@ function set_auth_user( string $data ): void {
 		'samesite' => 'Lax'   // Protects against CSRF
 	]);
 }
-function get_auth_user() {
+function get_auth_user( $index = null ): mixed {
     $cook = $_COOKIE["auth_user"] ?? null;
-	return $cook;
+    if (is_null($cook)) return null;
+    if (is_null($index)) return $cook;
+    $cook = json_decode($cook, true);
+    if (isset($cook[$index])) return $cook[$index];
+    return null;
 }
 function set_auth_token( string $data ): void {
 	setcookie('auth_token', $data, [

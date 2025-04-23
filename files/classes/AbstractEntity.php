@@ -61,12 +61,17 @@ abstract class AbstractEntity {
         $unique = $options['unique'] ?? false;
 
         try {
-            // Build the query
-            $query = $this->build_query($options);
-    
-            // Execute the query
-            $stmt = $this->db->prepare($query['sql']);
-            $stmt->execute($query['params']);
+            // Build and execute the query
+            if ( isset($options['sql']) ) {
+                $query = $options['sql'];
+                $stmt = $this->db->prepare($query);
+                $stmt->execute($options['params'] ?? []);
+            }
+            else {
+                $query = $this->build_query($options);
+                $stmt = $this->db->prepare($query['sql']);
+                $stmt->execute($query['params']);
+            }
             $list = $stmt->fetchAll(\PDO::FETCH_UNIQUE);
         } catch (\PDOException $e) {
             // LOG ERROR

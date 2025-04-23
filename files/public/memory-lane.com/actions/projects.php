@@ -1,16 +1,35 @@
 <?php
-// Project Management action file
-// This displays top-level tasks as projects
-
-// Get only top-level tasks (parent_id is NULL)
-$tree_res = api_call("Task", "list", [
-    "options" => [
-        'order' => ['id ASC'],
-        'filters' => ['parent_id IS NULL'],
-        "with" => ["assignments", "comments"],
-        "unique" => true
-    ]
-]);
+// Projects are tasks with parent_id = null
+// Fetch projects, im leaving this conditional here for easy access to all projects during development
+// PROJECTS RELATED TO THIS USER
+if ( true ) {
+    $sql = "SELECT t.id, t.*
+            FROM tasks t
+            INNER JOIN task_assignments ta ON t.id = ta.task_id
+            WHERE t.parent_id IS NULL
+            AND ta.assigned_to = :id";
+    $tree_res = api_call("Task", "list", [
+        "options" => [
+            'sql' => $sql,
+            'params' => [
+                'id' => get_auth_user('id')
+            ],
+            "with" => ["assignments", "comments"],
+            "unique" => true
+        ]
+    ]);
+}
+// ALL PROJECTS
+else {
+    $tree_res = api_call("Task", "list", [
+        "options" => [
+            'order' => ['id ASC'],
+            'filters' => ['parent_id IS NULL'],
+            "with" => ["assignments", "comments"],
+            "unique" => true
+        ]
+    ]);
+}
 if (!$tree_res['success']) {
     echo json_encode($tree_res);
     die();

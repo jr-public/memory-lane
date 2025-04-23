@@ -2,15 +2,27 @@
 
 require_once(getenv("PROJECT_ROOT") . 'vendor/autoload.php');
 
+
+
 $current_url = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
 $params = $_GET;
 unset($params['error']);
 $current_url = strtok($current_url, '?') . (!empty($params) ? '?' . http_build_query($params) : '');
 
-$user = json_decode(get_auth_user(),true);
-if (json_last_error() != 0 || empty($user)) {
-    die("NO USER");
+try {
+    $user = get_auth_user();
+    if (empty($user)) throw new \Exception("LOCAL SESSION INVALID");
+    $user = json_decode($user,true);
+    if (json_last_error() != 0 || empty($user)) {        
+        throw new \Exception("UNEXPECTED USER FORMAT");
+    }
+} catch (\Throwable $th) {
+    header('Location: index.php?error='.$th->getMessage());
+    die();
 }
+
+
+set_auth_user(json_encode($user));
 
 if ( $_SERVER['REQUEST_METHOD'] == 'POST' ) {
     $controller = $_POST['entity_name'];
@@ -52,11 +64,45 @@ if ( $_SERVER['REQUEST_METHOD'] == 'POST' ) {
 $action = isset($_GET['action']) ? $_GET['action'] : 'projects';
 // Sanitize the action parameter to prevent directory traversal
 $action = preg_replace('/[^a-zA-Z0-9_]/', '', $action);
-// If the action is 'tasks' but there is no 'id' in $_GET, redirect to 'projects'
-if ($action == 'tasks' && !isset($_GET['id'])) {
-    header("Location: main.php?action=projects");
-    die();
+
+
+
+// Check if the action is 'tasks' and if the current user is assigned to the parent task
+if ($action == 'tasks') {
+    if (!isset($_GET['id'])) {
+        header("Location: main.php?action=projects&error=Task id is required.");
+        die();
+    }
+
+    $parent_task_id = $_GET['id'];
+    $parent_task_res = api_call("Task", "list", [
+        "options" => [
+            'filters'   => ['id = '.$parent_task_id],
+            'perPage'   => 1,
+            'page'      => 1,
+            "with"      => ["assignments"]
+        ]
+    ]);
+    if (!$parent_task_res['success']) {
+        header("Location: main.php?action=projects&error=Task not found.");
+        die();
+    }
+    $parent_task = $parent_task_res['data'][0];
+    $is_assigned = false;
+    if (isset($parent_task['assignments'])) {
+        foreach ($parent_task['assignments'] as $assignment) {
+            if ($assignment['assigned_to'] == $user['id']) {
+                $is_assigned = true;
+                break;
+            }
+        }
+    }
+    if (!$is_assigned) {
+        header("Location: main.php?action=projects&error=You are not assigned to this task.");
+        die();
+    }
 }
+
 
 ?>
 <!DOCTYPE html>
