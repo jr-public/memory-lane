@@ -8,6 +8,7 @@ if (!isset($_GET['pid']) || !is_numeric($_GET['pid'])) {
 }
 $project_id = (int)$_GET['pid'];
 $current_user_id = $user['id']; // $user is available from main.php
+$current_client_id = 1; // <<< ADD THIS LINE
 $error_message = isset($_GET['error']) ? htmlspecialchars(urldecode($_GET['error'])) : null; // Get error from main.php redirect
 
 // --- 2. Fetch Data via API ---
@@ -15,10 +16,10 @@ $error_message = isset($_GET['error']) ? htmlspecialchars(urldecode($_GET['error
 // Fetch Project Details including assignments
 $project_res = api_call("Task", "list", [
     "options" => [
-		'filters' => [ 'id = ' . $project_id ],
-		'perPage'   => 1,
-		'page'      => 1,
-        "with" => ["assignments"] // Ensure assignments are loaded
+        'filters'   => ['id = '.$project_id],
+        'perPage'   => 1,
+        'page'      => 1,
+        "with"      => ["assignments"]
     ]
 ]);
 
@@ -26,6 +27,7 @@ if (!$project_res['success'] || empty($project_res['data'])) {
     echo '<div class="error-banner">Error fetching project details: ' . htmlspecialchars($project_res['message'] ?? 'Project not found or access denied.') . '</div>';
     return; // Stop if project data fails
 }
+// $project_data = $project_res['data'][0]; // Corrected: get returns single object
 $project_data = $project_res['data'][0];
 
 // Fetch All Users for mapping IDs to names/details
@@ -54,30 +56,36 @@ if (!$users_res['success']) {
         <?= $error_message ?>
     </div>
 
-	
+
     <!-- Invite User Section -->
     <div class="team-section">
-        <h2>Invite User</h2>
+        <h2>Assign User</h2> <!-- Changed header -->
         <form id="invite-form" method="post" action="">
              <input type="hidden" name="entity_name" value="TaskAssignment">
-             <!-- Using a distinct action name for clarity, even if main.php doesn't use it yet -->
-             <input type="hidden" name="entity_action" value="create_assignment_invite">
+             <!-- Changed action back to 'create' -->
+             <input type="hidden" name="entity_action" value="create">
              <input type="hidden" name="task_id" value=""> <!-- Project ID set by JS -->
              <input type="hidden" name="user_id" value=""> <!-- Current User ID set by JS -->
+             <!-- Hidden input to store the selected user ID -->
+             <input type="hidden" name="assigned_to" id="selected-user-id" value="">
 
             <div class="invite-form-row">
-                <input type="email" name="invite_email" required placeholder="Enter user's email to invite" class="invite-email-input">
-                <button type="submit" class="btn-action btn-invite">Invite</button>
+                <!-- Removed 'required', changed name for clarity -->
+                <input type="text" name="search_email" placeholder="Search user by email or username" class="invite-email-input" autocomplete="off">
+                <!-- Disable button initially -->
+                <button type="submit" class="btn-action btn-invite" id="assign-user-button" disabled>Assign</button>
             </div>
-             <p class="invite-note">Note: Invite functionality via email is not yet implemented. This form currently does nothing.</p>
+            <!-- Container for search results -->
+            <div id="user-search-results" class="user-search-results"></div>
+             <!-- Removed the "not implemented" note -->
         </form>
     </div>
-	
+
 
     <!-- Separator -->
     <hr class="team-separator">
 
-	
+
     <!-- Assigned Users List Section -->
     <div class="team-section">
         <h2>Current Team</h2>
@@ -109,6 +117,7 @@ if (!$users_res['success']) {
 
 <!-- CSS Styling -->
 <style>
+    /* Existing styles... */
     .team-container {
         padding: 20px;
         max-width: 800px;
@@ -128,6 +137,7 @@ if (!$users_res['success']) {
 
     .team-section {
         margin-bottom: 30px;
+        position: relative; /* Needed for absolute positioning of results */
     }
 
     .team-section h2 {
@@ -212,6 +222,7 @@ if (!$users_res['success']) {
         display: flex;
         gap: 10px;
         align-items: center;
+        position: relative; /* Context for results */
     }
 
     .invite-email-input {
@@ -226,11 +237,9 @@ if (!$users_res['success']) {
     .btn-invite {
         padding: 8px 15px;
     }
-
-    .invite-note {
-        font-size: 0.85em;
-        color: #888;
-        margin-top: 10px;
+    .btn-invite:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
     }
 
     .error-banner {
@@ -241,6 +250,56 @@ if (!$users_res['success']) {
         margin-bottom: 20px;
         text-align: center;
     }
+
+    /* Styles for Search Results */
+    .user-search-results {
+        position: absolute;
+        background-color: #3a3a3a;
+        border: 1px solid #555;
+        border-top: none;
+        border-radius: 0 0 4px 4px;
+        max-height: 200px;
+        overflow-y: auto;
+        z-index: 1000;
+        width: calc(100% - 100px); /* Adjust width based on button size */
+        left: 0;
+        top: 100%; /* Position below the input row */
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        display: none; /* Hidden by default */
+    }
+
+    .user-search-item {
+        padding: 8px 12px;
+        cursor: pointer;
+        border-bottom: 1px solid #4a4a4a;
+        color: #ccc;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .user-search-item:last-child {
+        border-bottom: none;
+    }
+
+    .user-search-item:hover {
+        background-color: #4a4a4a;
+        color: #fff;
+    }
+    .user-search-item .email {
+        font-size: 0.85em;
+        color: #999;
+    }
+    .user-search-item.loading,
+    .user-search-item.no-results {
+        padding: 10px;
+        text-align: center;
+        color: #888;
+        cursor: default;
+    }
+     .user-search-item.no-results:hover {
+         background-color: transparent;
+     }
+
 </style>
 
 <!-- JavaScript Logic -->
@@ -252,6 +311,10 @@ if (!$users_res['success']) {
     const errorMessage = <?= json_encode($error_message) ?>;
     const projectId = <?= json_encode($project_id) ?>;
     const currentUserId = <?= json_encode($current_user_id) ?>;
+    const currentClientId = <?= json_encode($current_client_id) ?>; // <<< ADDED
+
+    // --- Debounce Timer ---
+    let searchDebounceTimer;
 
     // --- Helper Functions ---
     function escapeHTML(str) {
@@ -261,20 +324,19 @@ if (!$users_res['success']) {
         return p.innerHTML;
     }
 
-    // Basic avatar color function (can be replaced with a more sophisticated one if needed)
     function getAvatarColor(index) {
         const colors = ['#e74c3c', '#3498db', '#2ecc71', '#f1c40f', '#9b59b6', '#1abc9c', '#e67e22'];
         return colors[index % colors.length];
     }
 
+    // Debounce function
+    function debounce(func, delay) {
+        clearTimeout(searchDebounceTimer);
+        searchDebounceTimer = setTimeout(func, delay);
+    }
+
     // --- Core Functions ---
 
-    /**
-     * Renders the list of assigned users.
-     * @param {Array} assignments - Array of assignment objects from projectData.
-     * @param {Object} usersMap - Map of user IDs to user objects.
-     * @param {string} actionUrl - The URL for form submissions.
-     */
     function renderAssignedUsers(assignments = [], usersMap = {}, actionUrl) {
         const listContainer = document.getElementById('assigned-users-list');
         const template = document.getElementById('user-item-template');
@@ -291,7 +353,8 @@ if (!$users_res['success']) {
 
         assignments.forEach((assignment, index) => {
             const user = usersMap[assignment.assigned_to];
-            const username = user ? user.username : `User ID: ${assignment.assigned_to}`;
+            // Ensure user exists and has a username, otherwise provide a fallback
+            const username = user?.username ? user.username : `User ID: ${assignment.assigned_to}`;
             const initial = username.charAt(0).toUpperCase();
 
             const clone = template.content.cloneNode(true);
@@ -302,7 +365,7 @@ if (!$users_res['success']) {
             const assignmentIdInput = clone.querySelector('input[name="id"]');
 
             avatar.textContent = initial;
-            avatar.style.backgroundColor = getAvatarColor(index); // Use index for color variation
+            avatar.style.backgroundColor = getAvatarColor(index);
             nameSpan.textContent = escapeHTML(username);
 
             removeForm.action = actionUrl;
@@ -313,27 +376,144 @@ if (!$users_res['success']) {
     }
 
     /**
-     * Sets up the invite form with necessary hidden values and action URL.
-     * @param {number} projId - The current project ID.
-     * @param {number} currUserId - The ID of the logged-in user.
-     * @param {string} actionUrl - The URL for form submission.
+     * Sets up the invite form, including the search input listener.
      */
     function setupInviteForm(projId, currUserId, actionUrl) {
         const form = document.getElementById('invite-form');
         const taskIdInput = form.querySelector('input[name="task_id"]');
         const userIdInput = form.querySelector('input[name="user_id"]');
+        const searchInput = form.querySelector('.invite-email-input');
+        const resultsContainer = document.getElementById('user-search-results');
+        const selectedUserIdInput = document.getElementById('selected-user-id');
+        const assignButton = document.getElementById('assign-user-button');
 
         form.action = actionUrl;
         taskIdInput.value = projId;
         userIdInput.value = currUserId;
 
-        // Optional: Add submit prevention if needed later for AJAX
-        // form.addEventListener('submit', (event) => {
-        //     // event.preventDefault(); // Uncomment for AJAX submission
-        //     console.log('Invite form submitted (currently does nothing).');
-        //     // Implement AJAX call here in the future
-        // });
+        searchInput.addEventListener('input', () => {
+            const searchTerm = searchInput.value.trim();
+            selectedUserIdInput.value = ''; // Clear selection on new input
+            assignButton.disabled = true; // Disable button until selection
+
+            if (searchTerm.length < 2) {
+                resultsContainer.innerHTML = '';
+                resultsContainer.style.display = 'none';
+                return;
+            }
+
+            debounce(() => performUserSearch(searchTerm), 300); // Debounce API call
+        });
+
+        // Hide results when clicking outside
+        document.addEventListener('click', (event) => {
+            if (!form.contains(event.target)) {
+                resultsContainer.style.display = 'none';
+            }
+        });
+
+        // Prevent form submission if no user is selected
+        form.addEventListener('submit', (event) => {
+            if (!selectedUserIdInput.value) {
+                event.preventDefault();
+                alert('Please select a user from the search results before assigning.');
+            }
+        });
     }
+
+    /**
+     * Performs the user search via API proxy.
+     * @param {string} searchTerm - The query string.
+     */
+    function performUserSearch(searchTerm) {
+        const resultsContainer = document.getElementById('user-search-results');
+        resultsContainer.innerHTML = '<div class="user-search-item loading">Searching...</div>';
+        resultsContainer.style.display = 'block';
+
+        const requestData = {
+            controller: "User",
+            action: "search",
+            params: {
+                query: searchTerm,
+                options: {
+                    filters: ["client_id = :client_id"],
+                    params: { "client_id": currentClientId },
+                    perPage: 10,
+                    page: 1,
+                    order: ["username ASC"],
+                    unique: false // Get array for easier iteration
+                }
+            }
+        };
+
+        apiProxyRequest(requestData, handleSearchResults, handleSearchError);
+    }
+
+    /**
+     * Handles the successful response from the user search API call.
+     * @param {object} result - The API response object.
+     */
+    function handleSearchResults(result) {
+        const resultsContainer = document.getElementById('user-search-results');
+        resultsContainer.innerHTML = ''; // Clear loading/previous results
+
+        if (!result.success) {
+            resultsContainer.innerHTML = `<div class="user-search-item no-results">Error: ${escapeHTML(result.message || 'Unknown error')}</div>`;
+            resultsContainer.style.display = 'block';
+            return;
+        }
+
+        const users = result.data; // Should be an array from unique: false
+
+        if (!users || users.length === 0) {
+            resultsContainer.innerHTML = '<div class="user-search-item no-results">No users found</div>';
+            resultsContainer.style.display = 'block';
+            return;
+        }
+
+        users.forEach(user => {
+            const item = document.createElement('div');
+            item.className = 'user-search-item';
+            item.dataset.userId = user.id;
+            item.dataset.username = user.username;
+            item.innerHTML = `
+                <span>${escapeHTML(user.username)}</span>
+                <span class="email">${escapeHTML(user.email)}</span>
+            `;
+            item.addEventListener('click', () => selectUser(user));
+            resultsContainer.appendChild(item);
+        });
+        resultsContainer.style.display = 'block';
+    }
+
+    /**
+     * Handles errors during the user search API call.
+     * @param {Error} error - The error object.
+     */
+    function handleSearchError(error) {
+        const resultsContainer = document.getElementById('user-search-results');
+        resultsContainer.innerHTML = `<div class="user-search-item no-results">Search failed: ${escapeHTML(error.message)}</div>`;
+        resultsContainer.style.display = 'block';
+        console.error("Search API Error:", error);
+    }
+
+    /**
+     * Handles the selection of a user from the search results.
+     * @param {object} user - The selected user object.
+     */
+    function selectUser(user) {
+        const searchInput = document.querySelector('.invite-email-input');
+        const selectedUserIdInput = document.getElementById('selected-user-id');
+        const resultsContainer = document.getElementById('user-search-results');
+        const assignButton = document.getElementById('assign-user-button');
+
+        searchInput.value = user.username; // Update input field to show selection
+        selectedUserIdInput.value = user.id; // Store the ID
+        resultsContainer.innerHTML = ''; // Clear results
+        resultsContainer.style.display = 'none'; // Hide results
+        assignButton.disabled = false; // Enable the assign button
+    }
+
 
     // --- Initialization ---
     document.addEventListener('DOMContentLoaded', () => {
@@ -346,13 +526,10 @@ if (!$users_res['success']) {
             errorArea.style.display = 'none';
         }
 
-        // Set project title (already done in PHP, but good practice if dynamic)
-        // document.getElementById('project-title').textContent = escapeHTML(projectData.title);
-
         // Render the list of assigned users
         renderAssignedUsers(projectData.assignments, allUsers, currentUrl);
 
-        // Setup the invite form
+        // Setup the invite/assign form
         setupInviteForm(projectId, currentUserId, currentUrl);
     });
 
