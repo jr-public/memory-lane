@@ -53,6 +53,9 @@
             <button type="submit" class="btn-add-assignment">Add</button>
         </div>
     </form>
+    <script>
+
+    </script>
 </div>
 <script>
 /**
@@ -117,6 +120,21 @@ function setupAssignmentForms(container, taskId) {
     forms.forEach(form => {
         form.action = currentUrl;
     });
+    
+    // Add event listener to the assignment form
+    const assignmentForm = container.querySelector('#assignment-form');
+    if (assignmentForm) {
+        assignmentForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            const formData = new FormData(assignmentForm);
+            const assignedTo = formData.get('assigned_to');
+            if (assignedTo === 'invite') {
+                window.location.href = 'main.php?action=teams&pid=' + taskId;
+            } else {
+                assignmentForm.submit();
+            }
+        });
+    }    
 }
 
 /**
@@ -212,12 +230,14 @@ function setupUserSelectionDropdown(container) {
     const userSelect = container.querySelector('.user-select');
     if (!userSelect) return;
     
-    let options = '<option value="">Select a user</option>';
+    let options = '<option value="">Select a user</option><option value="invite">Invite to project</option>';
     const usersArray = Array.isArray(tasked_users) ? tasked_users : Object.values(tasked_users);
     
     usersArray.forEach(user => {
         if (user && user.id && user.username) {
             options += `<option value="${user.id}">${escapeHTML(user.username)}</option>`;
+        } else {
+            console.warn('Invalid user object:', user);
         }
     });
     userSelect.innerHTML = options;
