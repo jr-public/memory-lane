@@ -12,10 +12,12 @@ if (!$tree_res['success']) {
     echo json_encode($tree_res);
     die();
 }
-$users_res = api_call("User", "list", [
-    "options" => [
-        "unique" => true
-    ]
+
+
+
+
+$users_res = api_call("Task", "get_project_asignees", [
+    'task_id' => $_GET['id']
 ]);
 if (!$users_res['success']) {
     echo json_encode($users_res);
