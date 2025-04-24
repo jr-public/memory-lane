@@ -24,37 +24,22 @@ abstract class AbstractEntity {
             return response(true, $id);
         } catch (\PDOException $e) {
             // LOG ERROR
-            return response(false, null, 'Entity creation error: ' . $e->getMessage(), $e->getCode());
+            return response(false, null, 'Entity creation error: ' . $e->getMessage());
         }
     }
     
-    public function get(string $id): array {
-        try {
-            // Use the query builder with a filter for ID
-            $options = [
-                'filters' => ['id = :id'],
-                'perPage' => 1,
-                'page' => 1
-            ];
-            
-            $query = $this->build_query($options);
-            
-            // Update the params to include the ID
-            $query['params']['id'] = $id;
-            
-            // Execute the query
-            $stmt = $this->db->prepare($query['sql']);
-            $stmt->execute($query['params']);
-            $result = $stmt->fetch();
-            
-            if (!$result) return response(true, []);
-            
-            return response(true, $result);
-        } catch (\PDOException $e) {
-            // LOG ERROR
-            return response(false, null, 'Entity get error: ' . $e->getMessage());
-        }
+    public function get(string $id, array $options = []): array {
+        $options = array_merge($options, [
+            'filters' => ['id = :id'],
+            'params' => ['id' => $id],
+            'perPage' => 1,
+            'page' => 1
+        ]);
+        $res = $this->list($options);
+        if (!$res['success']) return $res;
+        return response(true, $res['data'][0] ?? []);
     }
+
 
     public function list(array $options = []): array {
         $with = $options['with'] ?? [];
@@ -67,10 +52,14 @@ abstract class AbstractEntity {
                 $stmt = $this->db->prepare($query);
                 $stmt->execute($options['params'] ?? []);
             }
-            else {
+            else {                
                 $query = $this->build_query($options);
                 $stmt = $this->db->prepare($query['sql']);
-                $stmt->execute($query['params']);
+                $params = $query['params'];
+                if (isset($options['params']) && is_array($options['params'])) {
+                    $params = array_merge($params, $options['params']);
+                }
+                $stmt->execute($params);
             }
             $list = $stmt->fetchAll(\PDO::FETCH_UNIQUE);
         } catch (\PDOException $e) {
@@ -153,6 +142,157 @@ abstract class AbstractEntity {
         ];
         return response(true, $response);
     }
+    /**
+     * Searches entities based on a query string in 'email' and 'username' columns.
+     * Allows additional filtering via options.
+     * Uses ILIKE for case-insensitive partial matching (PostgreSQL specific).
+     *
+     * @param string $query The search term.
+     * @param array $options {
+     *     Optional. An array of query options.
+     *
+     *     @type int    $perPage Number of items per page. Default 1000.
+     *     @type int    $page    Current page number. Default 1.
+     *     @type array  $order   Array of order clauses (e.g., ['column ASC', 'other DESC']). Default ['id DESC'].
+     *     @type array  $filters Array of additional WHERE clause conditions (strings, e.g., ['status_id = :status']).
+     *     @type array  $params  Key-value pairs for placeholders used in $filters.
+     *     @type array  $with    Array of relation names to load.
+     *     @type bool   $unique  Whether to return results indexed by ID (true) or as a plain array (false). Default false.
+     * }
+     * @return array A response array containing 'success', 'data', 'message', 'code'.
+     */
+    public function search(string $query, array $options = []): array {
+        // --- Input Validation ---
+        if (empty(trim($query))) {
+            return response(false, null, 'Search query cannot be empty.', 400);
+        }
+        // Validate filters if provided
+        if (isset($options['filters']) && !is_array($options['filters'])) {
+             return response(false, null, "'filters' option must be an array.", 400);
+        }
+        if (isset($options['filters'])) {
+            foreach ($options['filters'] as $filter) {
+                if (!is_string($filter)) {
+                    return response(false, null, "All elements in 'filters' option must be strings.", 400);
+                }
+            }
+        }
+        // Validate params if provided
+        if (isset($options['params']) && !is_array($options['params'])) {
+             return response(false, null, "'params' option must be an array.", 400);
+        }
+
+        try {
+            // --- Extract Options ---
+            $perPage       = $options['perPage'] ?? 1000;
+            $page          = $options['page'] ?? 1;
+            $order         = $options['order'] ?? [];
+            $filters       = $options['filters'] ?? [];
+            $filter_params = $options['params'] ?? []; // Use 'params' key as requested
+            $with          = $options['with'] ?? [];
+            $unique        = $options['unique'] ?? false; // Default to false for search results
+            $offset        = ($page - 1) * $perPage;
+
+            // --- Construct SQL Query ---
+            $select = 'SELECT id, *';
+            $from   = ' FROM ' . static::$table;
+
+            // Build WHERE clause
+            // Fixed search condition for email and username
+            $searchCondition = '(email ILIKE :search_query OR username ILIKE :search_query)';
+            // For MySQL/other DBs use: "(LOWER(email) LIKE LOWER(:search_query) OR LOWER(username) LIKE LOWER(:search_query))"
+
+            // Build additional filter conditions
+            $filterCondition = '';
+            if (!empty($filters)) {
+                $filterCondition = '(' . implode(' AND ', $filters) . ')';
+            }
+
+            // Combine search and filter conditions
+            if (!empty($filterCondition)) {
+                $where = ' WHERE ' . $searchCondition . ' AND ' . $filterCondition;
+            } else {
+                $where = ' WHERE ' . $searchCondition;
+            }
+
+            // Build ORDER BY clause
+            // Ensure order clauses are strings
+            $valid_orders = !empty($order) && is_array($order) ? array_filter($order, 'is_string') : [];
+            if (!empty($order) && count($valid_orders) !== count($order)) {
+                 // Log warning or handle error if non-strings are found
+                 error_log("Warning: Non-string elements found in 'order' option for search.");
+                 $valid_orders = array_filter($valid_orders); // Keep only valid strings
+            }
+            $orderBy = ' ORDER BY ' . (!empty($valid_orders) ? implode(', ', $valid_orders) : 'id DESC');
+
+
+            // Build LIMIT clause
+            $limit = ' LIMIT :limit OFFSET :offset';
+
+            // Assemble the complete query
+            $sql = $select . $from . $where . $orderBy . $limit;
+
+            // --- Prepare Parameters ---
+            // Start with base parameters for search and pagination
+            $params = [
+                'search_query' => '%' . $query . '%', // Add wildcards for partial matching
+                'limit'        => $perPage,
+                'offset'       => $offset
+            ];
+            // Merge filter parameters (ensure filter_params is an array)
+            if (!is_array($filter_params)) {
+                 // This validation is already done above, but double-check doesn't hurt
+                 throw new \InvalidArgumentException("'params' option must be an array.");
+            }
+            // Check for placeholder collisions before merging
+            $base_param_keys = array_keys($params);
+            $filter_param_keys = array_keys($filter_params);
+            $collisions = array_intersect($base_param_keys, $filter_param_keys);
+            if (!empty($collisions)) {
+                throw new \InvalidArgumentException("Placeholder collision detected in 'params': " . implode(', ', $collisions));
+            }
+            $params = array_merge($params, $filter_params);
+
+
+            // --- Execute Query ---
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute($params);
+            $list = $stmt->fetchAll(\PDO::FETCH_UNIQUE); // Fetch unique for relation loading
+
+        } catch (\PDOException $e) {
+            // Log error if necessary
+            error_log("Search query failed: " . $e->getMessage() . " SQL: " . $sql);
+            return response(false, null, 'Search execution error: ' . $e->getMessage(), $e->getCode());
+        } catch (\InvalidArgumentException $e) {
+             // Catch specific validation/setup errors
+             error_log("Error during search setup: " . $e->getMessage());
+             return response(false, null, 'Search setup error: ' . $e->getMessage(), 400);
+        } catch (\Throwable $e) {
+             // Catch other potential errors during setup
+             error_log("Unexpected error during search setup: " . $e->getMessage());
+             return response(false, null, 'Search setup error: ' . $e->getMessage(), 500);
+        }
+
+        // --- Handle Empty Results ---
+        if (empty($list)) {
+            return response(true, []); // Successful query, but no results found
+        }
+
+        // --- Load Relations ---
+        $res = $this->load_relations($list, $with);
+        if (!$res['success']) {
+            return $res; // Propagate error from relation loading
+        }
+        $list = $res['data']; // Use the list potentially modified by load_relations
+
+        // --- Format Output ---
+        if (!$unique) {
+            return response(true, array_values($list)); // Return as a simple array
+        } else {
+            return response(true, $list); // Return indexed by ID
+        }
+    }
+
     public function update(string $id, array $data): array {
         if (empty(static::$editable_columns)) {
             return response(false, null, 'No editable columns defined', 400);

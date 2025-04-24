@@ -29,20 +29,25 @@ if ( $_SERVER['REQUEST_METHOD'] == 'POST' ) {
     $action     = $_POST['entity_action'];
     unset($_POST['entity_name']);
     unset($_POST['entity_action']);
-    if ( $action == 'create' ) $data = ["data" => $_POST];
-    elseif ( $action == 'update' ) {
-        $u_id = $_POST["id"];
-        unset($_POST["id"]);
-        $data = [
-            "id"    => $u_id,
-            "data" => $_POST
-        ];
-    }
-    elseif ( $action == 'delete' ) {
-        $data = ['id' => $_POST['id']];
-    }
-    else {
-        $data = [];
+
+    switch ($action) {
+        case 'create':
+            $data = ["data" => $_POST];
+            break;
+        case 'update':
+            $u_id = $_POST["id"];
+            unset($_POST["id"]);
+            $data = [
+                "id"    => $u_id,
+                "data" => $_POST
+            ];
+            break;
+        case 'delete':
+            $data = ['id' => $_POST['id']];
+            break;
+        default:
+            $data = $_POST;
+            break;
     }
 
     $args = '';
