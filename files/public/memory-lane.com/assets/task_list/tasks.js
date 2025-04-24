@@ -7,6 +7,9 @@ const taskTreeConfig = {
 
 // Modified renderTaskTree function with configurable expansion
 function renderTaskTree(tasks, parentElement = null, level = 0) {
+    if (tasks.length == 0 ) {
+        return;
+    }
     const taskList = parentElement || document.getElementById('task-list');
     tasks.forEach(task => {
         // Create task item
