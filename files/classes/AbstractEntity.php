@@ -28,33 +28,18 @@ abstract class AbstractEntity {
         }
     }
     
-    public function get(string $id): array {
-        try {
-            // Use the query builder with a filter for ID
-            $options = [
-                'filters' => ['id = :id'],
-                'perPage' => 1,
-                'page' => 1
-            ];
-            
-            $query = $this->build_query($options);
-            
-            // Update the params to include the ID
-            $query['params']['id'] = $id;
-            
-            // Execute the query
-            $stmt = $this->db->prepare($query['sql']);
-            $stmt->execute($query['params']);
-            $result = $stmt->fetch();
-            
-            if (!$result) return response(true, []);
-            
-            return response(true, $result);
-        } catch (\PDOException $e) {
-            // LOG ERROR
-            return response(false, null, 'Entity get error: ' . $e->getMessage());
-        }
+    public function get(string $id, array $options = []): array {
+        $options = array_merge($options, [
+            'filters' => ['id = :id'],
+            'params' => ['id' => $id],
+            'perPage' => 1,
+            'page' => 1
+        ]);
+        $res = $this->list($options);
+        if (!$res['success']) return $res;
+        return response(true, $res['data'][0] ?? []);
     }
+
 
     public function list(array $options = []): array {
         $with = $options['with'] ?? [];
