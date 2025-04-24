@@ -121,6 +121,25 @@ CREATE TRIGGER update_task_comments_updated_at
     BEFORE UPDATE ON task_comments
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+-- Function to automatically create a task assignment when a top-level task is created
+CREATE OR REPLACE FUNCTION create_task_assignment_on_top_level_task()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.parent_id IS NULL THEN
+        INSERT INTO task_assignments (task_id, user_id, assigned_to)
+        VALUES (NEW.id, NEW.user_id, NEW.user_id);
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger to automatically create a task assignment for top-level tasks
+CREATE TRIGGER create_task_assignment_for_top_level_tasks
+    AFTER INSERT ON tasks
+    FOR EACH ROW
+    WHEN (NEW.parent_id IS NULL)
+    EXECUTE FUNCTION create_task_assignment_on_top_level_task();
+
 -- -----------------------------------------------------------------------------
 -- Indexes
 -- -----------------------------------------------------------------------------
