@@ -75,7 +75,36 @@ abstract class AbstractEntity {
         if (!$unique) return response(true, array_values($res['data']));
         else return response(true, $res['data']);
     }
+    public function root( $id, $options = [] ) {
+        
+        $sql = 'WITH RECURSIVE TaskHierarchy AS (
+                SELECT id, parent_id
+                FROM ' . static::$table . '
+                WHERE id = :id
+                UNION ALL
+                SELECT t.id, t.parent_id
+                FROM tasks t
+                INNER JOIN TaskHierarchy th ON t.id = th.parent_id
+            )
+            SELECT id FROM TaskHierarchy WHERE parent_id IS NULL';
 
+        try {
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute(['id' => $id]);
+            $result = $stmt->fetch();
+            if ( empty($result) ) {
+                return response(true, null);
+            }
+        } catch (\Throwable $th) {
+            return response(false, $th, $th->getMessage());
+        }
+
+        $root = $this->get($result['id'], $options);
+        if ( !$root['success'] ) {
+            return $root;
+        }
+        return response(true, $root['data']);
+    }
     public function tree(array $options = []): array {
 
         $with = $options['with'] ?? [];

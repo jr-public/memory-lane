@@ -14,11 +14,9 @@ $error_message = isset($_GET['error']) ? htmlspecialchars(urldecode($_GET['error
 // --- 2. Fetch Data via API ---
 
 // Fetch Project Details including assignments
-$project_res = api_call("Task", "list", [
+$project_res = api_call("Task", "root", [
+    'id' => $project_id,
     "options" => [
-        'filters'   => ['id = '.$project_id],
-        'perPage'   => 1,
-        'page'      => 1,
         "with"      => ["assignments"]
     ]
 ]);
@@ -27,8 +25,7 @@ if (!$project_res['success'] || empty($project_res['data'])) {
     echo '<div class="error-banner">Error fetching project details: ' . htmlspecialchars($project_res['message'] ?? 'Project not found or access denied.') . '</div>';
     return; // Stop if project data fails
 }
-// $project_data = $project_res['data'][0]; // Corrected: get returns single object
-$project_data = $project_res['data'][0];
+$project_data = $project_res['data'];
 
 // Fetch All Users for mapping IDs to names/details
 $users_res = api_call("User", "list", [

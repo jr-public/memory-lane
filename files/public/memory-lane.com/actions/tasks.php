@@ -16,7 +16,7 @@ if (!$tree_res['success']) {
 
 
 
-$users_res = api_call("Task", "get_project_asignees", [
+$users_res = api_call("Task", "get_project_assignees", [
     'task_id' => $_GET['id']
 ]);
 if (!$users_res['success']) {
