@@ -24,7 +24,7 @@ abstract class AbstractEntity {
             return response(true, $id);
         } catch (\PDOException $e) {
             // LOG ERROR
-            return response(false, null, 'Entity creation error: ' . $e->getMessage(), $e->getCode());
+            return response(false, null, 'Entity creation error: ' . $e->getMessage());
         }
     }
     
@@ -67,10 +67,14 @@ abstract class AbstractEntity {
                 $stmt = $this->db->prepare($query);
                 $stmt->execute($options['params'] ?? []);
             }
-            else {
+            else {                
                 $query = $this->build_query($options);
                 $stmt = $this->db->prepare($query['sql']);
-                $stmt->execute($query['params']);
+                $params = $query['params'];
+                if (isset($options['params']) && is_array($options['params'])) {
+                    $params = array_merge($params, $options['params']);
+                }
+                $stmt->execute($params);
             }
             $list = $stmt->fetchAll(\PDO::FETCH_UNIQUE);
         } catch (\PDOException $e) {

@@ -62,19 +62,13 @@ if (!$users_res['success']) {
         <h2>Assign User</h2> <!-- Changed header -->
         <form id="invite-form" method="post" action="">
              <input type="hidden" name="entity_name" value="TaskAssignment">
-             <!-- Changed action back to 'create' -->
-             <input type="hidden" name="entity_action" value="create">
-             <input type="hidden" name="task_id" value=""> <!-- Project ID set by JS -->
-             <input type="hidden" name="user_id" value=""> <!-- Current User ID set by JS -->
-             <!-- Hidden input to store the selected user ID -->
-             <input type="hidden" name="assigned_to" id="selected-user-id" value="">
-
+             <input type="hidden" name="entity_action" value="invite">
+             <input type="hidden" name="task_id" value="<?= $project_id ?>;">
+             <input type="hidden" name="user_id" value="<?= get_auth_user('id') ?>;">
             <div class="invite-form-row">
-                <!-- Removed 'required', changed name for clarity -->
-                <input type="text" name="search_email" placeholder="Search user by email or username" class="invite-email-input" autocomplete="off">
-                <!-- Disable button initially -->
-                <button type="submit" class="btn-action btn-invite" id="assign-user-button" disabled>Assign</button>
-            </div>
+                <input type="email" name="email" placeholder="Search or enter email address" class="invite-email-input" autocomplete="off">
+                <button type="submit" class="btn-action btn-invite" id="assign-user-button">Assign</button>
+            </div>            
             <!-- Container for search results -->
             <div id="user-search-results" class="user-search-results"></div>
              <!-- Removed the "not implemented" note -->
@@ -380,21 +374,15 @@ if (!$users_res['success']) {
      */
     function setupInviteForm(projId, currUserId, actionUrl) {
         const form = document.getElementById('invite-form');
-        const taskIdInput = form.querySelector('input[name="task_id"]');
-        const userIdInput = form.querySelector('input[name="user_id"]');
         const searchInput = form.querySelector('.invite-email-input');
         const resultsContainer = document.getElementById('user-search-results');
-        const selectedUserIdInput = document.getElementById('selected-user-id');
         const assignButton = document.getElementById('assign-user-button');
 
         form.action = actionUrl;
-        taskIdInput.value = projId;
-        userIdInput.value = currUserId;
+        // taskIdInput.value = projId;
 
         searchInput.addEventListener('input', () => {
             const searchTerm = searchInput.value.trim();
-            selectedUserIdInput.value = ''; // Clear selection on new input
-            assignButton.disabled = true; // Disable button until selection
 
             if (searchTerm.length < 2) {
                 resultsContainer.innerHTML = '';
@@ -503,15 +491,11 @@ if (!$users_res['success']) {
      */
     function selectUser(user) {
         const searchInput = document.querySelector('.invite-email-input');
-        const selectedUserIdInput = document.getElementById('selected-user-id');
         const resultsContainer = document.getElementById('user-search-results');
-        const assignButton = document.getElementById('assign-user-button');
 
-        searchInput.value = user.username; // Update input field to show selection
-        selectedUserIdInput.value = user.id; // Store the ID
+        searchInput.value = user.email; // Update input field to show selection
         resultsContainer.innerHTML = ''; // Clear results
         resultsContainer.style.display = 'none'; // Hide results
-        assignButton.disabled = false; // Enable the assign button
     }
 
 
