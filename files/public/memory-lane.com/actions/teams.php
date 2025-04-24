@@ -64,7 +64,7 @@ if (!$users_res['success']) {
              <input type="hidden" name="entity_name" value="TaskAssignment">
              <input type="hidden" name="entity_action" value="invite">
              <input type="hidden" name="task_id" value="<?= $project_id ?>;">
-             <input type="hidden" name="user_id" value="<?= get_auth_user('id') ?>;">
+             <input type="hidden" name="creator_id" value="<?= get_auth_user('id') ?>;">
             <div class="invite-form-row">
                 <input type="email" name="email" placeholder="Search or enter email address" class="invite-email-input" autocomplete="off">
                 <button type="submit" class="btn-action btn-invite" id="assign-user-button">Assign</button>
