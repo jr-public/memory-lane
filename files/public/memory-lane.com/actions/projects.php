@@ -92,8 +92,14 @@ $priority_list = $priorities_res['data'];
     <div class="project-list-container">
         <!-- Actions -->
         <div class="project-actions">
-            <a class="btn-action" href="main.php?action=entity_create&type=task">+ Add New Project</a>
+            <button class="btn-action">+ Add New Project</button>
         </div>
+        
+        <?php if (isset($_GET['error'])): ?>
+        <div class="error-banner">
+            <?php echo htmlspecialchars(urldecode($_GET['error'])); ?>
+        </div>
+        <?php endif; ?>
         
         <!-- Project List - Will be populated -->
         <div class="project-list" id="project-list"></div>
@@ -115,7 +121,7 @@ require_once('includes/task-panel.php');
     
     // For compatibility with task panel
     const task_list = <?= json_encode($projects) ?>;
-    
+
     document.addEventListener('DOMContentLoaded', function() {
         renderProjects(projects_list);
     });
@@ -358,5 +364,14 @@ require_once('includes/task-panel.php');
     .project-edit-btn:hover {
         background-color: rgba(255, 255, 255, 0.1);
         color: #e0e0e0;
+    }
+    .error-banner {
+        background-color: #e74c3c;
+        color: white;
+        padding: 10px 15px;
+        border-radius: 4px;
+        margin-bottom: 20px;
+        text-align: center;
+        width: 100%;
     }
 </style>

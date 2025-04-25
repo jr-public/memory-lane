@@ -71,27 +71,49 @@ $difficulty_list = $difficulty_res['data'];
         <div class="task-actions">
             <a class="btn-action" id="add-task-btn" href="main.php?action=entity_create&type=task">+ Add New Task</a>
         </div>
-        
+        <?php if (isset($_GET['error'])): ?>
+        <div class="error-banner">
+            <?php echo htmlspecialchars(urldecode($_GET['error'])); ?>
+        </div>
+        <?php endif; ?>
         <!-- Task List - Will be populated by JavaScript -->
         <div class="task-list" id="task-list"></div>
     </div>
 
 <?php 
+?>
+<style>
+    .error-banner {
+        background-color: #e74c3c;
+        color: white;
+        padding: 10px 15px;
+        border-radius: 4px;
+        margin-bottom: 20px;
+        text-align: center;
+        width: 100%;
+    }
+</style>
+<?php
 require_once('includes/task-panel.php');
 ?>
 
 <!-- Task JavaScript -->
 <script>
     const tasked_users = <?= json_encode($tasked_users) ?>;
-    const task_tree = <?= json_encode($tasks['tree']) ?>;
-    const task_list = <?= json_encode($tasks['list']) ?>;
+    const task_tree = <?= json_encode($tasks['tree'] ?? []) ?>;
+    const task_list = <?= json_encode($tasks['list'] ?? []) ?>;
     const currentUrl = <?= json_encode($current_url) ?>;
     const status_list = <?= json_encode($status_list) ?>;
     const priority_list = <?= json_encode($priority_list) ?>;
     const difficulty_list = <?= json_encode($difficulty_list) ?>;
     
     document.addEventListener('DOMContentLoaded', function() {
-        renderTaskTree(task_tree);
+        if ( task_tree.length == 0 ) {
+            let el = document.getElementById('task-list');
+            el.appendChild(createNewTaskForm(<?= $_GET['id'] ?>, 0));
+        }
+        else renderTaskTree(task_tree);
+
         
         // Add expand/collapse all buttons to the task actions
         const taskActions = document.querySelector('.task-actions');

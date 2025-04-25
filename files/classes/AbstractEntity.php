@@ -13,10 +13,14 @@ abstract class AbstractEntity {
 
     public function create(array $data): array {
         try {
-            $fields = implode(', ', array_keys($data));
-            $placeholders = ':' . implode(', :', array_keys($data));
-            
-            $query = 'INSERT INTO ' . static::$table . ' (' . $fields . ') VALUES (' . $placeholders . ')';
+            $fields = array_keys($data);
+            $placeholders = array_map(function($field) {
+                return ":$field";
+            }, $fields);
+            $fieldsStr = implode(', ', $fields);
+            $placeholdersStr = implode(', ', $placeholders);
+    
+            $query = "INSERT INTO " . static::$table . " ($fieldsStr) VALUES ($placeholdersStr)";
             $stmt = $this->db->prepare($query);
             $stmt->execute($data);
             
